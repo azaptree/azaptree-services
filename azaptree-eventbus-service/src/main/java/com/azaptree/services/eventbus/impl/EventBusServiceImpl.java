@@ -46,7 +46,7 @@ public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 		}
 
 		eventBus.register(this);
-		log.info("Created EventBus: {}:", beanName);
+		log.info("Created EventBus: {}", beanName);
 	}
 
 	/**
