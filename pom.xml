@@ -268,6 +268,7 @@
 
 	<profiles>
 		<profile>
+			<!-- see : https://docs.sonatype.org/display/Repository/How+To+Generate+PGP+Signatures+With+Maven -->
 			<id>release-sign-artifacts</id>
 			<activation>
 				<!-- will trigger the profile when the system property "performRelease" 
