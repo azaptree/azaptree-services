@@ -5,7 +5,31 @@
 	<artifactId>azaptree-services</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
+
 	<name>AZAPTREE-SERVICES</name>
+	<description>Shared services that are designed to deployed as Spring beans</description>
+	<url>http://www.azaptree.com</url>
+
+	<licenses>
+		<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<scm>
+		<url>https://github.com/azaptree/azaptree-services.git</url>
+		<connection>https://github.com/azaptree/azaptree-services.git</connection>
+	</scm>
+
+	<developers>
+		<developer>
+			<id>azappala</id>
+			<name>Alfio Zappala</name>
+			<email>azappala@azaptree.com</email>
+		</developer>
+	</developers>
 
 	<dependencyManagement>
 		<dependencies>
@@ -15,7 +39,14 @@
 				<version>3.0.1</version>
 				<scope>provided</scope>
 			</dependency>
+			<dependency>
+				<groupId>org.apache.openejb</groupId>
+				<artifactId>javaee-api</artifactId>
+				<version>6.0-4</version>
+				<scope>provided</scope>
+			</dependency>
 
+			<!-- Spring -->
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aspects</artifactId>
@@ -26,13 +57,15 @@
 				<artifactId>spring-tx</artifactId>
 				<version>${springframework.version}</version>
 			</dependency>
+			<!-- END : Spring -->
+
 			<dependency>
 				<groupId>org.aspectj</groupId>
 				<artifactId>aspectjrt</artifactId>
 				<version>${aspectj.version}</version>
 			</dependency>
 
-			<!-- com.fasterxml -->
+			<!-- fasterxml -->
 			<dependency>
 				<groupId>com.fasterxml.jackson.core</groupId>
 				<artifactId>jackson-databind</artifactId>
@@ -58,13 +91,13 @@
 				<artifactId>jackson-datatype-joda</artifactId>
 				<version>${com.fasterxml.jackson.core.version}</version>
 			</dependency>
+			<!-- END: fasterxml -->
 
 			<dependency>
 				<groupId>org.hibernate</groupId>
 				<artifactId>hibernate-validator</artifactId>
 				<version>4.3.1.Final</version>
 			</dependency>
-			<!-- END : com.fasterxml -->
 
 			<dependency>
 				<groupId>com.google.guava</groupId>
@@ -78,6 +111,7 @@
 				<version>2.1</version>
 			</dependency>
 
+			<!-- Apache Commons -->
 			<dependency>
 				<groupId>commons-beanutils</groupId>
 				<artifactId>commons-beanutils</artifactId>
@@ -93,12 +127,12 @@
 				<artifactId>commons-chain</artifactId>
 				<version>1.2</version>
 			</dependency>
-
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
 				<version>3.1</version>
 			</dependency>
+			<!-- END : Apache Commons -->
 		</dependencies>
 	</dependencyManagement>
 
@@ -169,25 +203,6 @@
 		<com.fasterxml.jackson.core.version>2.1.0</com.fasterxml.jackson.core.version>
 	</properties>
 
-	<repositories>
-		<repository>
-			<id>springsource-repo</id>
-			<name>SpringSource Repository</name>
-			<url>http://repo.springsource.org/release</url>
-		</repository>
-
-		<repository>
-			<id>jboss-public-repository-group</id>
-			<url>https://repository.jboss.org/nexus/content/groups/public-jboss</url>
-			<releases>
-				<enabled>true</enabled>
-			</releases>
-			<snapshots>
-				<enabled>false</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -220,11 +235,81 @@
 					</execution>
 				</executions>
 			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.2.1</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 
-	<modules>
+	<profiles>
+		<profile>
+			<id>release-sign-artifacts</id>
+			<activation>
+				<!-- will trigger the profile when the system property "performRelease" 
+					is specified with the value "true" -->
+				<!-- mvn clean deploy -DperformRelease=true -Dgpg.passphrase=[yourpassphrase] -->
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.1</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9</version>
+			</plugin>
+		</plugins>
+	</reporting>
+
+	<modules>
 		<module>azaptree-eventbus-service</module>
 	</modules>
 </project>

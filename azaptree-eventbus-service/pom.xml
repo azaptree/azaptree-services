@@ -7,7 +7,15 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>azaptree-eventbus-service</artifactId>
-	<name>Eventbus Service</name>
+	
+	<name>EventBus Service</name>
+	<description>Wrapper around Guava's EventBus. Value adds are: 
+1. Spring enabled
+2. Can be configured to be synchronous / asynchronous
+3. Logs warning messages for DeadEvents
+4. Spring bean name is used by default as the EventBus identifier, but can be configured to use any identifier</description>
+	
+	
 	<dependencies>
 		<dependency>
 			<groupId>com.google.guava</groupId>
