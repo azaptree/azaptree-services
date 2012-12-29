@@ -19,8 +19,9 @@
 	</licenses>
 
 	<scm>
-		<url>https://github.com/azaptree/azaptree-services.git</url>
-		<connection>https://github.com/azaptree/azaptree-services.git</connection>
+		<url>scm:git:https://github.com/azaptree/azaptree-services.git</url>
+		<developerConnection>scm:git:https://github.com/azaptree/azaptree-services.git</developerConnection>
+		<connection>scm:git:https://github.com/azaptree/azaptree-services.git</connection>
 	</scm>
 
 	<developers>
@@ -313,4 +314,9 @@
 	<modules>
 		<module>azaptree-eventbus-service</module>
 	</modules>
+	<parent>
+		<groupId>org.sonatype.oss</groupId>
+		<artifactId>oss-parent</artifactId>
+		<version>7</version>
+	</parent>
 </project>
