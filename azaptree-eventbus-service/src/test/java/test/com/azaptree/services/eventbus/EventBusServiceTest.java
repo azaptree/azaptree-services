@@ -199,6 +199,11 @@ public class EventBusServiceTest extends AbstractTestNGSpringContextTests {
 		Assert.assertEquals(longEventHandler.counter.get(), 10);
 	}
 
+	@Test(expectedExceptions = { IllegalArgumentException.class })
+	public void test_registerEventHandlerWithNohandlerMethods() {
+		asynchronousCustomBeanNamedEventBusService.register(new Object());
+	}
+
 	@Test
 	public void test_synchronousBeanNamedEventBusService() {
 		Assert.assertEquals(synchronousBeanNamedEventBusService.getEventBusName(), "synchronousBeanNamedEventBusService");

@@ -40,6 +40,9 @@ public interface EventBusService {
 	/**
 	 * 
 	 * @param event
+	 *            REQUIRED
+	 * @throws IllegalArgumentException
+	 *             if event is null
 	 */
 	void post(Object event);
 
@@ -47,15 +50,21 @@ public interface EventBusService {
 	 * Each of the object's methods that are annotated with the com.google.common.eventbus.Subscribe annotation will be
 	 * registered as handler methods.
 	 * 
-	 * Immediately upon invoking register(Object) , the listener being registered is checked for the well-formedness of its handler methods. Specifically, any
-	 * methods marked with @Subscribe must take only a single argument.
-	 * 
-	 * Any violations of this rule will cause an IllegalArgumentException to be thrown.
-	 * 
 	 * @param eventHandler
-	 * @exception IllegalArgumentException
+	 *            Immediately upon invoking register(Object) , the listener being registered is checked for the well-formedness of its handler methods.
+	 *            Specifically, the object must have at least one method annotated with @Subscribe and any methods marked with @Subscribe must take only a
+	 *            single argument. Any violations of this rule will cause an IllegalArgumentException to be thrown.
+	 * @throws IllegalArgumentException
 	 */
 	void register(Object eventHandler);
 
+	/**
+	 * 
+	 * @param eventHandler
+	 *            REQUIRED
+	 * 
+	 * @throws IllegalArgumentException
+	 *             if event is null
+	 */
 	void unregister(Object eventHandler);
 }

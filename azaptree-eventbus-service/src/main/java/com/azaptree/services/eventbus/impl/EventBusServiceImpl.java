@@ -15,6 +15,7 @@
  */
 package com.azaptree.services.eventbus.impl;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.Executor;
 
 import javax.annotation.PostConstruct;
@@ -70,6 +71,16 @@ public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 
 	public EventBusServiceImpl(final String eventBusName, final Executor executor) {
 		init(eventBusName, executor);
+	}
+
+	private void checkSubscribeMethodExists(final Object eventHandler) {
+		for (final Method m : eventHandler.getClass().getMethods()) {
+			if (m.getAnnotation(Subscribe.class) != null) {
+				return;
+			}
+		}
+
+		throw new IllegalArgumentException("eventHandler has no methods annotated with @Subscribe");
 	}
 
 	@Override
@@ -130,6 +141,7 @@ public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 	@Override
 	public void register(final Object eventHandler) {
 		Assert.notNull(eventHandler, "eventHandler is required");
+		checkSubscribeMethodExists(eventHandler);
 		eventBus.register(eventHandler);
 		log.info("{} : registered event handler: {} ", beanName, eventHandler.getClass().getName());
 	}
