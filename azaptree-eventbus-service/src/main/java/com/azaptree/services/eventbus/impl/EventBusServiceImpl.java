@@ -1,4 +1,21 @@
+/*
+ * Copyright 2012 The AZAPTREE Authors
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.azaptree.services.eventbus.impl;
+
+import java.util.concurrent.Executor;
 
 import javax.annotation.PostConstruct;
 
@@ -7,6 +24,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.eventbus.EventBusService;
+import com.google.common.eventbus.AsyncEventBus;
 import com.google.common.eventbus.DeadEvent;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -17,36 +35,78 @@ import com.google.common.eventbus.Subscribe;
  * Registers a DeadEvent event handler. Dead events are events that posted, but there are no registered subscribers for that
  * event type. When a DeadEvent is received, it logs a WARNING message.
  * 
- * @author alfio
+ * @author Alfio Zappala
  * 
  */
 @Component
 public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 
 	private EventBus eventBus;
+	private Executor executor;
 	private String beanName;
+	private String eventBusName;
 
+	/**
+	 * Creates a synchronous EventBus, i.e., events are dispatched on the same thread.
+	 * 
+	 * The beanName is used as the EventBus identifier.
+	 */
 	public EventBusServiceImpl() {
 	}
 
+	/**
+	 * Creates an <a href="http://docs.guava-libraries.googlecode.com/git-history/release/javadoc/index.html">AsyncEventBus</a>
+	 * 
+	 * @param executor
+	 */
+	public EventBusServiceImpl(final Executor executor) {
+		Assert.notNull(executor);
+		this.executor = executor;
+	}
+
 	public EventBusServiceImpl(final String eventBusName) {
-		setBeanName(eventBusName);
-		init();
+		init(eventBusName, null);
+	}
+
+	public EventBusServiceImpl(final String eventBusName, final Executor executor) {
+		init(eventBusName, executor);
 	}
 
 	@Override
 	public String getEventBusName() {
-		return beanName;
+		return eventBusName;
 	}
 
 	@PostConstruct
 	public void init() {
-		if (eventBus == null) {
-			eventBus = new EventBus(beanName);
+		init(beanName, executor);
+	}
+
+	public void init(final String eventBusName, final Executor executor) {
+		if (eventBus != null) {
+			log.debug("eventBus has already been created");
+			return;
+		}
+
+		Assert.hasText(eventBusName, "eventBusName is required");
+		this.eventBusName = eventBusName;
+
+		if (executor != null) {
+			eventBus = new AsyncEventBus(eventBusName, executor);
+		} else {
+			eventBus = new EventBus(eventBusName);
 		}
 
 		eventBus.register(this);
-		log.info("Created EventBus: {}", beanName);
+		log.info("Created EventBus: {} -> {}", beanName, eventBus.getClass().getName());
+	}
+
+	@Override
+	public boolean isAsynchronous() {
+		if (eventBus == null) {
+			throw new IllegalStateException("EventBus has not yet been created");
+		}
+		return eventBus instanceof AsyncEventBus;
 	}
 
 	/**
