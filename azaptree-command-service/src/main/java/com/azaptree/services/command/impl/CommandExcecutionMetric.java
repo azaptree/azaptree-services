@@ -23,21 +23,20 @@ package com.azaptree.services.command.impl;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 
-import com.azaptree.services.command.CommandExcecutionMetric;
-
 /**
  * 
+ * Used to record command execution metrics.
  * 
  * @author Alfio Zappala
  * 
  */
-public class CommandExcecutionMetricImpl implements CommandExcecutionMetric {
+public class CommandExcecutionMetric {
 	private final long executionTimeStart;
 	private long executionTimeEnd;
 	private boolean success = true;
 	private Throwable throwable;
 
-	public CommandExcecutionMetricImpl() {
+	public CommandExcecutionMetric() {
 		super();
 		executionTimeStart = System.currentTimeMillis();
 	}
@@ -54,26 +53,22 @@ public class CommandExcecutionMetricImpl implements CommandExcecutionMetric {
 	 */
 	public void failed(final Throwable exception) {
 		executionTimeEnd = System.currentTimeMillis();
-		this.throwable = exception;
+		throwable = exception;
 		success = exception == null;
 	}
 
-	@Override
 	public long getExecutionTimeEnd() {
 		return executionTimeEnd;
 	}
 
-	@Override
 	public long getExecutionTimeStart() {
 		return executionTimeStart;
 	}
 
-	@Override
 	public Throwable getThrowable() {
 		return throwable;
 	}
 
-	@Override
 	public boolean isSuccess() {
 		return success;
 	}

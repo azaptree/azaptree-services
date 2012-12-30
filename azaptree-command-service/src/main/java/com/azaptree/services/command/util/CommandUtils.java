@@ -1,4 +1,4 @@
-package com.azaptree.services.command;
+package com.azaptree.services.command.util;
 
 /*
  * #%L
@@ -20,13 +20,22 @@ package com.azaptree.services.command;
  * #L%
  */
 
-public interface CommandExcecutionMetric {
-	long getExecutionTimeStart();
+import org.apache.commons.chain.Context;
 
-	long getExecutionTimeEnd();
+import com.azaptree.services.commons.TypeReferenceKey;
 
-	boolean isSuccess();
+public abstract class CommandUtils {
 
-	Throwable getThrowable();
+	public static <T> T get(final Context ctx, final TypeReferenceKey<T> key) {
+		if (ctx.containsKey(key.getName())) {
+			return (T) ctx.get(key.getName());
+		}
 
+		return key.getDefaultValue();
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> T put(final Context ctx, final TypeReferenceKey<T> key, final T value) {
+		return (T) ctx.put(key.getName(), value);
+	}
 }

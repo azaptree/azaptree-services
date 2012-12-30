@@ -73,7 +73,7 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 		Assert.notNull(ctx, "ctx is required");
 
 		final org.apache.commons.chain.Command command = getCommand(key);
-		final CommandExcecutionMetricImpl metric = new CommandExcecutionMetricImpl();
+		final CommandExcecutionMetric metric = new CommandExcecutionMetric();
 		try {
 			command.execute(ctx);
 			metric.succeeded();
