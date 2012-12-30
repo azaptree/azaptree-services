@@ -1,11 +1,6 @@
 package com.azaptree.services.executor;
 
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -32,50 +27,12 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
 	private final Condition unpaused = pauseLock.newCondition();
 
 	public ThreadPoolExecutor() {
-		super(10, 50,
-		        1, TimeUnit.MINUTES,
-		        new SynchronousQueue<Runnable>(),
-		        new CallerRunsPolicy());
-		logInfo();
-	}
-
-	public ThreadPoolExecutor(final int corePoolSize, final int maximumPoolSize, final long keepAliveTime, final TimeUnit unit,
-	        final BlockingQueue<Runnable> workQueue) {
-		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue);
-		logInfo();
-	}
-
-	public ThreadPoolExecutor(final int corePoolSize, final int maximumPoolSize, final long keepAliveTime, final TimeUnit unit,
-	        final BlockingQueue<Runnable> workQueue, final RejectedExecutionHandler handler) {
-		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, handler);
-		logInfo();
-	}
-
-	public ThreadPoolExecutor(final int corePoolSize, final int maximumPoolSize, final long keepAliveTime, final TimeUnit unit,
-	        final BlockingQueue<Runnable> workQueue, final ThreadFactory threadFactory) {
-		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory);
-		logInfo();
-	}
-
-	public ThreadPoolExecutor(final int corePoolSize, final int maximumPoolSize, final long keepAliveTime, final TimeUnit unit,
-	        final BlockingQueue<Runnable> workQueue, final ThreadFactory threadFactory, final RejectedExecutionHandler handler) {
-		super(corePoolSize, maximumPoolSize, keepAliveTime, unit, workQueue, threadFactory, handler);
+		this(new ThreadPoolConfig());
 		logInfo();
 	}
 
 	public ThreadPoolExecutor(final String name) {
-		super(10, 50,
-		        1, TimeUnit.MINUTES,
-		        new SynchronousQueue<Runnable>(),
-		        new ThreadFactory() {
-			        private final AtomicInteger threadCounter = new AtomicInteger(0);
-
-			        @Override
-			        public Thread newThread(final Runnable r) {
-				        return new Thread(r, String.format("%s-%d", name, threadCounter.incrementAndGet()));
-			        }
-		        },
-		        new CallerRunsPolicy());
+		this(new ThreadPoolConfig(name));
 		logInfo();
 	}
 

@@ -1,5 +1,6 @@
 package com.azaptree.services.executor;
 
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionHandler;
@@ -23,7 +24,7 @@ public class ThreadPoolConfig {
 
 	private int corePoolSize = 3;
 
-	private int maximumPoolSize = 50;
+	private int maximumPoolSize = 20;
 
 	private long keepAliveTime = 1;
 	private TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
@@ -33,36 +34,49 @@ public class ThreadPoolConfig {
 
 	private boolean daemon = false;
 
-	private boolean allowCoreThreadTimeOut;
+	private boolean allowCoreThreadTimeOut = false;
 
+	/**
+	 * DEFAULT CONFIG:
+	 * 
+	 * <code>
+	 * int corePoolSize = 3;
+	 * 
+	 * int maximumPoolSize = 20;
+	 * 
+	 * long keepAliveTime = 1;
+	 * TimeUnit keepAliveTimeUnit = TimeUnit.MINUTES;
+	 * 
+	 * BlockingQueue<Runnable> workQueue = new SynchronousQueue<>();
+	 * RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+	 * 
+	 * boolean daemon = false;
+	 * 
+	 * boolean allowCoreThreadTimeOut = false;
+	 * </code>
+	 * 
+	 */
 	public ThreadPoolConfig() {
-		super();
 	}
 
 	public ThreadPoolConfig(final String name) {
-		super();
-		this.name = name;
+		setName(name);
 	}
 
 	public ThreadPoolConfig(final String name, final boolean daemon) {
-		super();
-		this.name = name;
-		this.daemon = daemon;
+		this(name);
+		setDaemon(daemon);
 	}
 
 	public ThreadPoolConfig(final String name, final int corePoolSize, final int maximumPoolSize) {
-		super();
-		this.name = name;
-		this.corePoolSize = corePoolSize;
-		this.maximumPoolSize = maximumPoolSize;
+		this(name);
+		setCorePoolSize(corePoolSize);
+		setMaximumPoolSize(maximumPoolSize);
 	}
 
 	public ThreadPoolConfig(final String name, final int corePoolSize, final int maximumPoolSize, final boolean daemon) {
-		super();
-		this.name = name;
-		this.corePoolSize = corePoolSize;
-		this.maximumPoolSize = maximumPoolSize;
-		this.daemon = daemon;
+		this(name, corePoolSize, maximumPoolSize);
+		setDaemon(daemon);
 	}
 
 	@Override
@@ -77,14 +91,17 @@ public class ThreadPoolConfig {
 			return false;
 		}
 		final ThreadPoolConfig other = (ThreadPoolConfig) obj;
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
-			return false;
-		}
-		return true;
+		return Objects.equals(getName(), other.getName())
+		        && Objects.equals(getCorePoolSize(), other.getCorePoolSize())
+		        && Objects.equals(getMaximumPoolSize(), other.getMaximumPoolSize())
+		        && Objects.equals(getKeepAliveTime(), other.getKeepAliveTime())
+		        && Objects.equals(getKeepAliveTimeUnit(), other.getKeepAliveTimeUnit())
+		        && Objects.equals(isDaemon(), other.isDaemon())
+		        && Objects.equals(isAllowCoreThreadTimeOut(), other.isAllowCoreThreadTimeOut())
+		        && Objects.equals(getHandler() != null ? getHandler().getClass().getName() : null, other.getHandler() != null ? other.getHandler().getClass()
+		                .getName() : null)
+		        && Objects.equals(getWorkQueue() != null ? getWorkQueue().getClass().getName() : null, other.getWorkQueue() != null ? other.getWorkQueue()
+		                .getClass().getName() : null);
 	}
 
 	@Min(1)
@@ -140,10 +157,13 @@ public class ThreadPoolConfig {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (name == null ? 0 : name.hashCode());
-		return result;
+		final String handlerClass = getHandler() != null ? getHandler().getClass().getName() : "null";
+		final String workQueueClass = getWorkQueue() != null ? getWorkQueue().getClass().getName() : "null";
+		return Objects.hash(name,
+		        corePoolSize, maximumPoolSize,
+		        keepAliveTime, keepAliveTimeUnit,
+		        daemon, allowCoreThreadTimeOut,
+		        handlerClass, workQueueClass);
 	}
 
 	@PostConstruct
