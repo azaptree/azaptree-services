@@ -1,0 +1,25 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>com.azaptree</groupId>
+    <artifactId>azaptree-services</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+  <artifactId>azaptree-executor-service</artifactId>
+  <name>AZAPTREE-EXECUTOR-SERVICE</name>
+  <description>Provides an ExecutorService that is easily Spring configured. Additional features include:
+
+1. JMX enabled
+2.  Executor is pausable, i.e., which means when execution is paused, threads will wait to process tasks until execution is resumed - see PasuableThreadpoolExecutor
+3. ThreadPoolConfig makes it easier to configure a ThreadPoolExecutor</description>
+  <dependencies>
+  	<dependency>
+  		<groupId>org.hibernate</groupId>
+  		<artifactId>hibernate-validator</artifactId>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.apache.commons</groupId>
+  		<artifactId>commons-lang3</artifactId>
+  	</dependency>
+  </dependencies>
+</project>

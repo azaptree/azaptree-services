@@ -313,6 +313,7 @@
 
 	<modules>
 		<module>azaptree-eventbus-service</module>
+		<module>azaptree-executor-service</module>
 	</modules>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
