@@ -1,8 +1,8 @@
-package com.azaptree.services.executor;
+package com.azaptree.services.commons.validation;
 
 /*
  * #%L
- * AZAPTREE-EXECUTOR-SERVICE
+ * AZAPTREE-SERVICES-COMMONS
  * %%
  * Copyright (C) 2012 AZAPTREE.COM
  * %%
@@ -20,20 +20,25 @@ package com.azaptree.services.executor;
  * #L%
  */
 
-public interface PausableThreadPoolExecutor {
+import java.util.Collection;
 
-	boolean isPaused();
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
-	/**
-	 * Pause execution of tasks. This only affects tasks that are submitted after the executor has been paused.
-	 * 
-	 * Tasks that are currently running will continue.
-	 */
-	void pause();
+public class CollectionNotEmptyValidator implements ConstraintValidator<CollectionNotEmpty, Collection<?>> {
 
-	/**
-	 * Resume execution of tasks
-	 * 
-	 */
-	void resume();
+	@Override
+	public void initialize(final CollectionNotEmpty constraintAnnotation) {
+		// NO INITIALIZATION IS REQUIRED
+	}
+
+	@Override
+	public boolean isValid(final Collection<?> value, final ConstraintValidatorContext context) {
+		if (value == null) {
+			return true;
+		}
+
+		return !value.isEmpty();
+	}
+
 }

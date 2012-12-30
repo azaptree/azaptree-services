@@ -1,8 +1,8 @@
-package com.azaptree.services.executor;
+package com.azaptree.services.commons.validation;
 
 /*
  * #%L
- * AZAPTREE-EXECUTOR-SERVICE
+ * AZAPTREE-SERVICES-COMMONS
  * %%
  * Copyright (C) 2012 AZAPTREE.COM
  * %%
@@ -20,20 +20,12 @@ package com.azaptree.services.executor;
  * #L%
  */
 
-public interface PausableThreadPoolExecutor {
-
-	boolean isPaused();
-
-	/**
-	 * Pause execution of tasks. This only affects tasks that are submitted after the executor has been paused.
-	 * 
-	 * Tasks that are currently running will continue.
-	 */
-	void pause();
-
-	/**
-	 * Resume execution of tasks
-	 * 
-	 */
-	void resume();
+/**
+ * Marker interface for validation group for constraints that should be run only after basic constraints pass.
+ * 
+ * @author alfio
+ * 
+ */
+public interface ComplexConstraints {
+	// MARKER INTERFACE
 }

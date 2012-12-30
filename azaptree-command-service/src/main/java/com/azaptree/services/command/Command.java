@@ -1,8 +1,8 @@
-package com.azaptree.services.executor;
+package com.azaptree.services.command;
 
 /*
  * #%L
- * AZAPTREE-EXECUTOR-SERVICE
+ * AZAPTREE-COMMAND-SERVICE
  * %%
  * Copyright (C) 2012 AZAPTREE.COM
  * %%
@@ -20,20 +20,19 @@ package com.azaptree.services.executor;
  * #L%
  */
 
-public interface PausableThreadPoolExecutor {
+import com.azaptree.services.commons.TypeReferenceKey;
+import com.google.common.base.Optional;
 
-	boolean isPaused();
+public interface Command extends org.apache.commons.chain.Command {
 
-	/**
-	 * Pause execution of tasks. This only affects tasks that are submitted after the executor has been paused.
-	 * 
-	 * Tasks that are currently running will continue.
-	 */
-	void pause();
+	Optional<String> getDescription();
 
-	/**
-	 * Resume execution of tasks
-	 * 
-	 */
-	void resume();
+	Optional<TypeReferenceKey<?>[]> getInputKeys();
+
+	String getName();
+
+	Optional<TypeReferenceKey<?>[]> getOutputKeys();
+
+	CommandContextValidator getValidator();
+
 }

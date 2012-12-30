@@ -1,6 +1,6 @@
 <!--
   #%L
-  EventBus Service
+  AZAPTREE-COMMAND-SERVICE
   %%
   Copyright (C) 2012 AZAPTREE.COM
   %%
@@ -18,19 +18,20 @@
   #L%
   -->
 <configuration>
-	<contextName>azaptree-eventbus-service</contextName>
+	<contextName>azaptree-command-service</contextName>
 
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder by default -->
+		<!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder 
+			by default -->
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
-	</appender>	
+	</appender>
 
 	<appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
 		<appender-ref ref="STDOUT" />
 	</appender>
-	
+
 	<root level="info">
 		<appender-ref ref="ASYNC" />
 	</root>
