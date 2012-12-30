@@ -26,11 +26,19 @@ public class ThreadPoolExecutor extends java.util.concurrent.ThreadPoolExecutor 
 	private final ReentrantLock pauseLock = new ReentrantLock();
 	private final Condition unpaused = pauseLock.newCondition();
 
+	/**
+	 * same as : ThreadPoolExecutor(new ThreadPoolConfig());
+	 */
 	public ThreadPoolExecutor() {
 		this(new ThreadPoolConfig());
 		logInfo();
 	}
 
+	/**
+	 * same as : ThreadPoolExecutor(new ThreadPoolConfig(name));
+	 * 
+	 * @param name
+	 */
 	public ThreadPoolExecutor(final String name) {
 		this(new ThreadPoolConfig(name));
 		logInfo();

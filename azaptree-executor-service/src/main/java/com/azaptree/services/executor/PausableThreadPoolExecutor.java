@@ -5,7 +5,9 @@ public interface PausableThreadPoolExecutor {
 	boolean isPaused();
 
 	/**
-	 * Pause execution of tasks
+	 * Pause execution of tasks. This only affects tasks that are submitted after the executor has been paused.
+	 * 
+	 * Tasks that are currently running will continue.
 	 */
 	void pause();
 
