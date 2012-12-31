@@ -10,7 +10,7 @@ package com.azaptree.services.commons;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,7 +21,7 @@ package com.azaptree.services.commons;
  */
 
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.util.Objects;
 
 import org.springframework.util.Assert;
 
@@ -43,10 +43,12 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 	private boolean required = false;
 	private T defaultValue;
 	private final String name;
+	private final int hashCode;
 
 	protected TypeReferenceKey() {
 		super();
 		name = getRawType().getSimpleName();
+		this.hashCode = Objects.hash(name);
 	}
 
 	protected TypeReferenceKey(final boolean required) {
@@ -59,38 +61,23 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 		this.required = required;
 		this.defaultValue = defaultValue;
 		name = getRawType().getSimpleName();
+		this.hashCode = Objects.hash(name);
 	}
 
 	public TypeReferenceKey(final String name, final boolean required) {
 		super();
 		this.name = name;
 		this.required = required;
+		this.hashCode = Objects.hash(name);
 	}
 
 	protected TypeReferenceKey(final String name, final boolean required, final T defaultValue) {
 		super();
 		Assert.hasText(name);
 		this.name = name;
+		this.hashCode = Objects.hash(name);
 		this.required = required;
 		this.defaultValue = defaultValue;
-	}
-
-	@Override
-	public int compareTo(final TypeReference<T> o) {
-		if (o == this) {
-			return 0;
-		}
-
-		if (o instanceof TypeReferenceKey && o.getType().equals(getType())) {
-			final String s1 = new StringBuilder(getRawType().getName()).append(getName()).toString();
-			final Type type = o.getType();
-			final Class<?> rawType = type instanceof Class<?> ? (Class<?>) type : (Class<?>) ((ParameterizedType) type).getRawType();
-			final String s2 = new StringBuilder(rawType.getName()).append(((TypeReferenceKey<T>) o).getName()).toString();
-			return s1.compareTo(s2);
-		}
-		final Type type = o.getType();
-		final Class<?> rawType = type instanceof Class<?> ? (Class<?>) type : (Class<?>) ((ParameterizedType) type).getRawType();
-		return getRawType().getName().compareTo(rawType.getName());
 	}
 
 	@Override
@@ -131,10 +118,7 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + (name == null ? 0 : name.hashCode());
-		return result;
+		return hashCode;
 	}
 
 	public boolean isRequired() {
@@ -143,7 +127,7 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 
 	@Override
 	public String toString() {
-		return String.format("TypeReference [_type=%s, required=%s, defaultValue=%s, name=%s]", type, required, defaultValue, name);
+		return String.format("TypeReference [type=%s, required=%s, defaultValue=%s, name=%s]", type, required, defaultValue, name);
 	}
 
 }

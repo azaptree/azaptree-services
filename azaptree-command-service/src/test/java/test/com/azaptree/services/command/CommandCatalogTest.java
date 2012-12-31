@@ -236,6 +236,16 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 		}
 	}
 
+	@Test(expectedExceptions = { IllegalArgumentException.class })
+	public void test_getCommand_withBlankName() {
+		catalog.getCommand("  ");
+	}
+
+	@Test(expectedExceptions = { IllegalArgumentException.class })
+	public void test_getCommand_withNullName() {
+		catalog.getCommand(null);
+	}
+
 	@Test
 	public void test_getCommandNames() {
 		final String[] commandNames = catalog.getCommandNames();

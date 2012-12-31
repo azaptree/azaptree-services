@@ -33,8 +33,9 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 	private static final long serialVersionUID = 1L;
 
 	private final String catalogName;
-
 	private final String commandName;
+
+	private final int hashCode;
 
 	public CommandKey(final String catalogName, final String commandName) {
 		super();
@@ -42,6 +43,7 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 		Assert.hasText(commandName);
 		this.catalogName = catalogName;
 		this.commandName = commandName;
+		this.hashCode = Objects.hash(catalogName, commandName);
 	}
 
 	@Override
@@ -50,10 +52,9 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 			return 1;
 		}
 		return ComparisonChain.start()
-		        .compare(catalogName, o.commandName)
-		        .compare(commandName, commandName)
+		        .compare(catalogName, o.catalogName)
+		        .compare(commandName, o.commandName)
 		        .result();
-
 	}
 
 	@Override
@@ -97,12 +98,12 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(catalogName, commandName);
+		return hashCode;
 	}
 
 	@Override
 	public String toString() {
-		return new StringBuilder(catalogName).append(CatalogFactory.DELIMITER).append(CatalogFactory.DELIMITER).toString();
+		return new StringBuilder(catalogName).append(CatalogFactory.DELIMITER).append(commandName).toString();
 	}
 
 }

@@ -10,7 +10,7 @@ package com.azaptree.services.command.util;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,21 +21,24 @@ package com.azaptree.services.command.util;
  */
 
 import org.apache.commons.chain.Context;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.commons.TypeReferenceKey;
 
 public abstract class CommandUtils {
 
 	public static <T> T get(final Context ctx, final TypeReferenceKey<T> key) {
-		if (ctx.containsKey(key.getName())) {
-			return (T) ctx.get(key.getName());
-		}
-
-		return key.getDefaultValue();
+		Assert.notNull(ctx, "ctx is required");
+		Assert.notNull(key, "key is required");
+		final T t = (T) ctx.get(key);
+		return t != null ? t : key.getDefaultValue();
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> T put(final Context ctx, final TypeReferenceKey<T> key, final T value) {
-		return (T) ctx.put(key.getName(), value);
+		Assert.notNull(ctx, "ctx is required");
+		Assert.notNull(key, "key is required");
+		Assert.notNull(value, "value is required");
+		return (T) ctx.put(key, value);
 	}
 }

@@ -22,6 +22,7 @@ package com.azaptree.services.command.impl;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
+import org.springframework.util.Assert;
 
 /**
  * 
@@ -52,9 +53,9 @@ public class CommandExcecutionMetric {
 	 * @param exception
 	 */
 	public void failed(final Throwable exception) {
-		executionTimeEnd = System.currentTimeMillis();
+		Assert.notNull(exception);
+		failed();
 		throwable = exception;
-		success = exception == null;
 	}
 
 	public long getExecutionTimeEnd() {
@@ -89,11 +90,4 @@ public class CommandExcecutionMetric {
 
 		return sb.toString();
 	}
-
-	public void update(final long executionTimeEnd, final boolean success, final Throwable throwable) {
-		this.executionTimeEnd = executionTimeEnd;
-		this.success = success;
-		this.throwable = throwable;
-	}
-
 }

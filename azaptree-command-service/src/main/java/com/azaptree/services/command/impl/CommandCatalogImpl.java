@@ -54,14 +54,16 @@ public class CommandCatalogImpl implements CommandCatalog {
 
 		final ImmutableMap.Builder<String, org.apache.commons.chain.Command> mapBuilder = ImmutableMap.<String, org.apache.commons.chain.Command> builder();
 		for (final Command command : commands) {
+			Assert.hasText(command.getName(), "command.name is required");
 			mapBuilder.put(command.getName(), command);
 		}
 		this.commands = mapBuilder.build();
 	}
 
 	@Override
-	public void addCommand(final Command command) {
-		Assert.notNull(command);
+	public synchronized void addCommand(final Command command) {
+		Assert.notNull(command, "command is required");
+		Assert.hasText(command.getName(), "command.name is required");
 		if (getCommand(command.getName()) != null) {
 			throw new IllegalArgumentException(String.format("Command names must be unique within a catalog: %s", command.getName()));
 		}
@@ -111,6 +113,7 @@ public class CommandCatalogImpl implements CommandCatalog {
 
 	@Override
 	public org.apache.commons.chain.Command getCommand(final String name) {
+		Assert.hasText(name, "name is required");
 		return commands.get(name);
 	}
 

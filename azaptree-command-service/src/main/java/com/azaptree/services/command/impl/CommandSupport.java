@@ -20,8 +20,6 @@ package com.azaptree.services.command.impl;
  * #L%
  */
 
-import java.util.Arrays;
-
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.chain.Context;
@@ -32,7 +30,6 @@ import org.springframework.beans.factory.BeanNameAware;
 
 import com.azaptree.services.command.Command;
 import com.azaptree.services.command.CommandContextValidator;
-import com.azaptree.services.command.CommandException;
 import com.azaptree.services.command.util.CommandUtils;
 import com.azaptree.services.commons.TypeReferenceKey;
 import com.google.common.base.Optional;
@@ -64,7 +61,7 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 	}
 
 	@Override
-	public boolean execute(final Context ctx) throws CommandException {
+	public boolean execute(final Context ctx) {
 		if (validator != null) {
 			validator.validateInput(this, ctx);
 			final boolean result = executeCommand(ctx);
@@ -86,7 +83,7 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 		if (inputKeys == null || inputKeys.length == 0) {
 			return Optional.absent();
 		}
-		return Optional.of(Arrays.copyOf(inputKeys, inputKeys.length));
+		return Optional.of(inputKeys);
 	}
 
 	@Override
@@ -99,7 +96,7 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 		if (outputKeys == null || outputKeys.length == 0) {
 			return Optional.absent();
 		}
-		return Optional.of(Arrays.copyOf(outputKeys, outputKeys.length));
+		return Optional.of(outputKeys);
 	}
 
 	@Override

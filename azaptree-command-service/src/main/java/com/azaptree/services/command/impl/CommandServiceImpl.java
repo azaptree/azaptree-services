@@ -20,16 +20,15 @@ package com.azaptree.services.command.impl;
  * #L%
  */
 
-import java.util.Iterator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 
-import org.apache.commons.chain.Catalog;
-import org.apache.commons.chain.CatalogFactory;
+import org.apache.commons.chain.Command;
 import org.apache.commons.chain.Context;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
@@ -46,6 +45,7 @@ import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.command.CommandServiceJmxApi;
 import com.azaptree.services.commons.validation.ValidationException;
+import com.google.common.collect.ImmutableMap;
 
 /**
  * 
@@ -60,12 +60,8 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	@Autowired
 	private List<CommandCatalog> catalogs;
 
-	private CatalogFactory catalogFactory;
-
-	@PreDestroy
-	public void destroy() {
-		CatalogFactory.clear();
-	}
+	private Map<String, CommandCatalog> commandCatalogs;
+	private Map<CommandKey, Command> commands;
 
 	@Override
 	public void execute(final CommandKey key, final Context ctx) throws CommandException {
@@ -89,11 +85,8 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	}
 
 	private org.apache.commons.chain.Command getCommand(final CommandKey key) {
-		final CommandCatalog catalog = getCommandCatalog(key.getCatalogName());
-		if (catalog == null) {
-			throw new IllegalArgumentException(String.format("Unknown catalog: %s", key.getCatalogName()));
-		}
-		final org.apache.commons.chain.Command command = catalog.getCommand(key.getCommandName());
+		Assert.notNull(key, "key is required");
+		final org.apache.commons.chain.Command command = commands.get(key);
 		if (command == null) {
 			throw new IllegalArgumentException(String.format("Unknown command: %s -> %s", key.getCatalogName(), key.getCommandName()));
 		}
@@ -104,7 +97,7 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	@Override
 	public CommandCatalog getCommandCatalog(final String catalogName) {
 		Assert.hasText(catalogName);
-		return (CommandCatalog) catalogFactory.getCatalog(catalogName);
+		return commandCatalogs.get(catalogName);
 	}
 
 	/*
@@ -115,32 +108,8 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	@ManagedAttribute
 	@Override
 	public String[] getCommandCatalogNames() {
-		final Set<String> catalogNames = new TreeSet<>();
-		for (final Iterator<String> it = catalogFactory.getNames(); it.hasNext();) {
-			catalogNames.add(it.next());
-		}
+		final Set<String> catalogNames = new TreeSet<>(commandCatalogs.keySet());
 		return catalogNames.toArray(new String[catalogNames.size()]);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see com.azaptree.services.command.impl.CommandServiceJmxApi#getCommandKeys()
-	 */
-	@Override
-	@ManagedAttribute
-	public String[] getCommandKeys() {
-		final TreeSet<String> commandKeys = new TreeSet<>();
-		for (final Iterator<String> catalogNames = catalogFactory.getNames(); catalogNames.hasNext();) {
-			final String catalogName = catalogNames.next();
-			final Catalog catalog = catalogFactory.getCatalog(catalogName);
-			for (final Iterator<String> commandNames = catalog.getNames(); commandNames.hasNext();) {
-				final String commandName = commandNames.next();
-				commandKeys.add(String.format("%s%s%s", catalogName, CatalogFactory.DELIMITER, commandName));
-			}
-		}
-
-		return commandKeys.toArray(new String[commandKeys.size()]);
 	}
 
 	/*
@@ -161,15 +130,25 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	public void init() {
 		Assert.notEmpty(catalogs, "No catalogs were found");
 
-		catalogFactory = CatalogFactory.getInstance();
+		final Map<String, CommandCatalog> catMap = new HashMap<>();
+		final Map<CommandKey, Command> cmdMap = new HashMap<>();
 		for (final CommandCatalog catalog : catalogs) {
 			log.info("registering catalog : {}", catalog.getName());
-			if (catalogFactory.getCatalog(catalog.getName()) != null) {
+			if (catMap.get(catalog.getName()) != null) {
 				throw new IllegalArgumentException("Duplicate Catalog name found: " + catalog.getName());
 			}
-			catalogFactory.addCatalog(catalog.getName(), catalog);
-		}
+			catMap.put(catalog.getName(), catalog);
 
+			for (String commandName : catalog.getCommandNames()) {
+				final Command command = catalog.getCommand(commandName);
+				Assert.notNull(command);
+				cmdMap.put(new CommandKey(catalog.getName(), commandName), command);
+			}
+		}
 		catalogs = null; // no longer needed
+
+		this.commandCatalogs = ImmutableMap.<String, CommandCatalog> builder().putAll(catMap).build();
+		this.commands = ImmutableMap.<CommandKey, Command> builder().putAll(cmdMap).build();
+
 	}
 }

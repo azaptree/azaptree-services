@@ -10,7 +10,7 @@ package com.azaptree.services.commons;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,14 +29,14 @@ import java.lang.reflect.Type;
  * 
  * See: http://gafter.blogspot.com/2006/12/super-type-tokens.html
  * 
- * USE CASE: this can be used to declare constants that contain
+ * USE CASE: this can be used to declare constants that contain type info
  * 
  * 
  * @author alfio
  * 
  * @param <T>
  */
-public abstract class TypeReference<T> implements Comparable<TypeReference<T>> {
+public abstract class TypeReference<T> {
 
 	protected final Type type;
 
@@ -54,17 +54,6 @@ public abstract class TypeReference<T> implements Comparable<TypeReference<T>> {
 			return null;
 		}
 		return (T) object;
-	}
-
-	@Override
-	public int compareTo(final TypeReference<T> o) {
-		if (o == this) {
-			return 0;
-		}
-
-		final Type type = o.getType();
-		final Class<?> rawType = type instanceof Class<?> ? (Class<?>) type : (Class<?>) ((ParameterizedType) type).getRawType();
-		return getRawType().getName().compareTo(rawType.getName());
 	}
 
 	@Override
@@ -105,7 +94,7 @@ public abstract class TypeReference<T> implements Comparable<TypeReference<T>> {
 
 	@Override
 	public String toString() {
-		return String.format("TypeReference [_type=%s]", type);
+		return String.format("TypeReference [type=%s]", type);
 	}
 
 }

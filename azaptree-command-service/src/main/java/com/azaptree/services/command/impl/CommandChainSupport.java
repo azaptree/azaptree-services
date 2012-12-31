@@ -31,19 +31,26 @@ import com.azaptree.services.command.CommandException;
 public abstract class CommandChainSupport extends CommandSupport implements CommandChain {
 	private final ChainBase chain = new ChainBase();
 
-	private Command[] commands;
-
-	public CommandChainSupport() {
-		super();
-	}
+	private final Command[] commands;
 
 	public CommandChainSupport(final Command... commands) {
 		super();
-		setCommands(commands);
+		Assert.notEmpty(commands);
+		this.commands = commands;
+		initChain();
 	}
 
-	public CommandChainSupport(final String name) {
+	public CommandChainSupport(final String name, final Command... commands) {
 		super(name);
+		Assert.notEmpty(commands);
+		this.commands = commands;
+		initChain();
+	}
+
+	private void initChain() {
+		for (final Command c : commands) {
+			chain.addCommand(c);
+		}
 	}
 
 	@Override
@@ -58,14 +65,6 @@ public abstract class CommandChainSupport extends CommandSupport implements Comm
 	@Override
 	public Command[] getCommands() {
 		return commands;
-	}
-
-	public void setCommands(final Command[] commands) {
-		Assert.notEmpty(commands);
-		this.commands = commands;
-		for (final Command c : commands) {
-			chain.addCommand(c);
-		}
 	}
 
 	/**
