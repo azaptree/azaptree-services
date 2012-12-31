@@ -54,7 +54,12 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 	public CommandSupport() {
 	}
 
-	public CommandSupport(String name) {
+	/**
+	 * Only meant to be used if not created as a Spring bean because if it was a Spring bean the name would be overridden by the Spring bean name later on.
+	 * 
+	 * @param name
+	 */
+	public CommandSupport(final String name) {
 		this.name = name;
 	}
 

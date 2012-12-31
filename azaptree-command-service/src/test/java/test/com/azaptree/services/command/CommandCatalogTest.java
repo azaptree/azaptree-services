@@ -40,7 +40,9 @@ import org.testng.annotations.Test;
 
 import com.azaptree.services.command.Command;
 import com.azaptree.services.command.CommandCatalog;
+import com.azaptree.services.command.CommandChain;
 import com.azaptree.services.command.impl.CommandCatalogImpl;
+import com.azaptree.services.command.impl.CommandChainSupport;
 import com.azaptree.services.command.impl.CommandSupport;
 import com.azaptree.services.commons.TypeReferenceKey;
 import com.google.common.base.Optional;
@@ -57,7 +59,7 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 				@Override
 				protected boolean executeCommand(final Context ctx) {
 					log.info("msg: {}", ctx.get(MSG));
-					return false;
+					return org.apache.commons.chain.Command.CONTINUE_PROCESSING;
 				}
 
 				@Override
@@ -69,8 +71,17 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
+		public CommandChain logTimeCommandChain() {
+			return new CommandChainSupport(logCommand(), timeCommand()) {
+			};
+		}
+
+		@Bean
 		public CommandCatalog testCatalog() {
-			return new CommandCatalogImpl("test-command-catalog", timeCommand(), logCommand());
+			return new CommandCatalogImpl("test-command-catalog",
+			        timeCommand(),
+			        logCommand(),
+			        logTimeCommandChain());
 		}
 
 		@Bean
@@ -80,7 +91,7 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 				@Override
 				protected boolean executeCommand(final Context ctx) {
 					ctx.put(TIME, System.currentTimeMillis());
-					return false;
+					return org.apache.commons.chain.Command.CONTINUE_PROCESSING;
 				}
 
 				@Override
@@ -108,6 +119,7 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 		final String[] commandNames = catalog.getCommandNames();
 		Assert.assertNotNull(commandNames);
 		Assert.assertTrue(ArrayUtils.isNotEmpty(commandNames));
+		int commandCount = commandNames.length;
 
 		for (final String command : commandNames) {
 			final Command c = (Command) catalog.getCommand(command);
@@ -121,9 +133,9 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 				return false;
 			}
 		});
+		commandCount++;
 
-		Assert.assertEquals(catalog.getCommandNames().length, 3);
-
+		Assert.assertEquals(catalog.getCommandNames().length, commandCount);
 		Assert.assertNotNull(catalog.getCommand("test_addCommand"));
 
 		catalog.addCommand(new CommandSupport("test_addCommand2") {
@@ -133,9 +145,9 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 				return false;
 			}
 		});
+		commandCount++;
 
-		Assert.assertEquals(catalog.getCommandNames().length, 4);
-
+		Assert.assertEquals(catalog.getCommandNames().length, commandCount);
 		Assert.assertNotNull(catalog.getCommand("test_addCommand"));
 	}
 
@@ -195,6 +207,24 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 	}
 
 	@Test
+	public void test_equals_hashCode() {
+		final String commandName = UUID.randomUUID().toString();
+		final Command command = new CommandSupport(commandName) {
+
+			@Override
+			protected boolean executeCommand(final Context ctx) {
+				return false;
+			}
+		};
+		final CommandCatalogImpl cat1 = new CommandCatalogImpl("cat", command);
+		final CommandCatalogImpl cat2 = new CommandCatalogImpl("cat", command);
+
+		Assert.assertTrue(cat1.equals(cat2));
+		Assert.assertEquals(cat1, cat2);
+		Assert.assertEquals(cat1.hashCode(), cat2.hashCode());
+	}
+
+	@Test
 	public void test_getCommand() {
 		final String[] commandNames = catalog.getCommandNames();
 		Assert.assertNotNull(commandNames);
@@ -230,23 +260,5 @@ public class CommandCatalogTest extends AbstractTestNGSpringContextTests {
 	public void test_getName() {
 		Assert.assertEquals(catalog.getName(), "test-command-catalog");
 		log.info("catalog: {}", catalog);
-	}
-
-	@Test
-	public void test_equals_hashCode() {
-		final String commandName = UUID.randomUUID().toString();
-		final Command command = new CommandSupport(commandName) {
-
-			@Override
-			protected boolean executeCommand(final Context ctx) {
-				return false;
-			}
-		};
-		final CommandCatalogImpl cat1 = new CommandCatalogImpl("cat", command);
-		final CommandCatalogImpl cat2 = new CommandCatalogImpl("cat", command);
-
-		Assert.assertTrue(cat1.equals(cat2));
-		Assert.assertEquals(cat1, cat2);
-		Assert.assertEquals(cat1.hashCode(), cat2.hashCode());
 	}
 }
