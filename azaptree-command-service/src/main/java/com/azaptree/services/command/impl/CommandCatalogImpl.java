@@ -21,16 +21,17 @@ package com.azaptree.services.command.impl;
  */
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
@@ -39,36 +40,51 @@ import com.azaptree.services.command.CommandCatalog;
 import com.google.common.collect.ImmutableMap;
 
 @Component
-public class CommandCatalogImpl implements CommandCatalog, BeanNameAware {
-	private String name;
-	private String description;
+public class CommandCatalogImpl implements CommandCatalog {
+	private final String name;
 
 	private Map<String, org.apache.commons.chain.Command> commands;
 
-	public CommandCatalogImpl(final String name, final String description, final Map<String, org.apache.commons.chain.Command> commands) {
+	public CommandCatalogImpl(final String name, final Command... commands) {
 		Assert.hasText(name, "name is required");
-		Assert.hasText(description, "description is required");
+		Assert.notEmpty(commands, "commands are required");
+		checkCommandNamesAreUnique(commands);
+
 		this.name = name;
-		this.description = description;
-		this.commands = ImmutableMap.<String, org.apache.commons.chain.Command> builder().putAll(commands).build();
+
+		final ImmutableMap.Builder<String, org.apache.commons.chain.Command> mapBuilder = ImmutableMap.<String, org.apache.commons.chain.Command> builder();
+		for (final Command command : commands) {
+			mapBuilder.put(command.getName(), command);
+		}
+		this.commands = mapBuilder.build();
 	}
 
+	@Override
 	public void addCommand(final Command command) {
 		Assert.notNull(command);
 		if (getCommand(command.getName()) != null) {
 			throw new IllegalArgumentException(String.format("Command names must be unique within a catalog: %s", command.getName()));
 		}
-		addCommand(command.getName(), command);
+		commands = ImmutableMap.<String, org.apache.commons.chain.Command> builder().putAll(commands).put(command.getName(), command).build();
 	}
 
 	@Override
 	public synchronized void addCommand(final String name, final org.apache.commons.chain.Command command) {
-		Assert.hasText(name);
-		Assert.notNull(command);
+		Assert.hasText(name, "name is required");
+		Assert.notNull(command, "command is required");
 		if (getCommand(name) != null) {
 			throw new IllegalArgumentException(String.format("Command names must be unique within a catalog: %s", name));
 		}
-		this.commands = ImmutableMap.<String, org.apache.commons.chain.Command> builder().putAll(commands).put(name, command).build();
+		commands = ImmutableMap.<String, org.apache.commons.chain.Command> builder().putAll(commands).put(name, command).build();
+	}
+
+	private void checkCommandNamesAreUnique(final Command[] commands) {
+		final Set<String> names = new HashSet<>(commands.length);
+		for (final Command command : commands) {
+			if (!names.add(command.getName())) {
+				throw new IllegalArgumentException(String.format("Command names must be unique within a catalog: %s", command.getName()));
+			}
+		}
 	}
 
 	@Override
@@ -106,15 +122,6 @@ public class CommandCatalogImpl implements CommandCatalog, BeanNameAware {
 	}
 
 	@Override
-	public String getDescription() {
-		if (StringUtils.isBlank(description)) {
-			return getName();
-		}
-
-		return String.format("%s\n%%s", description, toString());
-	}
-
-	@Override
 	public String getName() {
 		return name;
 	}
@@ -130,16 +137,10 @@ public class CommandCatalogImpl implements CommandCatalog, BeanNameAware {
 	}
 
 	@Override
-	public void setBeanName(final String name) {
-		Assert.hasText(name);
-		this.name = name;
-	}
-
-	@Override
 	public String toString() {
 		final ToStringBuilder sb = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
 		sb.append("name", name);
-		sb.append("description", description);
+		sb.append("commandNames", Arrays.toString(getCommandNames()));
 		return sb.toString();
 	}
 

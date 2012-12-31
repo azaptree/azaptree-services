@@ -10,7 +10,7 @@ package com.azaptree.services.command.impl;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -47,10 +47,16 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 	protected Logger log = LoggerFactory.getLogger(getClass());
 
 	protected String name;
-	protected String description;
 
 	protected CommandContextValidator validator;
 	protected TypeReferenceKey<?>[] outputKeys, inputKeys;
+
+	public CommandSupport() {
+	}
+
+	public CommandSupport(String name) {
+		this.name = name;
+	}
 
 	@Override
 	public boolean execute(final Context ctx) throws CommandException {
@@ -68,15 +74,6 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 
 	protected <T> T get(final Context ctx, final TypeReferenceKey<T> key) {
 		return CommandUtils.get(ctx, key);
-	}
-
-	@Override
-	public Optional<String> getDescription() {
-		if (StringUtils.isBlank(description)) {
-			return Optional.absent();
-		}
-
-		return Optional.of(description);
 	}
 
 	@Override
@@ -119,10 +116,6 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 	@Override
 	public void setBeanName(final String name) {
 		this.name = name;
-	}
-
-	public void setDescription(final String description) {
-		this.description = description;
 	}
 
 	public void setInputKeys(final TypeReferenceKey<?>[] inputKeys) {

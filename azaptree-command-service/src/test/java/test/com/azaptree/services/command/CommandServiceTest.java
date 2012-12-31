@@ -1,4 +1,4 @@
-package com.azaptree.services.command;
+package test.com.azaptree.services.command;
 
 /*
  * #%L
@@ -20,11 +20,16 @@ package com.azaptree.services.command;
  * #L%
  */
 
-public enum CommandRequestStatus {
-	SUBMITTED,
-	QUEUED,
-	INVALID,
-	PROCESSING,
-	PROCESSED,
-	PROCESSING_FAILED
+import org.springframework.context.annotation.Configuration;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+
+@ContextConfiguration(classes = { CommandServiceTest.Config.class })
+public class CommandServiceTest extends AbstractTestNGSpringContextTests {
+
+	@Configuration
+	public static class Config {
+
+	}
+
 }
