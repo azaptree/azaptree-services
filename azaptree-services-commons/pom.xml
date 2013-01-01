@@ -3,7 +3,7 @@
   <parent>
     <groupId>com.azaptree</groupId>
     <artifactId>azaptree-services</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2-SNAPSHOT</version>
   </parent>
   <artifactId>azaptree-services-commons</artifactId>
   <name>AZAPTREE-SERVICES-COMMONS</name>
