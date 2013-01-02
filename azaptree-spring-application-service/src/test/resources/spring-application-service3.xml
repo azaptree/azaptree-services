@@ -26,7 +26,6 @@
 		<class>test.com.azaptree.services.spring.application.config.WebApplicationSpringConfig</class>
 	</configuration-classes>
 	<configuration-packages>
-		<package>test.com.azaptree.services.spring.application.config
-		</package>
+		<package>test.com.azaptree.services.spring.application.config</package>
 	</configuration-packages>
 </spring-application-service>

@@ -10,7 +10,7 @@ package test.com.azaptree.services.spring.application.config;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -62,6 +62,42 @@ public class SpringApplicationServiceConfigTest {
 			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
 
 			Assert.assertNull(config.getConfigurationClasses());
+		}
+	}
+
+	@Test
+	public void testValidXmlConfig3() throws IOException, ClassNotFoundException, JAXBException {
+		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service3.xml")) {
+			final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(is);
+			log.info(config.toString());
+
+			Assert.assertEquals(config.getConfigurationPackages().length, 1);
+			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
+
+			Assert.assertEquals(config.getConfigurationClasses().length, 2);
+			final Class<?>[] configClasses = config.getConfigurationClasses();
+			Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
+			Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
+		}
+	}
+
+	@Test
+	public void testValidXmlConfig4() throws IOException, ClassNotFoundException, JAXBException {
+		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service4.xml")) {
+			final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(is);
+			log.info(config.toString());
+
+			Assert.assertEquals(config.getConfigurationPackages().length, 1);
+			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
+
+			Assert.assertEquals(config.getConfigurationClasses().length, 2);
+			final Class<?>[] configClasses = config.getConfigurationClasses();
+			Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
+			Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
+
+			Assert.assertNotNull(config.getJvmSystemProperties());
+			Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
+			Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
 		}
 	}
 

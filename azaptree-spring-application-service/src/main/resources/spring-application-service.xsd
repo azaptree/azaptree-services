@@ -30,6 +30,21 @@
 						</sequence>
 					</complexType>
 				</element>
+				<element name="jvm-system-properties" minOccurs="0">
+					<complexType>
+						<sequence>
+							<element name="prop" maxOccurs="unbounded">
+								<complexType>
+									<simpleContent>
+										<extension base="string">
+											<attribute name="name" type="string" use="required" />
+										</extension>
+									</simpleContent>
+								</complexType>
+							</element>
+						</sequence>
+					</complexType>
+				</element>
 			</sequence>
 		</complexType>
 	</element>

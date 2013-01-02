@@ -20,10 +20,13 @@ package com.azaptree.services.spring.application.config;
  * #L%
  */
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -38,6 +41,8 @@ import org.springframework.util.CollectionUtils;
 
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationClasses;
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationPackages;
+import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties;
+import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties.Prop;
 
 public class SpringApplicationServiceConfig {
 
@@ -45,36 +50,14 @@ public class SpringApplicationServiceConfig {
 
 	private Package[] configurationPackages;
 
+	private Properties jvmSystemProperties;
+
 	public SpringApplicationServiceConfig(final InputStream xml) throws JAXBException, ClassNotFoundException {
 		Assert.notNull(xml);
-		final String packageName = SpringApplicationService.class.getPackage().getName();
-		final JAXBContext jc = JAXBContext.newInstance(packageName);
-		final Unmarshaller u = jc.createUnmarshaller();
-		final SpringApplicationService config = (SpringApplicationService) u.unmarshal(xml);
-
-		final ClassLoader cl = getClass().getClassLoader();
-		final ConfigurationClasses configurationClasses = config.getConfigurationClasses();
-		if (configurationClasses != null && !CollectionUtils.isEmpty(configurationClasses.getClazz())) {
-			final List<Class<?>> configClasses = new ArrayList<>(configurationClasses.getClazz().size());
-			for (String clazz : configurationClasses.getClazz()) {
-				final Class<?> c = cl.loadClass(clazz);
-				if (c.getAnnotation(Configuration.class) == null) {
-					throw new IllegalArgumentException(String.format("Class must be annotated with @org.springframework.context.annotation.Configuration: {}",
-					        clazz));
-				}
-				configClasses.add(c);
-			}
-			this.configurationClasses = configClasses.toArray(new Class<?>[configClasses.size()]);
-		}
-
-		final ConfigurationPackages configurationPackages = config.getConfigurationPackages();
-		if (configurationPackages != null && !CollectionUtils.isEmpty(configurationPackages.getPackage())) {
-			final List<Package> packages = new ArrayList<>(configurationPackages.getPackage().size());
-			for (String pkg : configurationPackages.getPackage()) {
-				packages.add(Package.getPackage(pkg));
-			}
-			this.configurationPackages = packages.toArray(new Package[packages.size()]);
-		}
+		final SpringApplicationService config = parse(xml);
+		loadConfigurationClasses(config);
+		loadConfigurationPackages(config);
+		loadJvmSystemProperties(config);
 	}
 
 	public Class<?>[] getConfigurationClasses() {
@@ -85,12 +68,55 @@ public class SpringApplicationServiceConfig {
 		return configurationPackages;
 	}
 
-	public void setConfigurationClasses(final Class<?>[] configurationClasses) {
-		this.configurationClasses = configurationClasses;
+	public Properties getJvmSystemProperties() {
+		return jvmSystemProperties;
 	}
 
-	public void setConfigurationPackages(final Package[] configurationPackages) {
-		this.configurationPackages = configurationPackages;
+	private void loadConfigurationClasses(final SpringApplicationService config) throws ClassNotFoundException {
+		final ClassLoader cl = getClass().getClassLoader();
+		final ConfigurationClasses configurationClasses = config.getConfigurationClasses();
+		if (configurationClasses != null && !CollectionUtils.isEmpty(configurationClasses.getClazz())) {
+			final List<Class<?>> configClasses = new ArrayList<>(configurationClasses.getClazz().size());
+			for (final String clazz : configurationClasses.getClazz()) {
+				final Class<?> c = cl.loadClass(clazz.trim());
+				if (c.getAnnotation(Configuration.class) == null) {
+					throw new IllegalArgumentException(String.format("Class must be annotated with @org.springframework.context.annotation.Configuration: {}",
+					        clazz));
+				}
+				configClasses.add(c);
+			}
+			this.configurationClasses = configClasses.toArray(new Class<?>[configClasses.size()]);
+		}
+
+	}
+
+	private void loadConfigurationPackages(final SpringApplicationService config) {
+		final ConfigurationPackages configurationPackages = config.getConfigurationPackages();
+		if (configurationPackages != null && !CollectionUtils.isEmpty(configurationPackages.getPackage())) {
+			final List<Package> packages = new ArrayList<>(configurationPackages.getPackage().size());
+			for (final String pkg : configurationPackages.getPackage()) {
+				packages.add(Package.getPackage(pkg.trim()));
+			}
+			this.configurationPackages = packages.toArray(new Package[packages.size()]);
+		}
+	}
+
+	private void loadJvmSystemProperties(final SpringApplicationService config) {
+		final JvmSystemProperties props = config.getJvmSystemProperties();
+		if (props != null && !CollectionUtils.isEmpty(props.getProp())) {
+			jvmSystemProperties = new Properties();
+			for (final Prop prop : props.getProp()) {
+				jvmSystemProperties.setProperty(prop.getName(), prop.getValue().trim());
+			}
+		}
+	}
+
+	private SpringApplicationService parse(final InputStream xml) throws JAXBException {
+		Assert.notNull(xml);
+		final String packageName = SpringApplicationService.class.getPackage().getName();
+		final JAXBContext jc = JAXBContext.newInstance(packageName);
+		final Unmarshaller u = jc.createUnmarshaller();
+		return (SpringApplicationService) u.unmarshal(xml);
 	}
 
 	@Override
@@ -109,6 +135,16 @@ public class SpringApplicationServiceConfig {
 				names[i] = configurationPackages[i].getName();
 			}
 			sb.append("configurationPackages", Arrays.toString(names));
+		}
+
+		if (!CollectionUtils.isEmpty(jvmSystemProperties)) {
+			final StringWriter sw = new StringWriter(256);
+			try {
+				jvmSystemProperties.store(sw, "JVM System Propperties");
+			} catch (final IOException e) {
+				throw new RuntimeException(e);
+			}
+			sb.append("jvmSystemProperties", sw.toString());
 		}
 		return sb.toString();
 	}
