@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://www.azaptree.com/spring-application-service"
+	xmlns:tns="http://www.azaptree.com/spring-application-service"
+	elementFormDefault="qualified">
+
+	<element name="spring-application-service">
+		<complexType>
+			<sequence>
+				<element name="configuration-classes" minOccurs="0">
+					<complexType>
+						<annotation>
+							<documentation><![CDATA[
+						List of Spring configuration classes that are used to load the Spring ApplicationContext. 
+						Classes must contain the @Configuration annotation.
+						]]></documentation>
+						</annotation>
+						<sequence>
+							<element name="class" type="string" maxOccurs="unbounded" />
+						</sequence>
+					</complexType>
+				</element>
+				<element name="configuration-packages" minOccurs="0">
+					<complexType>
+						<annotation>
+							<documentation><![CDATA[List of packages to scan for Spring configuration classes]]></documentation>
+						</annotation>
+						<sequence>
+							<element name="package" type="string" maxOccurs="unbounded" />
+						</sequence>
+					</complexType>
+				</element>
+			</sequence>
+		</complexType>
+	</element>
+</schema>
