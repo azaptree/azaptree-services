@@ -20,6 +20,7 @@ package test.com.azaptree.services.spring.application.config;
  * #L%
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -30,6 +31,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import ch.qos.logback.core.util.FileUtil;
 
 import com.azaptree.services.spring.application.config.SpringApplicationServiceConfig;
 
@@ -99,6 +102,42 @@ public class SpringApplicationServiceConfigTest {
 			Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
 			Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
 		}
+	}
+
+	@Test
+	public void testValidXmlConfig4_fileResource() throws IOException, ClassNotFoundException, JAXBException {
+		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("file:src/test/resources/spring-application-service4.xml");
+		log.info(config.toString());
+
+		Assert.assertEquals(config.getConfigurationPackages().length, 1);
+		Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
+
+		Assert.assertEquals(config.getConfigurationClasses().length, 2);
+		final Class<?>[] configClasses = config.getConfigurationClasses();
+		Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
+		Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
+
+		Assert.assertNotNull(config.getJvmSystemProperties());
+		Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
+		Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
+	}
+
+	@Test
+	public void testValidXmlConfig4_ClasspathResource() throws IOException, ClassNotFoundException, JAXBException {
+		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("classpath:spring-application-service4.xml");
+		log.info(config.toString());
+
+		Assert.assertEquals(config.getConfigurationPackages().length, 1);
+		Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
+
+		Assert.assertEquals(config.getConfigurationClasses().length, 2);
+		final Class<?>[] configClasses = config.getConfigurationClasses();
+		Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
+		Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
+
+		Assert.assertNotNull(config.getJvmSystemProperties());
+		Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
+		Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
 	}
 
 	@SuppressWarnings("unused")

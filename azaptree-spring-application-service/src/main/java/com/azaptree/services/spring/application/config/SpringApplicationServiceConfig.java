@@ -35,7 +35,10 @@ import javax.xml.bind.Unmarshaller;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -53,11 +56,34 @@ public class SpringApplicationServiceConfig {
 	private Properties jvmSystemProperties;
 
 	public SpringApplicationServiceConfig(final InputStream xml) throws JAXBException, ClassNotFoundException {
-		Assert.notNull(xml);
-		final SpringApplicationService config = parse(xml);
-		loadConfigurationClasses(config);
-		loadConfigurationPackages(config);
-		loadJvmSystemProperties(config);
+		init(xml);
+	}
+
+	public SpringApplicationServiceConfig(final String xmlLocation) throws IOException, ClassNotFoundException, JAXBException {
+		Assert.hasText(xmlLocation, "xmlResourcePath is required");
+		final PathMatchingResourcePatternResolver resourceResolver = new PathMatchingResourcePatternResolver();
+		final Resource resource = resourceResolver.getResource(xmlLocation);
+
+		try (InputStream xml = resource.getInputStream()) {
+			init(xml);
+		}
+	}
+
+	public AnnotationConfigApplicationContext createAnnotationConfigApplicationContext() {
+		final AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+		if (ArrayUtils.isNotEmpty(configurationClasses))
+			for (final Class<?> c : configurationClasses) {
+				ctx.register(c);
+			}
+		if (ArrayUtils.isNotEmpty(configurationPackages)) {
+			for (final Package p : configurationPackages) {
+				ctx.scan(p.getName());
+			}
+		}
+
+		ctx.refresh();
+		ctx.registerShutdownHook();
+		return ctx;
 	}
 
 	public Class<?>[] getConfigurationClasses() {
@@ -70,6 +96,14 @@ public class SpringApplicationServiceConfig {
 
 	public Properties getJvmSystemProperties() {
 		return jvmSystemProperties;
+	}
+
+	private void init(final InputStream xml) throws JAXBException, ClassNotFoundException {
+		Assert.notNull(xml, "xml is required");
+		final SpringApplicationService config = parse(xml);
+		loadConfigurationClasses(config);
+		loadConfigurationPackages(config);
+		loadJvmSystemProperties(config);
 	}
 
 	private void loadConfigurationClasses(final SpringApplicationService config) throws ClassNotFoundException {

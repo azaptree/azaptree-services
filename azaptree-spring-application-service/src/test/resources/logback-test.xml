@@ -31,6 +31,8 @@
 		<appender-ref ref="STDOUT" />
 	</appender>
 	
+	<logger name="com.azaptree.services.spring.application" level="debug" />
+	
 	<root level="info">
 		<appender-ref ref="ASYNC" />
 	</root>

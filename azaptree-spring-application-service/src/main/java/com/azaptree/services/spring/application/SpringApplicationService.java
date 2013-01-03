@@ -1,9 +1,24 @@
 package com.azaptree.services.spring.application;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Enumeration;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeMap;
+import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+
+import com.azaptree.services.spring.application.config.SpringApplicationServiceConfig;
 
 /*
  * #%L
@@ -27,23 +42,98 @@ import org.apache.commons.lang3.StringUtils;
 
 public class SpringApplicationService {
 
+	private static final CountDownLatch shutdownLatch = new CountDownLatch(1);
+
+	private static ApplicationContext applicationContext;
+
+	public static ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
+
+	private static Logger getLogger() {
+		return LoggerFactory.getLogger(SpringApplicationService.class);
+	}
+
+	private static void logConfig(final SpringApplicationServiceConfig config) {
+		final Logger log = getLogger();
+		log.info(config.toString());
+		logDebugSystemProperties(log);
+		logEnvironment(log);
+	}
+
+	private static void logDebugSystemProperties(final Logger log) {
+		Assert.notNull(log);
+		if (log.isDebugEnabled()) {
+			final TreeMap<String, String> sysProps = new TreeMap<>();
+			for (final Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+				sysProps.put(entry.getKey().toString(), entry.getValue().toString());
+			}
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			final PrintStream ps = new PrintStream(bos);
+			for (final Map.Entry<String, String> entry : sysProps.entrySet()) {
+				ps.print(entry.getKey());
+				ps.print('=');
+				ps.println(entry.getValue());
+			}
+			log.debug("System Properties:\n{}", bos);
+		}
+	}
+
+	private static void logEnvironment(final Logger log) {
+		if (log.isDebugEnabled()) {
+			final TreeMap<String, String> sysProps = new TreeMap<>(System.getenv());
+			final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+			final PrintStream ps = new PrintStream(bos);
+			for (final Map.Entry<String, String> entry : sysProps.entrySet()) {
+				ps.print(entry.getKey());
+				ps.print('=');
+				ps.println(entry.getValue());
+			}
+			log.debug("Environment:\n{}", bos);
+		}
+	}
+
 	/**
 	 * @param args
 	 */
-	public static void main(final String[] args) {
+	public static void main(final String[] args) throws Exception {
 		validate(args);
+		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(args[0]);
+		setSystemProperties(config.getJvmSystemProperties());
+		logConfig(config);
+		try (final AnnotationConfigApplicationContext applicationContext = config.createAnnotationConfigApplicationContext()) {
+			SpringApplicationService.applicationContext = applicationContext;
+			shutdownLatch.await();
+			getLogger().info("SHUTDOWN SIGNALLED");
+		} finally {
+			getLogger().info("SHUTDOWN COMPLETE");
+		}
 	}
 
-	private static void validate(String[] args) {
+	private static void setSystemProperties(final Properties props) {
+		if (CollectionUtils.isEmpty(props)) {
+			return;
+		}
+		System.getProperties().putAll(props);
+	}
+
+	/**
+	 * Triggers an orderly application shutdown
+	 */
+	public static void shutdown() {
+		shutdownLatch.countDown();
+	}
+
+	private static void validate(final String[] args) {
 		if (args.length == 0) {
 			final StringWriter sw = new StringWriter();
 			final PrintWriter pw = new PrintWriter(sw);
 			pw.println();
-			pw.println(StringUtils.repeat("=", 120));
+			pw.println(StringUtils.repeat("=", 160));
 			pw.println("Usage: java com.azaptree.services.spring.application.SpringApplicationService <config.xml>");
 			pw.println();
-			pw.println("       where <config.xml> = classpath resource XML file that must validate against spring-application-service.xsd");
-			pw.println(StringUtils.repeat("=", 120));
+			pw.println("       where <config.xml> = XML file location (loaded using Spring ResourceLoader) that must validate against spring-application-service.xsd");
+			pw.println(StringUtils.repeat("=", 160));
 			throw new IllegalArgumentException(sw.toString());
 		}
 	}
