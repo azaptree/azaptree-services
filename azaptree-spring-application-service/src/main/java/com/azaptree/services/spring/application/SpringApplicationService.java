@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Enumeration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
@@ -40,6 +39,25 @@ import com.azaptree.services.spring.application.config.SpringApplicationServiceC
  * #L%
  */
 
+/**
+ * Used to launch a Spring Application.
+ * 
+ * Command Line Usage: java com.azaptree.services.spring.application.SpringApplicationService [config.xml]
+ * 
+ * where [config.xml] = XML file location (loaded using Spring ResourceLoader) that must validate against spring-application-service.xsd
+ * 
+ * Example [config.xml]:
+ * 
+ * <pre>
+ * 	classpath:config.xml	- loads config.xml from the classpath
+ *  file:config.xml			- loads config.xml from the file system
+ * </pre>
+ * 
+ * The process may be killed via sending the process a SIGTERM signal, i.e., kill [pid]
+ * 
+ * @author alfio
+ * 
+ */
 public class SpringApplicationService {
 
 	private static final CountDownLatch shutdownLatch = new CountDownLatch(1);

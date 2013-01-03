@@ -86,14 +86,29 @@ public class SpringApplicationServiceConfig {
 		return ctx;
 	}
 
+	/**
+	 * Spring Configuration classes - used to configure a Spring ApplicationContext using Java based configuration
+	 * 
+	 * @return
+	 */
 	public Class<?>[] getConfigurationClasses() {
 		return configurationClasses;
 	}
 
+	/**
+	 * Packages to scan for Spring Configuration classes - used to configure a Spring ApplicationContext using Java based configuration
+	 * 
+	 * @return
+	 */
 	public Package[] getConfigurationPackages() {
 		return configurationPackages;
 	}
 
+	/**
+	 * Before creating the Spring ApplicationContext, the specified JVM system properties will be set
+	 * 
+	 * @return
+	 */
 	public Properties getJvmSystemProperties() {
 		return jvmSystemProperties;
 	}

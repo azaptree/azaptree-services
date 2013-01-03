@@ -20,7 +20,6 @@ package test.com.azaptree.services.spring.application.config;
  * #L%
  */
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -31,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-
-import ch.qos.logback.core.util.FileUtil;
 
 import com.azaptree.services.spring.application.config.SpringApplicationServiceConfig;
 
