@@ -21,4 +21,24 @@ The Spring Application Service is configured via Java based configuration.</desc
 			<artifactId>commons-lang3</artifactId>
 		</dependency>
 	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxb2-maven-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>xjc</id>
+						<goals>
+							<goal>xjc</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<packageName>com.azaptree.services.spring.application.config</packageName> <!-- The name of your generated source package -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
