@@ -32,11 +32,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.server.Handler;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.BeanNameAware;
 import org.springframework.util.Assert;
 
-public class HttpServiceConfig implements BeanNameAware {
-	private String name;
+public class HttpServiceConfig {
+	private final String name;
 
 	private final Executor requestExcecutor;
 	private ExecutorService requestExcecutorService;
@@ -51,8 +50,10 @@ public class HttpServiceConfig implements BeanNameAware {
 
 	private final Handler httpRequestHandler;
 
-	public HttpServiceConfig(final Handler httpRequestHandler) {
+	public HttpServiceConfig(final String name, final Handler httpRequestHandler) {
+		Assert.hasText(name, "name is required");
 		Assert.notNull(httpRequestHandler, "httpRequestHandler is required");
+		this.name = name;
 		this.httpRequestHandler = httpRequestHandler;
 		requestExcecutorService = Executors.newCachedThreadPool();
 		requestExcecutor = requestExcecutorService;
@@ -65,8 +66,10 @@ public class HttpServiceConfig implements BeanNameAware {
 		contextPath = "/";
 	}
 
-	public HttpServiceConfig(final Handler httpRequestHandler, final Executor requestExcecutor, final int port, final String contextPath) {
+	public HttpServiceConfig(final String name, final Handler httpRequestHandler, final Executor requestExcecutor, final int port, final String contextPath) {
+		Assert.hasText(name, "name is required");
 		Assert.notNull(httpRequestHandler, "httpRequestHandler is required");
+		this.name = name;
 		this.httpRequestHandler = httpRequestHandler;
 		Assert.notNull(requestExcecutor, "requestExcecutor is required");
 		Assert.isTrue(port > 0, "port must be > 0");
@@ -116,11 +119,6 @@ public class HttpServiceConfig implements BeanNameAware {
 
 	public Integer getResponseBufferSize() {
 		return responseBufferSize;
-	}
-
-	@Override
-	public void setBeanName(final String name) {
-		this.name = name;
 	}
 
 	public void setRequestBufferSize(final Integer requestBufferSize) {

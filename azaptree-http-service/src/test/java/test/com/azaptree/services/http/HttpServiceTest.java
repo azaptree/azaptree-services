@@ -10,7 +10,7 @@ package test.com.azaptree.services.http;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,9 +54,8 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 	@Configuration
 	public static class Config {
 
-		@Bean(name = "http-service")
 		public HttpServiceConfig httpServiceConfig() {
-			return new HttpServiceConfig(new AbstractHandler() {
+			return new HttpServiceConfig("http-service", new AbstractHandler() {
 				final Logger log = LoggerFactory.getLogger(getClass());
 
 				@Override
@@ -87,9 +86,6 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 	@Autowired
 	private HttpService httpService;
 
-	@Autowired
-	private HttpServiceConfig config;
-
 	@Test
 	public void test_httpService() throws Exception {
 		HttpClient client = new HttpClient();
@@ -101,7 +97,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			for (int i = 0; i < 10; i++) {
 				ContentExchange exchange = new ContentExchange(true);
 				exchange.setMethod("GET");
-				exchange.setURL(String.format("http://localhost:%d/user", config.getPort()));
+				exchange.setURL(String.format("http://localhost:%d/user", httpService.getHttpServiceConfig().getPort()));
 				client.send(exchange);
 
 				final int exchangeState = exchange.waitForDone();

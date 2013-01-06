@@ -39,6 +39,8 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService 
 
 	private final Server server;
 
+	private final HttpServiceConfig httpServiceConfig;
+
 	/**
 	 * The DefaultHandler is always added as the last Handler in the HandlerList.
 	 * This handle will deal with unhandled requests in the server.
@@ -50,6 +52,7 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService 
 	 */
 	public HttpServiceImpl(final HttpServiceConfig config) {
 		Assert.notNull(config, "config is required");
+		httpServiceConfig = config;
 		getLogger().info("config: {}", config);
 		server = new Server();
 		server.addConnector(createSelectChannelConnector(config));
@@ -78,6 +81,11 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService 
 	@PreDestroy
 	public void destroy() {
 		server.destroy();
+	}
+
+	@Override
+	public HttpServiceConfig getHttpServiceConfig() {
+		return httpServiceConfig;
 	}
 
 	protected Logger getLogger() {
