@@ -27,7 +27,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Resource;
-import javax.servlet.AsyncContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -53,67 +52,66 @@ import org.testng.annotations.Test;
 
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
+import com.azaptree.services.http.handler.AsyncSuspendCompleteHttpHandlerSupport;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
 
 @ContextConfiguration(classes = { HttpServiceTest.Config.class })
 public class HttpServiceTest extends AbstractTestNGSpringContextTests {
-	public static class AsyncHttpHandler extends AbstractHandler {
-		final Logger log = LoggerFactory.getLogger(getClass());
 
+	public static class AsyncHttpHandler extends AsyncSuspendCompleteHttpHandlerSupport {
 		final int workTime;
 
 		private final AtomicInteger requestCounter = new AtomicInteger();
 
-		final Executor executor;
-
 		public AsyncHttpHandler(final int workTime, final Executor executor) {
-			super();
+			super(executor);
 			this.workTime = workTime;
-			this.executor = executor;
 		}
 
 		@Override
-		public void handle(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response)
-		        throws IOException, ServletException {
-			final AsyncContext asyncCtx = baseRequest.startAsync();
-			executor.execute(new Runnable() {
+		protected void handleAsync(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 
-				@Override
-				public void run() {
-					if (workTime > 0) {
-						try {
-							log.info("sleeping for {} seconds ", workTime);
-							Thread.sleep(workTime * 1000);
-						} catch (final InterruptedException e) {
-							e.printStackTrace();
-						}
-					}
+			final ToStringBuilder sb = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
+			sb.append("target", target);
+			sb.append("request.getContextPath()", request.getContextPath());
+			sb.append("request.getRequestURI()", request.getRequestURI());
+			sb.append("request.getQueryString()", request.getQueryString());
+			final String requestInfo = sb.toString();
 
-					final HttpServletRequest request = (HttpServletRequest) asyncCtx.getRequest();
-					final HttpServletResponse response = (HttpServletResponse) asyncCtx.getResponse();
-
-					try {
-						final ToStringBuilder sb = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
-						sb.append("target", target);
-						sb.append("request.getContextPath()", request.getContextPath());
-						sb.append("request.getRequestURI()", request.getRequestURI());
-						sb.append("request.getQueryString()", request.getQueryString());
-						final String requestInfo = sb.toString();
-						log.info("request : {}", requestInfo);
-						response.setContentType("text/plain;charset=utf-8");
-						response.setStatus(HttpServletResponse.SC_OK);
-						response.getWriter().print(requestInfo);
-						log.info("requestCounter = {}", requestCounter.incrementAndGet());
-						baseRequest.setHandled(true);
-					} catch (Exception e) {
-						e.printStackTrace();
-					} finally {
-						asyncCtx.complete();
-					}
+			if (workTime > 0) {
+				try {
+					log.info("sleeping for {} seconds ", workTime);
+					Thread.sleep(workTime * 1000);
+				} catch (final InterruptedException e) {
+					e.printStackTrace();
 				}
-			});
+			}
 
+			try {
+
+				log.info("request : {}", requestInfo);
+				response.setContentType("text/plain;charset=utf-8");
+				response.setStatus(HttpServletResponse.SC_OK);
+				response.getWriter().print(requestInfo);
+				log.info("requestCounter = {}", requestCounter.incrementAndGet());
+			} catch (final Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public static class AsyncHttpHandlerThrowsException extends AsyncSuspendCompleteHttpHandlerSupport {
+		private final AtomicInteger requestCounter = new AtomicInteger();
+
+		public AsyncHttpHandlerThrowsException(final Executor executor) {
+			super(executor);
+		}
+
+		@Override
+		protected void handleAsync(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
+			log.info("requestCounter = {}", requestCounter.incrementAndGet());
+			throw new RuntimeException(target);
 		}
 	}
 
@@ -122,7 +120,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 		@Bean
 		public Handler asyncHttpHandler() {
-			return new AsyncHttpHandler(3, executorService());
+			return new AsyncHttpHandler(1, executorService());
+		}
+
+		@Bean
+		public Handler asyncHttpHandlerThrowsException() {
+			return new AsyncHttpHandlerThrowsException(executorService());
 		}
 
 		@Bean(destroyMethod = "shutdown")
@@ -155,9 +158,17 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
+		public HttpService httpService8083() {
+			return new HttpServiceImpl(httpServiceConfig8083());
+		}
+
+		@Bean
 		public HttpServiceConfig httpServiceConfig8080() {
 			final HttpServiceConfig config = new HttpServiceConfig("http-service", new HttpHandler(0));
 			config.setGracefulShutdownTimeoutSecs(30);
+			config.setRequestBufferSize(8096);
+			config.setRequestHeaderBufferSize(8096);
+			config.setResponseBufferSize(8096);
 			return config;
 		}
 
@@ -171,6 +182,13 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		@Bean
 		public HttpServiceConfig httpServiceConfig8082() {
 			final HttpServiceConfig config = new HttpServiceConfig("http-service", asyncHttpHandler(), Executors.newCachedThreadPool(), 8082);
+			config.setGracefulShutdownTimeoutSecs(30);
+			return config;
+		}
+
+		@Bean
+		public HttpServiceConfig httpServiceConfig8083() {
+			final HttpServiceConfig config = new HttpServiceConfig("http-service", asyncHttpHandlerThrowsException(), Executors.newCachedThreadPool(), 8083);
 			config.setGracefulShutdownTimeoutSecs(30);
 			return config;
 		}
@@ -244,6 +262,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 	@Resource(name = "httpServiceConfig8082")
 	private HttpServiceConfig httpServiceConfig8082;
 
+	@Resource(name = "httpService8083")
+	private HttpService httpService8083;
+
+	@Resource(name = "httpServiceConfig8083")
+	private HttpServiceConfig httpServiceConfig8083;
+
 	@Autowired
 	private HttpClient client;
 
@@ -258,12 +282,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			final int exchangeState = exchange.waitForDone();
 			Assert.assertEquals(exchangeState, HttpExchange.STATUS_COMPLETED);
 
-			log.info("exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
+			log.info("test_httpService8080() : exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
 		}
 	}
 
 	@Test
-	public void test_httpService8081() throws Exception {
+	public void test_httpService8081_asyncHttpClient_stopHttpServer() throws Exception {
 		final ContentExchange[] exchanges = new ContentExchange[10];
 		for (int i = 0; i < exchanges.length; i++) {
 			final ContentExchange exchange = new ContentExchange(true);
@@ -275,16 +299,18 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		Thread.sleep(500);
 		httpService8081.stopAndWait();
 		log.info("test_httpService8081(): stopped httpService8081");
+
+		// check that all server requests were processed
 		Assert.assertEquals(((HttpHandler) httpServiceConfig8081.getHttpRequestHandler()).requestCounter.get(), exchanges.length);
 		log.info("test_httpService8081(): stopped HTTPClient");
 		for (final ContentExchange exchange : exchanges) {
-			log.info("exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
+			log.info("test_httpService8081() : exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
 		}
 	}
 
 	@Test
-	public void test_httpService8082() throws Exception {
-		for (int i = 0; i < 10; i++) {
+	public void test_httpService8082_asyncServerHandler() throws Exception {
+		for (int i = 0; i < 3; i++) {
 			final ContentExchange exchange = new ContentExchange(true);
 			exchange.setMethod("GET");
 			exchange.setURL(String.format("http://localhost:%d/test_httpService8082", httpServiceConfig8082.getPort()));
@@ -293,7 +319,24 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			final int exchangeState = exchange.waitForDone();
 			Assert.assertEquals(exchangeState, HttpExchange.STATUS_COMPLETED);
 
-			log.info("exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
+			// check that all server requests were processed
+			log.info("test_httpService8082_asyncServerHandler(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
+		}
+	}
+
+	@Test
+	public void test_httpService8083_asyncServerHandlerThrowsException() throws Exception {
+		for (int i = 0; i < 3; i++) {
+			final ContentExchange exchange = new ContentExchange(true);
+			exchange.setMethod("GET");
+			exchange.setURL(String.format("http://localhost:%d/test_httpService8083", httpServiceConfig8083.getPort()));
+			client.send(exchange);
+
+			final int exchangeState = exchange.waitForDone();
+			Assert.assertEquals(exchangeState, HttpExchange.STATUS_COMPLETED);
+
+			log.info("test_httpService8083_asyncServerHandlerThrowsException(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(),
+			        exchange.getResponseContent());
 		}
 	}
 }
