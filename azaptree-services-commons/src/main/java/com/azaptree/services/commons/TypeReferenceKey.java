@@ -21,7 +21,6 @@ package com.azaptree.services.commons;
  */
 
 import java.lang.reflect.ParameterizedType;
-import java.util.Objects;
 
 import org.springframework.util.Assert;
 
@@ -30,8 +29,6 @@ import org.springframework.util.Assert;
  * References a generic type.
  * 
  * See: http://gafter.blogspot.com/2006/12/super-type-tokens.html
- * 
- * 
  * 
  * 
  * @author alfio
@@ -48,7 +45,7 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 	protected TypeReferenceKey() {
 		super();
 		name = getRawType().getSimpleName();
-		this.hashCode = Objects.hash(name);
+		this.hashCode = name.hashCode();
 	}
 
 	protected TypeReferenceKey(final boolean required) {
@@ -61,21 +58,21 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 		this.required = required;
 		this.defaultValue = defaultValue;
 		name = getRawType().getSimpleName();
-		this.hashCode = Objects.hash(name);
+		this.hashCode = name.hashCode();
 	}
 
 	public TypeReferenceKey(final String name, final boolean required) {
 		super();
 		this.name = name;
 		this.required = required;
-		this.hashCode = Objects.hash(name);
+		this.hashCode = name.hashCode();
 	}
 
 	protected TypeReferenceKey(final String name, final boolean required, final T defaultValue) {
 		super();
 		Assert.hasText(name);
 		this.name = name;
-		this.hashCode = Objects.hash(name);
+		this.hashCode = name.hashCode();
 		this.required = required;
 		this.defaultValue = defaultValue;
 	}
@@ -85,22 +82,12 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 		if (this == obj) {
 			return true;
 		}
-		if (!super.equals(obj)) {
-			return false;
-		}
 		if (!(obj instanceof TypeReferenceKey)) {
 			return false;
 		}
 		@SuppressWarnings("rawtypes")
 		final TypeReferenceKey other = (TypeReferenceKey) obj;
-		if (name == null) {
-			if (other.name != null) {
-				return false;
-			}
-		} else if (!name.equals(other.name)) {
-			return false;
-		}
-		return true;
+		return name.equals(other.name) && getRawType().equals(other.getRawType());
 	}
 
 	public T getDefaultValue() {
@@ -127,7 +114,7 @@ public abstract class TypeReferenceKey<T> extends TypeReference<T> {
 
 	@Override
 	public String toString() {
-		return String.format("TypeReference [type=%s, required=%s, defaultValue=%s, name=%s]", type, required, defaultValue, name);
+		return String.format("TypeReferenceKey [type=%s, required=%s, defaultValue=%s, name=%s]", type, required, defaultValue, name);
 	}
 
 }

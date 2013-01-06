@@ -42,7 +42,7 @@ public abstract class CommandContextValidatorSupport implements CommandContextVa
 
 		for (final TypeReferenceKey<?> key : keys.get()) {
 			if (key.isRequired()) {
-				if (ctx.get(key) == null && key.getDefaultValue() == null) {
+				if (!ctx.containsKey(key)) {
 					throw new ValidationException(String.format("%s  : TypeReferenceKey is required: %s", command.getName(), key));
 				}
 			}
@@ -57,7 +57,7 @@ public abstract class CommandContextValidatorSupport implements CommandContextVa
 
 		for (final TypeReferenceKey<?> key : keys.get()) {
 			if (key.isRequired()) {
-				if (ctx.get(key) == null && key.getDefaultValue() == null) {
+				if (!ctx.containsKey(key)) {
 					throw new ValidationException(String.format("%s  : TypeReferenceKey is required: %s", command.getName(), key));
 				}
 			}

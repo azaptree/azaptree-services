@@ -38,14 +38,39 @@ public class CommandContext extends ContextBase {
 		super(map);
 	}
 
-	public <T> boolean containsKey(final TypeReferenceKey<T> key) {
-		Assert.notNull(key, "key is required");
+	@SuppressWarnings("rawtypes")
+	@Override
+	public boolean containsKey(final Object key) {
+		if (key instanceof TypeReferenceKey) {
+			return super.containsKey(((TypeReferenceKey) key).getName());
+		}
 		return super.containsKey(key);
 	}
 
+	public <T> boolean containsKey(final TypeReferenceKey<T> key) {
+		Assert.notNull(key, "key is required");
+		return super.containsKey(key.getName());
+	}
+
+	/**
+	 * If there is no such key in the context, then return the default value.
+	 * 
+	 * @param key
+	 * @return
+	 */
 	public <T> T get(final TypeReferenceKey<T> key) {
 		Assert.notNull(key, "key is required");
-		return (T) super.get(key);
+		final T t = (T) super.get(key.getName());
+		return t != null ? t : key.getDefaultValue();
+	}
+
+	@SuppressWarnings("rawtypes")
+	@Override
+	public Object put(final Object key, final Object value) {
+		if (key instanceof TypeReferenceKey) {
+			return super.put(((TypeReferenceKey) key).getName(), value);
+		}
+		return super.put(key, value);
 	}
 
 	/**
@@ -57,11 +82,12 @@ public class CommandContext extends ContextBase {
 	 */
 	public <T> T put(final TypeReferenceKey<T> key, final T value) {
 		Assert.notNull(key, "key is required");
-		return (T) super.put(key, value);
+		Assert.notNull(value, "value is required");
+		return (T) super.put(key.getName(), value);
 	}
 
 	public <T> T remove(final TypeReferenceKey<T> key) {
 		Assert.notNull(key, "key is required");
-		return (T) super.remove(key);
+		return (T) super.remove(key.getName());
 	}
 }

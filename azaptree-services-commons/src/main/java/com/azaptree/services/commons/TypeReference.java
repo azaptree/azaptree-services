@@ -69,14 +69,7 @@ public abstract class TypeReference<T> {
 		}
 		@SuppressWarnings("rawtypes")
 		final TypeReference other = (TypeReference) obj;
-		if (type == null) {
-			if (other.type != null) {
-				return false;
-			}
-		} else if (!getRawType().equals(other.getRawType())) {
-			return false;
-		}
-		return true;
+		return getRawType().equals(other.getRawType());
 	}
 
 	public Class<?> getRawType() {
