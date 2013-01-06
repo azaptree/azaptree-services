@@ -27,19 +27,18 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-public class HttpServiceImpl extends AbstractIdleService implements HttpService {
+public class HttpServiceImpl extends AbstractIdleService implements HttpService, ApplicationListener<ContextRefreshedEvent> {
 
 	private final Server server;
-
-	private final HttpServiceConfig httpServiceConfig;
 
 	/**
 	 * The DefaultHandler is always added as the last Handler in the HandlerList.
@@ -52,13 +51,19 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService 
 	 */
 	public HttpServiceImpl(final HttpServiceConfig config) {
 		Assert.notNull(config, "config is required");
-		httpServiceConfig = config;
-		getLogger().info("config: {}", config);
+		LoggerFactory.getLogger(HttpService.class).info("config: {}", config);
 		server = new Server();
+		configureServer(config);
+	}
+
+	private void configureServer(final HttpServiceConfig config) {
 		server.addConnector(createSelectChannelConnector(config));
+		server.setThreadPool(new ExecutorThreadPoolWithGracefulShutdown(config.getRequestExcecutor(), config.getGracefulShutdownTimeoutSecs()));
 		final HandlerList handlerList = new HandlerList();
 		handlerList.setHandlers(new Handler[] { config.getHttpRequestHandler(), new DefaultHandler() });
 		server.setHandler(handlerList);
+		server.setDumpAfterStart(true);
+		server.setDumpBeforeStop(true);
 	}
 
 	private SelectChannelConnector createSelectChannelConnector(final HttpServiceConfig config) {
@@ -80,16 +85,14 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService 
 
 	@PreDestroy
 	public void destroy() {
+		stopAndWait();
+		LoggerFactory.getLogger(HttpService.class).info("STOPPED");
 		server.destroy();
 	}
 
 	@Override
-	public HttpServiceConfig getHttpServiceConfig() {
-		return httpServiceConfig;
-	}
-
-	protected Logger getLogger() {
-		return LoggerFactory.getLogger(HttpService.class);
+	public void onApplicationEvent(final ContextRefreshedEvent event) {
+		startAndWait();
 	}
 
 	@Override

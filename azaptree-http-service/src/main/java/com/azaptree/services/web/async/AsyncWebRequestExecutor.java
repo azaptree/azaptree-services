@@ -10,7 +10,7 @@ package com.azaptree.services.web.async;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,7 +23,6 @@ package com.azaptree.services.web.async;
 import java.util.concurrent.Executor;
 
 import javax.servlet.AsyncContext;
-import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.util.Assert;
 
@@ -48,15 +47,21 @@ public class AsyncWebRequestExecutor {
 	 *            no timeout.
 	 * 
 	 *            If setTimeout(long) is not called, then the container's default timeout, which is available via a call to getTimeout(), will apply.
-	 * @param command
+	 * @param handler
 	 */
-	public void execute(final HttpServletRequest request, final long timeout, final Runnable command) {
-		Assert.notNull(request, "request is required");
-		Assert.notNull(command, "command is required");
-		final AsyncContext asyncCtx = request.startAsync();
+	public void execute(final AsyncContext asyncCtx, final long timeout, final AsyncWebRequestHandler handler) {
+		Assert.notNull(asyncCtx, "asyncCtx is required");
+		Assert.notNull(handler, "handler is required");
 		asyncCtx.setTimeout(timeout);
 		try {
-			executor.execute(command);
+			executor.execute(new Runnable() {
+
+				@Override
+				public void run() {
+					handler.handle(asyncCtx);
+				}
+
+			});
 		} finally {
 			asyncCtx.complete();
 		}

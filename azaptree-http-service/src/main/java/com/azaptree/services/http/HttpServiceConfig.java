@@ -20,25 +20,19 @@ package com.azaptree.services.http;
  * #L%
  */
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import javax.annotation.PreDestroy;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.server.Handler;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 public class HttpServiceConfig {
 	private final String name;
 
-	private final Executor requestExcecutor;
-	private ExecutorService requestExcecutorService;
+	private final ExecutorService requestExcecutorService;
 
 	private final int port;
 
@@ -46,9 +40,9 @@ public class HttpServiceConfig {
 	private Integer requestHeaderBufferSize;
 	private Integer responseBufferSize;
 
-	private final String contextPath;
-
 	private final Handler httpRequestHandler;
+
+	private int gracefulShutdownTimeoutSecs = 30;
 
 	public HttpServiceConfig(final String name, final Handler httpRequestHandler) {
 		Assert.hasText(name, "name is required");
@@ -56,41 +50,34 @@ public class HttpServiceConfig {
 		this.name = name;
 		this.httpRequestHandler = httpRequestHandler;
 		requestExcecutorService = Executors.newCachedThreadPool();
-		requestExcecutor = requestExcecutorService;
 		final String PORT = System.getenv("PORT");
 		if (StringUtils.isNotBlank(PORT)) {
 			port = Integer.parseInt(PORT);
 		} else {
 			port = 8080;
 		}
-		contextPath = "/";
 	}
 
-	public HttpServiceConfig(final String name, final Handler httpRequestHandler, final Executor requestExcecutor, final int port, final String contextPath) {
+	public HttpServiceConfig(final String name, final Handler httpRequestHandler, final ExecutorService requestExcecutor, final int port) {
 		Assert.hasText(name, "name is required");
 		Assert.notNull(httpRequestHandler, "httpRequestHandler is required");
 		this.name = name;
 		this.httpRequestHandler = httpRequestHandler;
 		Assert.notNull(requestExcecutor, "requestExcecutor is required");
 		Assert.isTrue(port > 0, "port must be > 0");
-		Assert.hasText(contextPath, "contextPath is required");
-		this.requestExcecutor = requestExcecutor;
+		requestExcecutorService = requestExcecutor;
 		this.port = port;
-		this.contextPath = contextPath;
 	}
 
-	@PreDestroy
-	public void destroy() throws InterruptedException {
-		if (requestExcecutorService != null) {
-			requestExcecutorService.shutdown();
-			while (!requestExcecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
-				LoggerFactory.getLogger(getClass()).info("Waiting for requestExcecutorService tasks to complete");
-			}
-		}
-	}
-
-	public String getContextPath() {
-		return contextPath;
+	/**
+	 * The graceful shutdown timeout. If set, the server will not immediately stop. Instead, all Connectors will be closed so that
+	 * new connections will not be accepted and all handlers that implement Server.Graceful will be put into the shutdown mode so that no new requests will be
+	 * accepted, but existing requests can complete. The server will then wait the configured timeout before stopping.
+	 * 
+	 * @return
+	 */
+	public int getGracefulShutdownTimeoutSecs() {
+		return gracefulShutdownTimeoutSecs;
 	}
 
 	public Handler getHttpRequestHandler() {
@@ -109,8 +96,8 @@ public class HttpServiceConfig {
 		return requestBufferSize;
 	}
 
-	public Executor getRequestExcecutor() {
-		return requestExcecutor;
+	public ExecutorService getRequestExcecutor() {
+		return requestExcecutorService;
 	}
 
 	public Integer getRequestHeaderBufferSize() {
@@ -119,6 +106,18 @@ public class HttpServiceConfig {
 
 	public Integer getResponseBufferSize() {
 		return responseBufferSize;
+	}
+
+	/**
+	 * Set graceful shutdown timeout. If set, the server will not immediately stop. Instead, all Connectors will be closed so that
+	 * new connections will not be accepted and all handlers that implement Server.Graceful will be put into the shutdown mode so that no new requests will be
+	 * accepted, but existing requests can complete. The server will then wait the configured timeout before stopping.
+	 * 
+	 * @param gracefulShutdownTimeoutSecs
+	 *            the seconds to wait for existing request to complete before stopping the server.
+	 */
+	public void setGracefulShutdownTimeoutSecs(final int gracefulShutdownTimeoutSecs) {
+		this.gracefulShutdownTimeoutSecs = gracefulShutdownTimeoutSecs;
 	}
 
 	public void setRequestBufferSize(final Integer requestBufferSize) {
@@ -138,8 +137,7 @@ public class HttpServiceConfig {
 		final ToStringBuilder sb = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
 		sb.append("name", name);
 		sb.append("port", port);
-		sb.append("contextPath", contextPath);
-		sb.append("requestExcecutor", requestExcecutor);
+		sb.append("requestExcecutorService", requestExcecutorService);
 		if (requestBufferSize != null) {
 			sb.append("requestBufferSize", requestBufferSize);
 		}
