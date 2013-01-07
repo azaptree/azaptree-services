@@ -57,14 +57,14 @@ import org.testng.annotations.Test;
 
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
-import com.azaptree.services.http.handler.AsyncSuspendCompleteHttpHandlerSupport;
+import com.azaptree.services.http.handler.AsyncSuspendContinueHttpHandlerSupport;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
 
 @ContextConfiguration(classes = { HttpServiceTest.Config.class })
 public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
-	public static class AsyncHttpHandler extends AsyncSuspendCompleteHttpHandlerSupport {
+	public static class AsyncHttpHandler extends AsyncSuspendContinueHttpHandlerSupport {
 		final int workTime;
 
 		private final AtomicInteger requestCounter = new AtomicInteger();
@@ -81,7 +81,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Override
-		protected void handleAsync(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
+		protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 
 			final ToStringBuilder sb = new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE);
 			sb.append("target", target);
@@ -112,7 +112,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 	}
 
-	public static class AsyncHttpHandlerThrowsException extends AsyncSuspendCompleteHttpHandlerSupport {
+	public static class AsyncHttpHandlerThrowsException extends AsyncSuspendContinueHttpHandlerSupport {
 		private final AtomicInteger requestCounter = new AtomicInteger();
 
 		public AsyncHttpHandlerThrowsException(final Executor executor) {
@@ -120,7 +120,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Override
-		protected void handleAsync(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
+		protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 			log.info("requestCounter = {}", requestCounter.incrementAndGet());
 			throw new RuntimeException(target);
 		}
