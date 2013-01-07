@@ -354,6 +354,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 		Thread.sleep(100);
 		httpService8082.stopAndWait();
+		((HttpServiceImpl) httpService8082).destroy();
 
 		// check that all server requests were processed
 		Assert.assertEquals(((AsyncHttpHandler) httpServiceConfig8082.getHttpRequestHandler()).requestCounter.get(), exchanges.size());

@@ -48,6 +48,7 @@ public class ExecutorThreadPoolWithGracefulShutdown extends ExecutorThreadPool {
 	public ExecutorThreadPoolWithGracefulShutdown(final ExecutorService executor, final int shutdownTimeoutSecs) {
 		super(executor);
 		Assert.notNull(executor);
+		Assert.isTrue(shutdownTimeoutSecs > 0, "constraint failed: shutdownTimeoutSecs > 0");
 		this.executor = executor;
 		this.shutdownTimeoutSecs = shutdownTimeoutSecs;
 	}
@@ -58,11 +59,18 @@ public class ExecutorThreadPoolWithGracefulShutdown extends ExecutorThreadPool {
 		log.info("STOPPING ...");
 		executor.shutdown();
 
-		final int waitTime = 5;
 		int totalWaitTime = 0;
-		while (!executor.awaitTermination(waitTime, TimeUnit.SECONDS)) {
-			totalWaitTime += waitTime;
-			if (totalWaitTime >= shutdownTimeoutSecs) {
+		final int waitTimeInterval = shutdownTimeoutSecs * 1000 / 2;
+		final int shutdownTimeout = (shutdownTimeoutSecs * 1000);
+		log.debug("waitTimeInterval = {} msec", waitTimeInterval);
+		log.debug("shutdownTimeout = {} msec", shutdownTimeout);
+		while (true) {
+			if (executor.awaitTermination(waitTimeInterval, TimeUnit.MILLISECONDS)) {
+				break;
+			}
+			totalWaitTime += waitTimeInterval;
+			log.debug("totalWaitTime = {} msec", totalWaitTime);
+			if (totalWaitTime >= shutdownTimeout) {
 				log.error("Executor tasks failed to shutdown within specified max wait time: {}", shutdownTimeoutSecs);
 				final List<Runnable> tasks = executor.shutdownNow();
 				if (!CollectionUtils.isEmpty(tasks)) {
