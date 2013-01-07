@@ -10,7 +10,7 @@ package com.azaptree.services.http.impl;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -54,9 +54,10 @@ public class ExecutorThreadPoolWithGracefulShutdown extends ExecutorThreadPool {
 
 	@Override
 	protected void doStop() throws Exception {
+		final Logger log = LoggerFactory.getLogger(getClass());
+		log.info("STOPPING ...");
 		executor.shutdown();
 
-		final Logger log = LoggerFactory.getLogger(getClass());
 		final int waitTime = 5;
 		int totalWaitTime = 0;
 		while (!executor.awaitTermination(waitTime, TimeUnit.SECONDS)) {
@@ -76,6 +77,7 @@ public class ExecutorThreadPoolWithGracefulShutdown extends ExecutorThreadPool {
 		}
 
 		super.doStop();
+		log.info("STOPPED");
 	}
 
 	public int getShutdownTimeoutSecs() {

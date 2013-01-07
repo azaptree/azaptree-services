@@ -10,7 +10,7 @@ package com.azaptree.services.http.handler;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -30,16 +30,19 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.continuation.Continuation;
 import org.eclipse.jetty.continuation.ContinuationSupport;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
-public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHandler {
+public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHandler implements Server.Graceful {
 
 	protected final Executor executor;
 
 	protected Logger log = LoggerFactory.getLogger(getClass());
+
+	protected boolean shutdown;
 
 	public AsyncSuspendCompleteHttpHandlerSupport(final Executor executor) {
 		super();
@@ -72,5 +75,11 @@ public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHan
 
 	protected abstract void handleAsync(String target, Request baseRequest, HttpServletRequest request,
 	        HttpServletResponse response);
+
+	@Override
+	public void setShutdown(final boolean shutdown) {
+		log.info("shutdown : {}", shutdown);
+		this.shutdown = shutdown;
+	}
 
 }

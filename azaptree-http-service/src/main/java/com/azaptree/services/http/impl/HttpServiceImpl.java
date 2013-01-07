@@ -27,6 +27,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -59,6 +60,9 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService,
 	private void configureServer(final HttpServiceConfig config) {
 		server.addConnector(createSelectChannelConnector(config));
 		server.setThreadPool(new ExecutorThreadPoolWithGracefulShutdown(config.getRequestExcecutor(), config.getGracefulShutdownTimeoutSecs()));
+		if (config.getGracefulShutdownTimeoutSecs() > 0) {
+			server.setGracefulShutdown(1);
+		}
 		final HandlerList handlerList = new HandlerList();
 		handlerList.setHandlers(new Handler[] { config.getHttpRequestHandler(), new DefaultHandler() });
 		server.setHandler(handlerList);
@@ -85,9 +89,12 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService,
 
 	@PreDestroy
 	public void destroy() {
+		final Logger log = LoggerFactory.getLogger(HttpService.class);
+		log.info("STOPPING HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
 		stopAndWait();
-		LoggerFactory.getLogger(HttpService.class).info("STOPPED");
+		log.info("STOPPED HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
 		server.destroy();
+		log.info("DESTROYED HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
 	}
 
 	@Override

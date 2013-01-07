@@ -21,11 +21,14 @@ package test.com.azaptree.services.http;
  */
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -43,11 +46,13 @@ import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.http.HttpService;
@@ -67,6 +72,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		public AsyncHttpHandler(final int workTime, final Executor executor) {
 			super(executor);
 			this.workTime = workTime;
+		}
+
+		@Override
+		@PreDestroy
+		public void destroy() {
+			log.info("PRE-DESTROY");
 		}
 
 		@Override
@@ -120,7 +131,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 		@Bean
 		public Handler asyncHttpHandler() {
-			return new AsyncHttpHandler(1, executorService());
+			return new AsyncHttpHandler(2, executorService());
 		}
 
 		@Bean
@@ -182,7 +193,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		@Bean
 		public HttpServiceConfig httpServiceConfig8082() {
 			final HttpServiceConfig config = new HttpServiceConfig("http-service", asyncHttpHandler(), Executors.newCachedThreadPool(), 8082);
-			config.setGracefulShutdownTimeoutSecs(30);
+			config.setGracefulShutdownTimeoutSecs(1);
 			return config;
 		}
 
@@ -242,6 +253,9 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 	}
 
+	@Resource
+	private ApplicationContext ctx;
+
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Resource(name = "httpService8080")
@@ -271,6 +285,13 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 	@Autowired
 	private HttpClient client;
 
+	@BeforeClass
+	public void beforeClass() {
+		for (final String beanName : ctx.getBeanDefinitionNames()) {
+			log.info("spring managed bean : {} -> {}", beanName, ctx.getBean(beanName).getClass().getName());
+		}
+	}
+
 	@Test
 	public void test_httpService8080() throws Exception {
 		for (int i = 0; i < 10; i++) {
@@ -296,13 +317,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			exchange.setURL(String.format("http://localhost:%d/test_httpService8081", httpServiceConfig8081.getPort()));
 			client.send(exchange);
 		}
-		Thread.sleep(500);
+		Thread.sleep(200);
 		httpService8081.stopAndWait();
 		log.info("test_httpService8081(): stopped httpService8081");
 
 		// check that all server requests were processed
 		Assert.assertEquals(((HttpHandler) httpServiceConfig8081.getHttpRequestHandler()).requestCounter.get(), exchanges.length);
-		log.info("test_httpService8081(): stopped HTTPClient");
 		for (final ContentExchange exchange : exchanges) {
 			log.info("test_httpService8081() : exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
 		}
@@ -310,8 +330,10 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 	@Test
 	public void test_httpService8082_asyncServerHandler() throws Exception {
-		for (int i = 0; i < 3; i++) {
+		final List<ContentExchange> exchanges = new ArrayList<>();
+		for (int requestCount = 0; requestCount < 3; requestCount++) {
 			final ContentExchange exchange = new ContentExchange(true);
+			exchanges.add(exchange);
 			exchange.setMethod("GET");
 			exchange.setURL(String.format("http://localhost:%d/test_httpService8082", httpServiceConfig8082.getPort()));
 			client.send(exchange);
@@ -321,6 +343,23 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 			// check that all server requests were processed
 			log.info("test_httpService8082_asyncServerHandler(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(), exchange.getResponseContent());
+		}
+
+		for (int requestCount = 0; requestCount < 0; requestCount++) {
+			final ContentExchange exchange = new ContentExchange(true);
+			exchanges.add(exchange);
+			exchange.setMethod("GET");
+			exchange.setURL(String.format("http://localhost:%d/test_httpService8082", httpServiceConfig8082.getPort()));
+			client.send(exchange);
+		}
+		Thread.sleep(100);
+		httpService8082.stopAndWait();
+
+		// check that all server requests were processed
+		Assert.assertEquals(((AsyncHttpHandler) httpServiceConfig8082.getHttpRequestHandler()).requestCounter.get(), exchanges.size());
+		for (final ContentExchange exchange : exchanges) {
+			log.info("test_httpService8082_asyncServerHandler(): after server has been stopped : exchange.getResponseContent(): {} -> {}",
+			        exchange.getStatus(), exchange.getResponseContent());
 		}
 	}
 

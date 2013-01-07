@@ -23,7 +23,6 @@ package com.azaptree.services.http;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.server.Handler;
@@ -44,18 +43,20 @@ public class HttpServiceConfig {
 
 	private int gracefulShutdownTimeoutSecs = 30;
 
+	/**
+	 * 
+	 * @param name
+	 *            REQUIRED
+	 * @param httpRequestHandler
+	 *            REQUIRED
+	 */
 	public HttpServiceConfig(final String name, final Handler httpRequestHandler) {
 		Assert.hasText(name, "name is required");
 		Assert.notNull(httpRequestHandler, "httpRequestHandler is required");
 		this.name = name;
 		this.httpRequestHandler = httpRequestHandler;
 		requestExcecutorService = Executors.newCachedThreadPool();
-		final String PORT = System.getenv("PORT");
-		if (StringUtils.isNotBlank(PORT)) {
-			port = Integer.parseInt(PORT);
-		} else {
-			port = 8080;
-		}
+		port = 8080;
 	}
 
 	public HttpServiceConfig(final String name, final Handler httpRequestHandler, final ExecutorService requestExcecutor, final int port) {
