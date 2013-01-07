@@ -27,6 +27,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.continuation.Continuation;
 import org.eclipse.jetty.continuation.ContinuationSupport;
 import org.eclipse.jetty.server.Request;
@@ -42,12 +44,22 @@ public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHan
 
 	protected Logger log = LoggerFactory.getLogger(getClass());
 
+	protected long continuationTimeoutMillis;
+
 	protected boolean shutdown;
 
 	public AsyncSuspendCompleteHttpHandlerSupport(final Executor executor) {
 		super();
 		Assert.notNull(executor, "executor is required");
 		this.executor = executor;
+		log.info(toString());
+	}
+
+	public AsyncSuspendCompleteHttpHandlerSupport(final Executor executor, final long continuationTimeoutMillis) {
+		this(executor);
+		Assert.isTrue(continuationTimeoutMillis > 0, "constraint: continuationTimeoutMillis > 0");
+		this.continuationTimeoutMillis = continuationTimeoutMillis;
+		log.info(toString());
 	}
 
 	@Override
@@ -55,6 +67,9 @@ public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHan
 	        throws IOException, ServletException {
 		final Continuation continuation = ContinuationSupport.getContinuation(baseRequest);
 		continuation.suspend();
+		if (continuationTimeoutMillis > 0) {
+			continuation.setTimeout(continuationTimeoutMillis);
+		}
 		executor.execute(new Runnable() {
 
 			@Override
@@ -80,6 +95,15 @@ public abstract class AsyncSuspendCompleteHttpHandlerSupport extends AbstractHan
 	public void setShutdown(final boolean shutdown) {
 		log.info("shutdown : {}", shutdown);
 		this.shutdown = shutdown;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+		        .append("continuationTimeoutMillis", continuationTimeoutMillis)
+		        .append("executor", executor)
+		        .append("shutdown", shutdown)
+		        .toString();
 	}
 
 }

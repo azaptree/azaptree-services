@@ -69,8 +69,8 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 		private final AtomicInteger requestCounter = new AtomicInteger();
 
-		public AsyncHttpHandler(final int workTime, final Executor executor) {
-			super(executor);
+		public AsyncHttpHandler(final int workTime, final Executor executor, long timeout) {
+			super(executor, timeout);
 			this.workTime = workTime;
 		}
 
@@ -131,7 +131,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 		@Bean
 		public Handler asyncHttpHandler() {
-			return new AsyncHttpHandler(2, executorService());
+			return new AsyncHttpHandler(2, executorService(), 10 * 1000);
 		}
 
 		@Bean
