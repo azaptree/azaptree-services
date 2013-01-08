@@ -26,7 +26,9 @@ import java.util.concurrent.Executor;
 import javax.annotation.PostConstruct;
 
 import org.springframework.beans.factory.BeanNameAware;
-import org.springframework.stereotype.Component;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedResource;
+import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.eventbus.EventBusService;
@@ -44,7 +46,8 @@ import com.google.common.eventbus.Subscribe;
  * @author Alfio Zappala
  * 
  */
-@Component
+@Service
+@ManagedResource
 public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 
 	private EventBus eventBus;
@@ -88,7 +91,13 @@ public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 		throw new IllegalArgumentException("eventHandler has no methods annotated with @Subscribe");
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.azaptree.services.eventbus.impl.EventBusServiceJmxApi#getEventBusName()
+	 */
 	@Override
+	@ManagedAttribute
 	public String getEventBusName() {
 		return eventBusName;
 	}
@@ -117,7 +126,13 @@ public class EventBusServiceImpl implements EventBusService, BeanNameAware {
 		log.info("Created EventBus: {} -> {}", beanName, eventBus.getClass().getName());
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see com.azaptree.services.eventbus.impl.EventBusServiceJmxApi#isAsynchronous()
+	 */
 	@Override
+	@ManagedAttribute
 	public boolean isAsynchronous() {
 		if (eventBus == null) {
 			throw new IllegalStateException("EventBus has not yet been created");

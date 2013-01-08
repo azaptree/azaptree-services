@@ -34,6 +34,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.client.ContentExchange;
@@ -57,6 +58,7 @@ import org.testng.annotations.Test;
 
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
+import com.azaptree.services.http.HttpServiceJmxApi;
 import com.azaptree.services.http.handler.AsyncSuspendContinueHttpHandlerSupport;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
@@ -69,7 +71,7 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 		private final AtomicInteger requestCounter = new AtomicInteger();
 
-		public AsyncHttpHandler(final int workTime, final Executor executor, long timeout) {
+		public AsyncHttpHandler(final int workTime, final Executor executor, final long timeout) {
 			super(executor, timeout);
 			this.workTime = workTime;
 		}
@@ -378,5 +380,17 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			log.info("test_httpService8083_asyncServerHandlerThrowsException(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(),
 			        exchange.getResponseContent());
 		}
+	}
+
+	@Test
+	public void testJmxApi() {
+		final HttpServiceJmxApi jmxApi = (HttpServiceJmxApi) httpService8080;
+		Assert.assertEquals(jmxApi.getPort(), 8080);
+		Assert.assertTrue(StringUtils.isNotBlank(jmxApi.getName()));
+		Assert.assertTrue(StringUtils.isNotBlank(jmxApi.getVersion()));
+		Assert.assertTrue(StringUtils.isNotBlank(jmxApi.getState()));
+		log.info("name : {}", jmxApi.getName());
+		log.info("version : {}", jmxApi.getVersion());
+		log.info("state : {}", jmxApi.getState());
 	}
 }

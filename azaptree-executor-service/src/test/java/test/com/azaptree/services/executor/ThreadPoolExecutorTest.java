@@ -238,7 +238,7 @@ public class ThreadPoolExecutorTest extends AbstractTestNGSpringContextTests {
 			executor.execute(new Task());
 		}
 
-		for (int i = 0; i < 3; i++) {
+		for (int i = 0; i < 5; i++) {
 			Thread.sleep(100l);
 			if (executor.getCompletedTaskCount() == 100) {
 				break;

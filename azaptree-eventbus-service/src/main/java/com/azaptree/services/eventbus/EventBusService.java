@@ -30,17 +30,10 @@ import org.slf4j.LoggerFactory;
  * @author Alfio Zappala
  * 
  */
-public interface EventBusService {
+public interface EventBusService extends EventBusServiceJmxApi {
 	public static final Logger log = LoggerFactory.getLogger(EventBusService.class);
 
-	String getEventBusName();
-
-	/**
-	 * Indicates whether events are dispatched to handlers synchronously on the same thread or asynchronously via an Executor
-	 * 
-	 * @return
-	 */
-	boolean isAsynchronous();
+	
 
 	/**
 	 * 

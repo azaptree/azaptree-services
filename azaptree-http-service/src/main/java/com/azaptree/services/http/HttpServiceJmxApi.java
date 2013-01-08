@@ -2,7 +2,7 @@ package com.azaptree.services.http;
 
 /*
  * #%L
- * AZAPTREE-SPRING-WEB-MVC
+ * AZAPTREE-HTTP-SERVICE
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -10,7 +10,7 @@ package com.azaptree.services.http;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,12 +20,22 @@ package com.azaptree.services.http;
  * #L%
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedResource;
 
-import com.google.common.util.concurrent.Service;
+@ManagedResource
+public interface HttpServiceJmxApi {
 
-public interface HttpService extends Service {
+	@ManagedAttribute
+	String getName();
 
-	public static final Logger log = LoggerFactory.getLogger(HttpService.class);
+	@ManagedAttribute
+	int getPort();
+
+	@ManagedAttribute
+	String getState();
+
+	@ManagedAttribute
+	String getVersion();
+
 }

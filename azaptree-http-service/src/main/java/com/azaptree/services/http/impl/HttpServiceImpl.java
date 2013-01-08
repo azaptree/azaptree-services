@@ -27,17 +27,21 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.jmx.export.annotation.ManagedAttribute;
+import org.springframework.jmx.export.annotation.ManagedResource;
+import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
+import com.azaptree.services.http.HttpServiceJmxApi;
 import com.google.common.util.concurrent.AbstractIdleService;
 
-public class HttpServiceImpl extends AbstractIdleService implements HttpService, ApplicationListener<ContextRefreshedEvent> {
+@Service
+@ManagedResource
+public class HttpServiceImpl extends AbstractIdleService implements HttpService, ApplicationListener<ContextRefreshedEvent>, HttpServiceJmxApi {
 
 	private final Server server;
 
@@ -52,7 +56,7 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService,
 	 */
 	public HttpServiceImpl(final HttpServiceConfig config) {
 		Assert.notNull(config, "config is required");
-		LoggerFactory.getLogger(HttpService.class).info("config: {}", config);
+		log.info("config: {}", config);
 		server = new Server();
 		configureServer(config);
 	}
@@ -89,12 +93,35 @@ public class HttpServiceImpl extends AbstractIdleService implements HttpService,
 
 	@PreDestroy
 	public void destroy() {
-		final Logger log = LoggerFactory.getLogger(HttpService.class);
 		log.info("STOPPING HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
 		stopAndWait();
 		log.info("STOPPED HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
 		server.destroy();
 		log.info("DESTROYED HTTP SERVICE ON PORT: {}", server.getConnectors()[0].getPort());
+	}
+
+	@Override
+	@ManagedAttribute
+	public String getName() {
+		return server.getConnectors()[0].getName();
+	}
+
+	@Override
+	@ManagedAttribute
+	public int getPort() {
+		return server.getConnectors()[0].getPort();
+	}
+
+	@Override
+	@ManagedAttribute
+	public String getState() {
+		return server.getState();
+	}
+
+	@Override
+	@ManagedAttribute
+	public String getVersion() {
+		return Server.getVersion();
 	}
 
 	@Override
