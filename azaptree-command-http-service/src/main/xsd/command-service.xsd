@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.azaptree.com/command-service"
+	xmlns:tns="http://www.azaptree.com/command-service" elementFormDefault="qualified">
+
+	<element name="catalog-names">
+		<complexType>
+			<sequence>
+				<element name="catalog" type="string" maxOccurs="unbounded" />
+			</sequence>
+		</complexType>
+	</element>
+
+	<complexType name="Catalog"></complexType>
+
+	<complexType name="Command"></complexType>
+
+</schema>

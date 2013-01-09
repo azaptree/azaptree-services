@@ -417,6 +417,7 @@
 		<module>azaptree-services-commons</module>
 		<module>azaptree-spring-application-service</module>
 		<module>azaptree-http-service</module>
+		<module>azaptree-command-http-service</module>
 	</modules>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>

@@ -20,17 +20,29 @@ package com.azaptree.services.spring.application.config;
  * #L%
  */
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.SchemaOutputResolver;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.util.JAXBSource;
+import javax.xml.transform.Result;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -41,6 +53,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
+import org.xml.sax.SAXException;
 
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationClasses;
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationPackages;
@@ -71,10 +84,11 @@ public class SpringApplicationServiceConfig {
 
 	public AnnotationConfigApplicationContext createAnnotationConfigApplicationContext() {
 		final AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
-		if (ArrayUtils.isNotEmpty(configurationClasses))
+		if (ArrayUtils.isNotEmpty(configurationClasses)) {
 			for (final Class<?> c : configurationClasses) {
 				ctx.register(c);
 			}
+		}
 		if (ArrayUtils.isNotEmpty(configurationPackages)) {
 			for (final Package p : configurationPackages) {
 				ctx.scan(p.getName());
@@ -84,6 +98,22 @@ public class SpringApplicationServiceConfig {
 		ctx.refresh();
 		ctx.registerShutdownHook();
 		return ctx;
+	}
+
+	private void generateSchema(final OutputStream os) {
+		try {
+			JAXBContext.newInstance(SpringApplicationService.class).generateSchema(new SchemaOutputResolver() {
+
+				@Override
+				public Result createOutput(final String namespaceUri, final String suggestedFileName) throws IOException {
+					final StreamResult result = new StreamResult(os);
+					result.setSystemId("");
+					return result;
+				}
+			});
+		} catch (final IOException | JAXBException e) {
+			throw new RuntimeException("generateSchema() failed", e);
+		}
 	}
 
 	/**
@@ -162,10 +192,20 @@ public class SpringApplicationServiceConfig {
 
 	private SpringApplicationService parse(final InputStream xml) throws JAXBException {
 		Assert.notNull(xml);
-		final String packageName = SpringApplicationService.class.getPackage().getName();
-		final JAXBContext jc = JAXBContext.newInstance(packageName);
+		final JAXBContext jc = JAXBContext.newInstance(SpringApplicationService.class);
 		final Unmarshaller u = jc.createUnmarshaller();
-		return (SpringApplicationService) u.unmarshal(xml);
+		final SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream(512);
+		generateSchema(bos);
+		try {
+			final SpringApplicationService springApplicationService = (SpringApplicationService) u.unmarshal(xml);
+			final Schema schema = schemaFactory.newSchema(new StreamSource(new ByteArrayInputStream(bos.toByteArray())));
+			final Validator validator = schema.newValidator();
+			validator.validate(new JAXBSource(jc, springApplicationService));
+			return springApplicationService;
+		} catch (SAXException | IOException e) {
+			throw new IllegalArgumentException("Failed to parse XML. The XML must conform to the following schema:\n" + bos, e);
+		}
 	}
 
 	@Override

@@ -20,8 +20,17 @@ package test.com.azaptree.services.spring.application;
  * #L%
  */
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.util.Map;
 import java.util.Properties;
+
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.SchemaOutputResolver;
+import javax.xml.transform.Result;
+import javax.xml.transform.stream.StreamResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -132,6 +141,35 @@ public class SpringApplicationServiceTest {
 		} finally {
 			SpringApplicationService.shutdown();
 		}
+	}
+
+	@Test
+	public void testGenerateXSD() throws JAXBException, IOException {
+		final JAXBContext jc = JAXBContext.newInstance(com.azaptree.services.spring.application.config.SpringApplicationService.class);
+		jc.generateSchema(new SchemaOutputResolver() {
+
+			@Override
+			public Result createOutput(String namespaceUri, String suggestedFileName) throws IOException {
+				File file = new File("target", suggestedFileName);
+				StreamResult result = new StreamResult(file);
+				result.setSystemId(file.toURI().toURL().toString());
+				return result;
+			}
+		});
+
+		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+		jc.generateSchema(new SchemaOutputResolver() {
+
+			@Override
+			public Result createOutput(String namespaceUri, String suggestedFileName) throws IOException {
+				StreamResult result = new StreamResult(bos);
+				result.setSystemId("");
+				return result;
+			}
+		});
+
+		System.out.println(bos.toString());
 	}
 
 }

@@ -37,6 +37,14 @@ public class SpringApplicationServiceConfigTest {
 
 	final Logger log = LoggerFactory.getLogger(getClass());
 
+	@SuppressWarnings("unused")
+	@Test(expectedExceptions = { IllegalArgumentException.class })
+	public void testInvalidXml() throws ClassNotFoundException, JAXBException, IOException {
+		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service-invalidXml.xml")) {
+			new SpringApplicationServiceConfig(is);
+		}
+	}
+
 	@Test
 	public void testValidXmlConfig1() throws IOException, ClassNotFoundException, JAXBException {
 		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service.xml")) {
