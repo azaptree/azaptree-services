@@ -27,6 +27,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.command.Command;
 import com.azaptree.services.command.CommandContextValidator;
@@ -57,6 +58,7 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 	 * @param name
 	 */
 	public CommandSupport(final String name) {
+		Assert.hasText(name, "name is required");
 		this.name = name;
 	}
 

@@ -44,19 +44,40 @@ public class WebCommandContext<T, V> extends CommandContext {
 
 	protected final HttpServletResponse httpServletResponse;
 
-	protected T requestMessage;
+	protected final T requestMessage;
 
 	protected V responseMessage;
 
+	/**
+	 * This constructor is for commands that do not require a request message.
+	 * 
+	 * @param httpServletRequest
+	 *            REQUIRED
+	 * @param httpServletResponse
+	 *            REQUIRED
+	 */
 	public WebCommandContext(final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse) {
 		Assert.notNull(httpServletRequest, "httpServletRequest is required");
 		Assert.notNull(httpServletResponse, "httpServletResponse is required");
 		this.httpServletRequest = httpServletRequest;
 		this.httpServletResponse = httpServletResponse;
+		this.requestMessage = null;
 	}
 
+	/**
+	 * 
+	 * @param httpServletRequest
+	 *            REQUIRED
+	 * @param httpServletResponse
+	 *            REQUIRED
+	 * @param requestMessage
+	 *            REQUIRED
+	 */
 	public WebCommandContext(final HttpServletRequest httpServletRequest, final HttpServletResponse httpServletResponse, final T requestMessage) {
-		this(httpServletRequest, httpServletResponse);
+		Assert.notNull(httpServletRequest, "httpServletRequest is required");
+		Assert.notNull(httpServletResponse, "httpServletResponse is required");
+		this.httpServletRequest = httpServletRequest;
+		this.httpServletResponse = httpServletResponse;
 		Assert.notNull(requestMessage, "requestMessage is required");
 		this.requestMessage = requestMessage;
 	}
@@ -75,10 +96,6 @@ public class WebCommandContext<T, V> extends CommandContext {
 
 	public V getResponseMessage() {
 		return responseMessage;
-	}
-
-	public void setRequestMessage(final T requestMessage) {
-		this.requestMessage = requestMessage;
 	}
 
 	public void setResponseMessage(final V responseMessage) {
