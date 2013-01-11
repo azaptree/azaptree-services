@@ -95,6 +95,11 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	}
 
 	@Override
+	public com.azaptree.services.command.Command getCommandCatalog(final CommandKey key) {
+		return (com.azaptree.services.command.Command) commands.get(key);
+	}
+
+	@Override
 	public CommandCatalog getCommandCatalog(final String catalogName) {
 		Assert.hasText(catalogName);
 		return commandCatalogs.get(catalogName);
@@ -139,7 +144,7 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 			}
 			catMap.put(catalog.getName(), catalog);
 
-			for (String commandName : catalog.getCommandNames()) {
+			for (final String commandName : catalog.getCommandNames()) {
 				final Command command = catalog.getCommand(commandName);
 				Assert.notNull(command);
 				cmdMap.put(new CommandKey(catalog.getName(), commandName), command);
@@ -147,8 +152,8 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 		}
 		catalogs = null; // no longer needed
 
-		this.commandCatalogs = ImmutableMap.<String, CommandCatalog> builder().putAll(catMap).build();
-		this.commands = ImmutableMap.<CommandKey, Command> builder().putAll(cmdMap).build();
+		commandCatalogs = ImmutableMap.<String, CommandCatalog> builder().putAll(catMap).build();
+		commands = ImmutableMap.<CommandKey, Command> builder().putAll(cmdMap).build();
 
 	}
 }

@@ -29,18 +29,21 @@ import javax.annotation.PostConstruct;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.chain.Command;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.http.HttpHeaders;
 import org.eclipse.jetty.http.HttpStatus;
-import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.server.Request;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.azaptree.services.command.CommandCatalog;
 import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
+import com.azaptree.services.command.http.WebCommandContext;
 import com.azaptree.services.command.http.WebRequestCommand;
 import com.azaptree.services.http.handler.AsyncSuspendContinueHttpHandlerSupport;
 import com.google.common.collect.ImmutableMap;
@@ -49,7 +52,7 @@ import com.google.common.collect.ImmutableMap;
  * REST API:
  * 
  * <code>
- * GET  /										returns WADL which describes the REST API
+ * GET  /command-service.wadl					returns WADL which describes the REST API
  * GET  /command-service/{catalog}/{command}	returns command XSD, which describes the command's XML messages
  * POST /command-service/{catalog}/{command}	executes the command - the command XML request message is provided in the HTTP request body		
  * </code>
@@ -79,14 +82,56 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		@SuppressWarnings("rawtypes")
 		final WebRequestCommand command = (WebRequestCommand) catalog.getCommand(commandKey.getCommandName());
 		response.setStatus(HttpStatus.OK_200);
-		response.setContentType(MimeTypes.TEXT_XML_UTF_8);
+		response.setContentType("application/xml");
 		command.generateSchema(response.getOutputStream());
 	}
 
 	private void generateWADL(final Request baseRequest, final HttpServletResponse response) {
-		response.setStatus(HttpStatus.NOT_FOUND_404);
-		response.setContentType(MimeTypes.TEXT_XML_UTF_8);
+		response.setStatus(HttpStatus.OK_200);
+		response.setContentType("application/vnd.sun.wadl+xml");
 		// TODO: generate WADL
+		baseRequest.setHandled(true);
+	}
+
+	private void handleCommandExecutionError(final Request baseRequest, final HttpServletResponse response, final Exception exception) {
+		response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR_500);
+		response.setContentType("application/xml");
+		// TODO: write out standard error message response
+		baseRequest.setHandled(true);
+	}
+
+	private void handleGET(final String target, final Request baseRequest, final HttpServletResponse response)
+	        throws IOException {
+		if (StringUtils.equals(target, "/command-service.wadl")) {
+			generateWADL(baseRequest, response);
+		} else if (targetUriCommandKeyMap.containsKey(target)) {
+			generateCommandXSD(target, response);
+		} else {
+			handleInvalidUri(baseRequest, response);
+		}
+	}
+
+	private void handleInvalidUri(final Request baseRequest, final HttpServletResponse response) {
+		response.setStatus(HttpStatus.NOT_FOUND_404);
+		baseRequest.setHandled(true);
+	}
+
+	private void handleMethodNotAllowed(final Request baseRequest, final HttpServletResponse response) {
+		response.setStatus(HttpStatus.METHOD_NOT_ALLOWED_405);
+		response.setHeader(HttpHeaders.ALLOW, "GET, POST");
+		baseRequest.setHandled(true);
+	}
+
+	private void handlePOST(final String target, final Request baseRequest, final HttpServletResponse response) {
+		if (!targetUriCommandKeyMap.containsKey(target)) {
+			handleInvalidUri(baseRequest, response);
+		}
+	}
+
+	private void handleUnmarshallingRequestMessageError(final Request baseRequest, final HttpServletResponse response, final Exception exception) {
+		response.setStatus(HttpStatus.BAD_REQUEST_400);
+		response.setContentType("application/xml");
+		// TODO: write out standard error message response
 		baseRequest.setHandled(true);
 	}
 
@@ -125,37 +170,39 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		}
 	}
 
-	private void handlePOST(String target, Request baseRequest, HttpServletResponse response) {
-		if (!targetUriCommandKeyMap.containsKey(target)) {
-			handleInvalidUri(baseRequest, response);
-		}
-	}
-
-	private void handleGET(final String target, final Request baseRequest, final HttpServletResponse response)
-	        throws IOException {
-		if (StringUtils.equals(target, "/")) {
-			generateWADL(baseRequest, response);
-		} else if (targetUriCommandKeyMap.containsKey(target)) {
-			generateCommandXSD(target, response);
-		} else {
-			handleInvalidUri(baseRequest, response);
-		}
-	}
-
-	private void handleInvalidUri(final Request baseRequest, final HttpServletResponse response) {
-		response.setStatus(HttpStatus.NOT_FOUND_404);
-		baseRequest.setHandled(true);
-	}
-
-	private void handleMethodNotAllowed(final Request baseRequest, final HttpServletResponse response) {
-		response.setStatus(HttpStatus.METHOD_NOT_ALLOWED_405);
-		response.setHeader(HttpHeaders.ALLOW, "GET, POST");
-		baseRequest.setHandled(true);
-	}
-
 	@Override
 	protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
-		// TODO Auto-generated method stub
-	}
+		final CommandKey commandKey = targetUriCommandKeyMap.get(target);
+		if (commandKey == null) {
+			handleInvalidUri(baseRequest, response);
+			return;
+		}
 
+		@SuppressWarnings("rawtypes")
+		final WebRequestCommand command = (WebRequestCommand) commandService.getCommandCatalog(commandKey);
+		final WebCommandContext<?, ?> commandContext;
+		if (command.getRequestClass() != null) {
+			final JAXBContext ctx = command.getJaxbContext();
+			final Object requestMessage;
+			try {
+				final Unmarshaller unmarshaller = ctx.createUnmarshaller();
+				requestMessage = unmarshaller.unmarshal(baseRequest.getInputStream());
+			} catch (JAXBException | IOException e) {
+				log.error("Failed to unmarshal request message", e);
+				handleUnmarshallingRequestMessageError(baseRequest, response, e);
+				return;
+			}
+
+			commandContext = new WebCommandContext<>(request, response, requestMessage);
+		} else {
+			commandContext = new WebCommandContext<>(request, response);
+		}
+
+		try {
+			command.execute(commandContext);
+		} catch (final Exception e) {
+			log.error(String.format("Failed to execute command : %s", commandKey), e);
+			handleCommandExecutionError(baseRequest, response, e);
+		}
+	}
 }
