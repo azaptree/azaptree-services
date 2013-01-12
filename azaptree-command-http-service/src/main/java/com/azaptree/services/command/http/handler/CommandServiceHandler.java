@@ -30,6 +30,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
@@ -77,6 +78,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 
 	private void generateCommandXSD(final String target, final HttpServletResponse response)
 	        throws IOException {
+		// TODO: implement HTTP caching
 		final CommandKey commandKey = targetUriCommandKeyMap.get(target);
 		final CommandCatalog catalog = commandService.getCommandCatalog(commandKey.getCatalogName());
 		@SuppressWarnings("rawtypes")
@@ -87,6 +89,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 	}
 
 	private void generateWADL(final Request baseRequest, final HttpServletResponse response) {
+		// TODO: implement HTTP caching
 		response.setStatus(HttpStatus.OK_200);
 		response.setContentType("application/vnd.sun.wadl+xml");
 		// TODO: generate WADL
@@ -170,6 +173,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		}
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 		final CommandKey commandKey = targetUriCommandKeyMap.get(target);
@@ -193,7 +197,11 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 				return;
 			}
 
-			commandContext = new WebCommandContext<>(request, response, requestMessage);
+			if (requestMessage instanceof JAXBElement) {
+				commandContext = new WebCommandContext<>(request, response, ((JAXBElement) requestMessage).getValue());
+			} else {
+				commandContext = new WebCommandContext<>(request, response, requestMessage);
+			}
 		} else {
 			commandContext = new WebCommandContext<>(request, response);
 		}

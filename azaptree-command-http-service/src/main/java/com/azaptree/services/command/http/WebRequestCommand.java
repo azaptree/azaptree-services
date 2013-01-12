@@ -22,12 +22,13 @@ package com.azaptree.services.command.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.SchemaOutputResolver;
 import javax.xml.transform.Result;
 import javax.xml.transform.stream.StreamResult;
@@ -98,43 +99,6 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 
 	protected abstract boolean executeCommand(WebCommandContext<T, V> ctx);
 
-	public JAXBContext getJaxbContext() {
-		if (jaxbContext != null) {
-			return jaxbContext;
-		}
-
-		if (requestClass != null || responseClass != null) {
-			synchronized (this) {
-				if (jaxbContext != null) {
-					return jaxbContext;
-				}
-
-				final List<Class<?>> classes = new ArrayList<>(2);
-				if (requestClass != null) {
-					classes.add(requestClass);
-				}
-				if (responseClass != null) {
-					classes.add(responseClass);
-				}
-				final Class<?>[] jaxbClasses = classes.toArray(new Class<?>[classes.size()]);
-				try {
-					jaxbContext = JAXBContext.newInstance(jaxbClasses);
-				} catch (final JAXBException e) {
-					throw new IllegalStateException("Failed to create JAXContext for: " + Arrays.toString(jaxbClasses));
-				}
-			}
-		}
-		return jaxbContext;
-	}
-
-	public Class<T> getRequestClass() {
-		return requestClass;
-	}
-
-	public Class<V> getResponseClass() {
-		return responseClass;
-	}
-
 	public void generateSchema(final OutputStream os) {
 		final JAXBContext jaxbContext = getJaxbContext();
 		if (jaxbContext == null) {
@@ -153,5 +117,72 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 		} catch (final IOException e) {
 			throw new RuntimeException("generateSchema() failed", e);
 		}
+	}
+
+	public JAXBContext getJaxbContext() {
+		if (jaxbContext != null) {
+			return jaxbContext;
+		}
+
+		if (requestClass != null || responseClass != null) {
+			synchronized (this) {
+				if (jaxbContext != null) {
+					return jaxbContext;
+				}
+
+				final Set<String> packageNames = new HashSet<>();
+
+				if (requestClass != null) {
+					packageNames.add(requestClass.getPackage().getName());
+				}
+
+				if (responseClass != null) {
+					packageNames.add(responseClass.getPackage().getName());
+				}
+
+				final StringBuilder sb = new StringBuilder(128);
+				for (String packageName : packageNames) {
+					sb.append(packageName).append(':');
+				}
+				sb.delete(sb.length() - 1, sb.length());
+				final String jaxbContextPath = sb.toString();
+				log.info("jaxbContextPath : {}", jaxbContextPath);
+
+				try {
+					jaxbContext = JAXBContext.newInstance(jaxbContextPath);
+				} catch (final JAXBException e) {
+					throw new IllegalStateException("Failed to create JAXContext for: " + requestClass.getPackage().getName());
+				}
+
+			}
+		}
+		return jaxbContext;
+	}
+
+	public Class<T> getRequestClass() {
+		return requestClass;
+	}
+
+	public Class<V> getResponseClass() {
+		return responseClass;
+	}
+
+	protected void writeResponseMessage(final HttpServletResponse httpResponse, final Object message) {
+		Marshaller marshaller;
+		try {
+			marshaller = getJaxbContext().createMarshaller();
+		} catch (final JAXBException e) {
+			throw new IllegalStateException("failed to create JAXB marshaller", e);
+		}
+
+		try {
+			marshaller.marshal(message, httpResponse.getOutputStream());
+		} catch (JAXBException | IOException e) {
+			throw new RuntimeException("Failed to write JAXB message response");
+		}
+	}
+
+	protected void writeResponseMessage(final WebCommandContext<T, V> ctx) {
+		writeResponseMessage(ctx.getHttpServletResponse(), ctx.getResponseMessage());
 	}
 }

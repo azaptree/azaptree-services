@@ -1,30 +1,31 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.azaptree</groupId>
-    <artifactId>azaptree-services</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
-  </parent>
-  <artifactId>azaptree-command-service</artifactId>
-  <name>AZAPTREE-COMMAND-SERVICE</name>
-  <description>Command Service that implements "Chain of Responsibility" pattern - building on top of Commons-Chain</description>
-  <dependencies>
-  	<dependency>
-  		<groupId>com.google.guava</groupId>
-  		<artifactId>guava</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.azaptree</groupId>
-  		<artifactId>azaptree-services-commons</artifactId>
-  		<version>0.0.3-SNAPSHOT</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>commons-chain</groupId>
-  		<artifactId>commons-chain</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.apache.commons</groupId>
-  		<artifactId>commons-lang3</artifactId>
-  	</dependency>
-  </dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.azaptree</groupId>
+		<artifactId>azaptree-services</artifactId>
+		<version>0.0.3-SNAPSHOT</version>
+	</parent>
+	<artifactId>azaptree-command-service</artifactId>
+	<name>AZAPTREE-COMMAND-SERVICE</name>
+	<description>Command Service that implements "Chain of Responsibility" pattern - building on top of Commons-Chain</description>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.azaptree</groupId>
+			<artifactId>azaptree-services-commons</artifactId>
+			<version>0.0.3-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-chain</groupId>
+			<artifactId>commons-chain</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+		</dependency>
+	</dependencies>
 </project>

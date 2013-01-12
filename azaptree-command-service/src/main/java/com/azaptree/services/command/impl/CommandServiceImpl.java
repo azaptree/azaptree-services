@@ -147,7 +147,9 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 			for (final String commandName : catalog.getCommandNames()) {
 				final Command command = catalog.getCommand(commandName);
 				Assert.notNull(command);
-				cmdMap.put(new CommandKey(catalog.getName(), commandName), command);
+				final CommandKey commandKey = new CommandKey(catalog.getName(), commandName);
+				cmdMap.put(commandKey, command);
+				log.info("registered CommandKey: {}", commandKey);
 			}
 		}
 		catalogs = null; // no longer needed

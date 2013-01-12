@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.azaptree.com/test"
+	xmlns:tns="http://www.azaptree.com/test" elementFormDefault="qualified">
+
+	<element name="add-numbers-request" type="tns:AdditionRequestMessage" />
+	<element name="add-numbers-response" type="tns:AdditionResponseMessage" />
+
+	<complexType name="AdditionRequestMessage">
+		<sequence>
+			<element name="number" type="double" maxOccurs="unbounded" />
+		</sequence>
+	</complexType>
+
+	<complexType name="AdditionResponseMessage">
+		<attribute name="sum" type="double" use="required" />
+	</complexType>
+
+</schema>
