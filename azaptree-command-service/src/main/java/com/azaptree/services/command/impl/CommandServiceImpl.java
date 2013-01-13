@@ -68,7 +68,7 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 		Assert.notNull(key, "key is required");
 		Assert.notNull(ctx, "ctx is required");
 
-		final org.apache.commons.chain.Command command = getCommand(key);
+		final org.apache.commons.chain.Command command = getCommonsChainCommand(key);
 		final CommandExcecutionMetric metric = new CommandExcecutionMetric();
 		try {
 			command.execute(ctx);
@@ -84,7 +84,7 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 		}
 	}
 
-	private org.apache.commons.chain.Command getCommand(final CommandKey key) {
+	private org.apache.commons.chain.Command getCommonsChainCommand(final CommandKey key) {
 		Assert.notNull(key, "key is required");
 		final org.apache.commons.chain.Command command = commands.get(key);
 		if (command == null) {
@@ -95,8 +95,8 @@ public class CommandServiceImpl implements CommandService, CommandServiceJmxApi 
 	}
 
 	@Override
-	public com.azaptree.services.command.Command getCommandCatalog(final CommandKey key) {
-		return (com.azaptree.services.command.Command) commands.get(key);
+	public com.azaptree.services.command.Command getCommand(final CommandKey key) {
+		return (com.azaptree.services.command.Command) getCommonsChainCommand(key);
 	}
 
 	@Override

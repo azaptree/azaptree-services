@@ -30,6 +30,11 @@
 			<artifactId>jetty-client</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>com.azaptree</groupId>
+			<artifactId>azaptree-wadl-jaxb</artifactId>
+			<version>0.0.3-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

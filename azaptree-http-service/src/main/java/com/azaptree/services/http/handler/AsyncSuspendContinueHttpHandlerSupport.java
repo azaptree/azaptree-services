@@ -137,8 +137,7 @@ public abstract class AsyncSuspendContinueHttpHandlerSupport extends AbstractHan
 	 * @throws ServletException
 	 */
 	protected void preProcess(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response)
-	        throws IOException,
-	        ServletException {
+	        throws IOException, ServletException {
 		// NOOP
 	}
 

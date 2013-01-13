@@ -47,7 +47,7 @@ public interface CommandService {
 	 */
 	void execute(CommandKey key, Context ctx) throws CommandException;
 
-	Command getCommandCatalog(CommandKey key);
+	Command getCommand(CommandKey key);
 
 	CommandCatalog getCommandCatalog(String catalogName);
 

@@ -24,6 +24,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -33,7 +35,15 @@ import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.namespace.QName;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.eclipse.jetty.client.ContentExchange;
@@ -64,13 +74,53 @@ import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
+import com.google.common.base.Optional;
 
 @ContextConfiguration(classes = { CommandServiceHandlerTest.Config.class })
 public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests {
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
 	@Configuration
 	public static class Config {
+		@Bean
+		WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand() {
+			return new WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage>(AdditionRequestMessage.class, AdditionResponseMessage.class) {
+
+				@Override
+				protected boolean executeCommand(final WebCommandContext<AdditionRequestMessage, AdditionResponseMessage> ctx) {
+					final HttpServletResponse response = ctx.getHttpServletResponse();
+					response.setStatus(HttpStatus.OK_200);
+					response.setCharacterEncoding("UTF-8");
+					response.setContentType("application/xml");
+
+					final AdditionRequestMessage requestMessage = ctx.getRequestMessage();
+					double sum = 0;
+					for (final double number : requestMessage.getNumber()) {
+						sum += number;
+					}
+
+					final AdditionResponseMessage responseMessage = new AdditionResponseMessage();
+					responseMessage.setSum(sum);
+					ctx.setResponseMessage(responseMessage);
+					final ObjectFactory objectFactory = new ObjectFactory();
+					writeResponseMessage(ctx.getHttpServletResponse(), objectFactory.createAddNumbersResponse(responseMessage));
+					return true;
+				}
+
+				@Override
+				public Optional<QName> getRequestXmlElement() {
+					final ObjectFactory objectFactory = new ObjectFactory();
+					final QName elemName = objectFactory.createAddNumbersRequest(objectFactory.createAdditionRequestMessage()).getName();
+					return Optional.of(elemName);
+				}
+
+				@Override
+				public Optional<QName> getResponseXmlElement() {
+					final ObjectFactory objectFactory = new ObjectFactory();
+					final QName elemName = objectFactory.createAddNumbersResponse(objectFactory.createAdditionResponseMessage()).getName();
+					return Optional.of(elemName);
+				}
+			};
+		}
+
 		@Bean
 		CommandCatalog commandCatalog() {
 			return new CommandCatalogImpl("CommandServiceHandlerTest",
@@ -81,6 +131,11 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		@Bean
 		CommandService commandService() {
 			return new CommandServiceImpl();
+		}
+
+		@Bean
+		CommandServiceHandler commandServiceHandler() {
+			return new CommandServiceHandler(executor(), "http://localhost:8080");
 		}
 
 		@Bean(destroyMethod = "shutdown")
@@ -107,34 +162,26 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 
 					return true;
 				}
+
+				@Override
+				public Optional getRequestXmlElement() {
+					return Optional.absent();
+				}
+
+				@Override
+				public Optional getResponseXmlElement() {
+					return Optional.absent();
+				}
 			};
 		}
 
-		@Bean
-		WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand() {
-			return new WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage>(AdditionRequestMessage.class, AdditionResponseMessage.class) {
-
-				@Override
-				protected boolean executeCommand(final WebCommandContext<AdditionRequestMessage, AdditionResponseMessage> ctx) {
-					final HttpServletResponse response = ctx.getHttpServletResponse();
-					response.setStatus(HttpStatus.OK_200);
-					response.setCharacterEncoding("UTF-8");
-					response.setContentType("application/xml");
-
-					final AdditionRequestMessage requestMessage = ctx.getRequestMessage();
-					double sum = 0;
-					for (double number : requestMessage.getNumber()) {
-						sum += number;
-					}
-
-					final AdditionResponseMessage responseMessage = new AdditionResponseMessage();
-					responseMessage.setSum(sum);
-					ctx.setResponseMessage(responseMessage);
-					final ObjectFactory objectFactory = new ObjectFactory();
-					writeResponseMessage(ctx.getHttpServletResponse(), objectFactory.createAddNumbersResponse(responseMessage));
-					return true;
-				}
-			};
+		@Bean(destroyMethod = "stop")
+		HttpClient httpClient() throws Exception {
+			final HttpClient client = new HttpClient();
+			client.setThreadPool(new ExecutorThreadPoolWithGracefulShutdown(Executors.newCachedThreadPool(), 30));
+			client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
+			client.start();
+			return client;
 		}
 
 		@Bean
@@ -147,21 +194,25 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 			return new HttpServiceConfig("command-service", commandServiceHandler());
 		}
 
-		@Bean
-		CommandServiceHandler commandServiceHandler() {
-			return new CommandServiceHandler(executor());
-		}
-
-		@Bean(destroyMethod = "stop")
-		HttpClient httpClient() throws Exception {
-			final HttpClient client = new HttpClient();
-			client.setThreadPool(new ExecutorThreadPoolWithGracefulShutdown(Executors.newCachedThreadPool(), 30));
-			client.setConnectorType(HttpClient.CONNECTOR_SELECT_CHANNEL);
-			client.start();
-			return client;
-		}
-
 	}
+
+	public static String prettyFormat(final String input, final int indent) {
+		try {
+			final Source xmlInput = new StreamSource(new StringReader(input));
+			final StringWriter stringWriter = new StringWriter();
+			final StreamResult xmlOutput = new StreamResult(stringWriter);
+			final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+			transformerFactory.setAttribute("indent-number", indent);
+			final Transformer transformer = transformerFactory.newTransformer();
+			transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+			transformer.transform(xmlInput, xmlOutput);
+			return xmlOutput.getWriter().toString();
+		} catch (final Exception e) {
+			throw new RuntimeException(e); // simple exception handling, please review it
+		}
+	}
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private HttpServiceConfig httpSericeConfig;
@@ -171,22 +222,6 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 
 	@Resource(name = "addNumbersCommand")
 	private WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand;
-
-	@Test
-	public void test_helloWorldCommand() throws IOException, InterruptedException {
-		final ContentExchange contentExchange = new ContentExchange(true);
-		contentExchange.setMethod("POST");
-		final String commandCatalogName = "CommandServiceHandlerTest";
-		final String commandName = "helloWorldCommand";
-		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
-		client.send(contentExchange);
-
-		contentExchange.waitForDone();
-		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.OK_200);
-		final String responseMsg = contentExchange.getResponseContent();
-		log.info("responseMsg : {}", responseMsg);
-		Assert.assertTrue(StringUtils.startsWith(responseMsg, "TIMESTAMP :"));
-	}
 
 	@Test
 	public void test_addNumbersCommand() throws IOException, JAXBException, InterruptedException {
@@ -201,7 +236,7 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		requestMessage.getNumber().add(1d);
 		requestMessage.getNumber().add(2d);
 		requestMessage.getNumber().add(3d);
-		final Marshaller marshaller = addNumbersCommand.getJaxbContext().createMarshaller();
+		final Marshaller marshaller = addNumbersCommand.getJaxbContext().get().createMarshaller();
 		final ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		final ObjectFactory objectFactory = new ObjectFactory();
 		marshaller.marshal(objectFactory.createAddNumbersRequest(requestMessage), bos);
@@ -215,10 +250,79 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 
 		final byte[] responseContent = contentExchange.getResponseContentBytes();
 		final ByteArrayInputStream bis = new ByteArrayInputStream(responseContent);
-		log.info("response content: {}", new String(responseContent));
-		final Unmarshaller unmarshaller = addNumbersCommand.getJaxbContext().createUnmarshaller();
+		log.info("test_addNumbersCommand(): response content: {}", new String(responseContent));
+		final Unmarshaller unmarshaller = addNumbersCommand.getJaxbContext().get().createUnmarshaller();
 
 		final JAXBElement<AdditionResponseMessage> responseMessage = (JAXBElement<AdditionResponseMessage>) unmarshaller.unmarshal(bis);
-		Assert.assertEquals(responseMessage.getValue().getSum(), (1d + 2d + 3d));
+		Assert.assertEquals(responseMessage.getValue().getSum(), 1d + 2d + 3d);
+	}
+
+	@Test
+	public void test_getCommandWithNoXSD() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("GET");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "helloWorldCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s.xsd", httpSericeConfig.getPort(), commandCatalogName, commandName));
+
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.NO_CONTENT_204);
+
+		final byte[] responseContent = contentExchange.getResponseContentBytes();
+		Assert.assertTrue(ArrayUtils.isEmpty(responseContent));
+	}
+
+	@Test
+	public void test_getCommandXSD() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("GET");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "addNumbersCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s.xsd", httpSericeConfig.getPort(), commandCatalogName, commandName));
+
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.OK_200);
+
+		final byte[] responseContent = contentExchange.getResponseContentBytes();
+		final String xsd = new String(responseContent, "UTF-8");
+		Assert.assertTrue(StringUtils.isNotBlank(xsd));
+		log.info("test_getCommandXSD() xsd :\n{}", prettyFormat(xsd, 4));
+	}
+
+	@Test
+	public void test_getWADL() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("GET");
+		contentExchange.setURL(String.format("http://localhost:%d/command-service.wadl", httpSericeConfig.getPort()));
+
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.OK_200);
+
+		final byte[] responseContent = contentExchange.getResponseContentBytes();
+		final String xsd = new String(responseContent, "UTF-8");
+		Assert.assertTrue(StringUtils.isNotBlank(xsd));
+		log.info("test_getWADL() xsd :\n{}", prettyFormat(xsd, 4));
+	}
+
+	@Test
+	public void test_helloWorldCommand() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("POST");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "helloWorldCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.OK_200);
+		final String responseMsg = contentExchange.getResponseContent();
+		log.info("test_helloWorldCommand() : responseMsg : {}", responseMsg);
+		Assert.assertTrue(StringUtils.startsWith(responseMsg, "TIMESTAMP :"));
 	}
 }
