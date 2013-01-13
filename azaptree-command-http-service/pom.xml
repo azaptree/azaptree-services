@@ -3,7 +3,7 @@
 	<parent>
 		<groupId>com.azaptree</groupId>
 		<artifactId>azaptree-services</artifactId>
-		<version>0.0.3</version>
+		<version>0.0.4-SNAPSHOT</version>
 	</parent>
 	<artifactId>azaptree-command-http-service</artifactId>
 	<name>AZAPTREE-COMMAND-HTTP-SERVICE</name>
@@ -12,17 +12,17 @@
 		<dependency>
 			<groupId>com.azaptree</groupId>
 			<artifactId>azaptree-command-service</artifactId>
-			<version>0.0.3</version>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.azaptree</groupId>
 			<artifactId>azaptree-http-service</artifactId>
-			<version>0.0.3</version>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>com.azaptree</groupId>
 			<artifactId>azaptree-executor-service</artifactId>
-			<version>0.0.3</version>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.eclipse.jetty</groupId>
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>com.azaptree</groupId>
 			<artifactId>azaptree-wadl-jaxb</artifactId>
-			<version>0.0.3</version>
+			<version>0.0.4-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 
