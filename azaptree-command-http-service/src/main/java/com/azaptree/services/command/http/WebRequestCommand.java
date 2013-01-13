@@ -58,10 +58,10 @@ import com.google.common.base.Optional;
  */
 public abstract class WebRequestCommand<T, V> extends CommandSupport {
 
-	private volatile JAXBContext jaxbContext;
+	protected volatile JAXBContext jaxbContext;
 
-	private final Class<T> requestClass;
-	private final Class<V> responseClass;
+	protected final Class<T> requestClass;
+	protected final Class<V> responseClass;
 
 	/**
 	 * No request or response message is required.
@@ -152,35 +152,29 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 		}
 
 		if (hasXmlSchema()) {
-			synchronized (this) {
-				if (jaxbContext != null) {
-					return Optional.of(jaxbContext);
-				}
+			final Set<String> packageNames = new HashSet<>();
 
-				final Set<String> packageNames = new HashSet<>();
+			if (requestClass != null) {
+				packageNames.add(requestClass.getPackage().getName());
+			}
 
-				if (requestClass != null) {
-					packageNames.add(requestClass.getPackage().getName());
-				}
+			if (responseClass != null) {
+				packageNames.add(responseClass.getPackage().getName());
+			}
 
-				if (responseClass != null) {
-					packageNames.add(responseClass.getPackage().getName());
-				}
+			final StringBuilder sb = new StringBuilder(128);
+			for (final String packageName : packageNames) {
+				sb.append(packageName).append(':');
+			}
+			sb.delete(sb.length() - 1, sb.length());
+			final String jaxbContextPath = sb.toString();
+			log.info("jaxbContextPath : {}", jaxbContextPath);
 
-				final StringBuilder sb = new StringBuilder(128);
-				for (final String packageName : packageNames) {
-					sb.append(packageName).append(':');
-				}
-				sb.delete(sb.length() - 1, sb.length());
-				final String jaxbContextPath = sb.toString();
-				log.info("jaxbContextPath : {}", jaxbContextPath);
-
-				try {
-					return Optional.of(JAXBContext.newInstance(jaxbContextPath));
-				} catch (final JAXBException e) {
-					throw new IllegalStateException("Failed to create JAXContext for: " + requestClass.getPackage().getName());
-				}
-
+			try {
+				this.jaxbContext = JAXBContext.newInstance(jaxbContextPath);
+				return Optional.of(jaxbContext);
+			} catch (final JAXBException e) {
+				throw new IllegalStateException("Failed to create JAXContext for: " + requestClass.getPackage().getName());
 			}
 		}
 		return Optional.absent();
@@ -221,7 +215,7 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 		try {
 			marshaller.marshal(message, httpResponse.getOutputStream());
 		} catch (JAXBException | IOException e) {
-			throw new RuntimeException("Failed to write JAXB message response");
+			throw new RuntimeException("Failed to write JAXB message response", e);
 		}
 	}
 

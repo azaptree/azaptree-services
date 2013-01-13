@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -48,6 +49,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
+import org.eclipse.jetty.http.HttpHeaders;
 import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.io.ByteArrayBuffer;
@@ -62,6 +64,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.command.CommandCatalog;
+import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.command.http.WebCommandContext;
 import com.azaptree.services.command.http.WebRequestCommand;
@@ -69,9 +72,11 @@ import com.azaptree.services.command.impl.CommandCatalogImpl;
 import com.azaptree.services.command.impl.CommandServiceImpl;
 import com.azaptree.services.command.messages.AdditionRequestMessage;
 import com.azaptree.services.command.messages.AdditionResponseMessage;
+import com.azaptree.services.command.messages.HeartbeatMessage;
 import com.azaptree.services.command.messages.ObjectFactory;
 import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
+import com.azaptree.services.http.headers.ResponseMessageHeaders;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
 import com.google.common.base.Optional;
@@ -125,7 +130,28 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		CommandCatalog commandCatalog() {
 			return new CommandCatalogImpl("CommandServiceHandlerTest",
 			        helloWorldCommand(),
-			        addNumbersCommand());
+			        addNumbersCommand(),
+			        errorCommand(),
+			        new WebRequestCommand<HeartbeatMessage, HeartbeatMessage>("heartbeat", HeartbeatMessage.class, HeartbeatMessage.class) {
+
+				        @Override
+				        protected boolean executeCommand(final WebCommandContext<HeartbeatMessage, HeartbeatMessage> ctx) {
+					        ctx.setResponseMessage(ctx.getRequestMessage());
+					        writeResponseMessage(ctx);
+					        return false;
+				        }
+
+				        @Override
+				        public Optional<QName> getRequestXmlElement() {
+					        return Optional.of(new QName("http://www.azaptree.com/test", "heartbeat-message"));
+				        }
+
+				        @Override
+				        public Optional<QName> getResponseXmlElement() {
+					        return Optional.of(new QName("http://www.azaptree.com/test", "heartbeat-message"));
+				        }
+
+			        });
 		}
 
 		@Bean
@@ -136,6 +162,28 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		@Bean
 		CommandServiceHandler commandServiceHandler() {
 			return new CommandServiceHandler(executor(), "http://localhost:8080");
+		}
+
+		@SuppressWarnings("rawtypes")
+		@Bean
+		WebRequestCommand errorCommand() {
+			return new WebRequestCommand() {
+
+				@Override
+				protected boolean executeCommand(final WebCommandContext ctx) {
+					throw new RuntimeException("ERROR");
+				}
+
+				@Override
+				public Optional getRequestXmlElement() {
+					return Optional.absent();
+				}
+
+				@Override
+				public Optional getResponseXmlElement() {
+					return Optional.absent();
+				}
+			};
 		}
 
 		@Bean(destroyMethod = "shutdown")
@@ -223,6 +271,9 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 	@Resource(name = "addNumbersCommand")
 	private WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand;
 
+	@Autowired
+	private CommandService commandService;
+
 	@Test
 	public void test_addNumbersCommand() throws IOException, JAXBException, InterruptedException {
 		final ContentExchange contentExchange = new ContentExchange(true);
@@ -258,6 +309,22 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 	}
 
 	@Test
+	public void test_errorCommad() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("POST");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "errorCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.INTERNAL_SERVER_ERROR_500);
+
+		Assert.assertTrue(StringUtils.isNotBlank(contentExchange.getResponseFields().getStringField(ResponseMessageHeaders.STATUS_MSG.header)));
+
+	}
+
+	@Test
 	public void test_getCommandWithNoXSD() throws IOException, InterruptedException {
 		final ContentExchange contentExchange = new ContentExchange(true);
 		contentExchange.setMethod("GET");
@@ -281,7 +348,6 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		final String commandCatalogName = "CommandServiceHandlerTest";
 		final String commandName = "addNumbersCommand";
 		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s.xsd", httpSericeConfig.getPort(), commandCatalogName, commandName));
-
 		client.send(contentExchange);
 
 		contentExchange.waitForDone();
@@ -311,6 +377,35 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 	}
 
 	@Test
+	public void test_hearbeat() throws IOException, InterruptedException, JAXBException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("POST");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "heartbeat";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+
+		final WebRequestCommand<String, String> cmd = (WebRequestCommand<String, String>) commandService.getCommand(new CommandKey(commandCatalogName,
+		        commandName));
+		final JAXBContext jaxbCtx = cmd.getJaxbContext().get();
+		final Marshaller marshaller = jaxbCtx.createMarshaller();
+		final StringWriter sw = new StringWriter();
+		final HeartbeatMessage hearbeat = new HeartbeatMessage();
+		hearbeat.setMessage("test_hearbeat()");
+		marshaller.marshal(hearbeat, sw);
+
+		contentExchange.setRequestContent(new ByteArrayBuffer(sw.toString()));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.OK_200);
+
+		final Unmarshaller unmarshaller = jaxbCtx.createUnmarshaller();
+		final HeartbeatMessage responseMsg = (HeartbeatMessage) unmarshaller
+		        .unmarshal(new ByteArrayInputStream(contentExchange.getResponseContentBytes()));
+		Assert.assertEquals(responseMsg.getMessage(), hearbeat.getMessage());
+	}
+
+	@Test
 	public void test_helloWorldCommand() throws IOException, InterruptedException {
 		final ContentExchange contentExchange = new ContentExchange(true);
 		contentExchange.setMethod("POST");
@@ -324,5 +419,73 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		final String responseMsg = contentExchange.getResponseContent();
 		log.info("test_helloWorldCommand() : responseMsg : {}", responseMsg);
 		Assert.assertTrue(StringUtils.startsWith(responseMsg, "TIMESTAMP :"));
+	}
+
+	@Test
+	public void test_invalidRequestXmlMessage() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("POST");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "addNumbersCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		contentExchange.setRequestContentType("application/xml");
+
+		contentExchange.setRequestContent(new ByteArrayBuffer("<invalid-request />"));
+
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.BAD_REQUEST_400);
+
+		Assert.assertTrue(StringUtils.isNotBlank(contentExchange.getResponseFields().getStringField(ResponseMessageHeaders.STATUS_MSG.header)));
+	}
+
+	@Test
+	public void test_unknownCommand_GET() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("GET");
+		final String commandCatalogName = "ABC";
+		final String commandName = "XYZ";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.NOT_FOUND_404);
+	}
+
+	@Test
+	public void test_unknownCommand_POST() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("POST");
+		final String commandCatalogName = "ABC";
+		final String commandName = "XYZ";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.NOT_FOUND_404);
+	}
+
+	@Test
+	public void test_unsupportedHttpMethod() throws IOException, InterruptedException {
+		final ContentExchange contentExchange = new ContentExchange(true);
+		contentExchange.setMethod("PUT");
+		final String commandCatalogName = "CommandServiceHandlerTest";
+		final String commandName = "helloWorldCommand";
+		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
+		client.send(contentExchange);
+
+		contentExchange.waitForDone();
+		Assert.assertEquals(contentExchange.getResponseStatus(), HttpStatus.METHOD_NOT_ALLOWED_405);
+
+		Assert.assertTrue(contentExchange.getResponseFields().getStringField(HttpHeaders.ALLOW).contains("GET"));
+		Assert.assertTrue(contentExchange.getResponseFields().getStringField(HttpHeaders.ALLOW).contains("POST"));
+	}
+
+	@Test
+	public void test_WebRequestCommand_getJAXBContext() {
+		final Optional<JAXBContext> ctx = addNumbersCommand.getJaxbContext();
+		Assert.assertTrue(ctx.isPresent());
+		Assert.assertTrue(addNumbersCommand.getJaxbContext().get() == ctx.get());
 	}
 }

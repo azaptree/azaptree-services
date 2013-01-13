@@ -5,6 +5,12 @@
 	<element name="add-numbers-request" type="tns:AdditionRequestMessage" />
 	<element name="add-numbers-response" type="tns:AdditionResponseMessage" />
 
+	<element name="heartbeat-message">
+		<complexType>
+			<attribute name="message" type="string" />
+		</complexType>
+	</element>
+
 	<complexType name="AdditionRequestMessage">
 		<sequence>
 			<element name="number" type="double" maxOccurs="unbounded" />
@@ -14,5 +20,6 @@
 	<complexType name="AdditionResponseMessage">
 		<attribute name="sum" type="double" use="required" />
 	</complexType>
+
 
 </schema>

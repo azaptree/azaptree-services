@@ -299,11 +299,6 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 	@Override
 	protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 		final CommandKey commandKey = targetUriCommandKeyMap.get(target);
-		if (commandKey == null) {
-			handleInvalidUri(baseRequest, response);
-			return;
-		}
-
 		final WebRequestCommand command = (WebRequestCommand) commandService.getCommand(commandKey);
 		final WebCommandContext<?, ?> commandContext;
 		try {
