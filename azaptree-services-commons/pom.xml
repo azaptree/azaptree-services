@@ -1,17 +1,39 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.azaptree</groupId>
-    <artifactId>azaptree-services</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
-  </parent>
-  <artifactId>azaptree-services-commons</artifactId>
-  <name>AZAPTREE-SERVICES-COMMONS</name>
-  <description>Common code that is shared by other azaptree-services modules</description>
-  <dependencies>
-  	<dependency>
-  		<groupId>org.hibernate</groupId>
-  		<artifactId>hibernate-validator</artifactId>
-  	</dependency>
-  </dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.azaptree</groupId>
+		<artifactId>azaptree-services</artifactId>
+		<version>0.0.4-SNAPSHOT</version>
+	</parent>
+	<artifactId>azaptree-services-commons</artifactId>
+	<name>AZAPTREE-SERVICES-COMMONS</name>
+	<description>Common code that is shared by other azaptree-services modules</description>
+	<dependencies>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-validator</artifactId>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>jaxb2-maven-plugin</artifactId>
+				<version>1.5</version>
+				<executions>
+					<execution>
+						<id>xjc</id>
+						<goals>
+							<goal>testXjc</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<packageName>com.azaptree.services.command.messages</packageName> <!-- The name of your generated source package -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

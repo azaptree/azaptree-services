@@ -22,8 +22,8 @@ package com.azaptree.services.command.http;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.bind.JAXBContext;
@@ -40,6 +40,7 @@ import org.eclipse.jetty.http.HttpStatus;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.command.impl.CommandSupport;
+import com.azaptree.services.commons.xml.jaxb.JAXBContextCache;
 import com.azaptree.wadl.Method;
 import com.azaptree.wadl.Representation;
 import com.azaptree.wadl.Resource;
@@ -83,6 +84,7 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 	public WebRequestCommand(final Class<T> requestClass, final Class<V> responseClass) {
 		this.requestClass = requestClass;
 		this.responseClass = responseClass;
+		this.getJaxbContext();
 	}
 
 	/**
@@ -98,6 +100,7 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 		super(name);
 		this.requestClass = requestClass;
 		this.responseClass = responseClass;
+		this.getJaxbContext();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -152,7 +155,7 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 		}
 
 		if (hasXmlSchema()) {
-			final Set<String> packageNames = new HashSet<>();
+			final Set<String> packageNames = new TreeSet<>();
 
 			if (requestClass != null) {
 				packageNames.add(requestClass.getPackage().getName());
@@ -170,12 +173,8 @@ public abstract class WebRequestCommand<T, V> extends CommandSupport {
 			final String jaxbContextPath = sb.toString();
 			log.info("jaxbContextPath : {}", jaxbContextPath);
 
-			try {
-				this.jaxbContext = JAXBContext.newInstance(jaxbContextPath);
-				return Optional.of(jaxbContext);
-			} catch (final JAXBException e) {
-				throw new IllegalStateException("Failed to create JAXContext for: " + requestClass.getPackage().getName());
-			}
+			this.jaxbContext = JAXBContextCache.get(jaxbContextPath);
+			return Optional.of(jaxbContext);
 		}
 		return Optional.absent();
 	}
