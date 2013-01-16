@@ -54,7 +54,7 @@ public class SpringApplicationServiceTest {
 
 	@Test
 	public void testSpringApplicationService() throws Exception {
-		final String[] args = { "classpath:spring-application-service4.xml" };
+		final String[] args = { "classpath:spring-application-service.xml" };
 
 		try {
 			new Thread(new Runnable() {
@@ -64,7 +64,6 @@ public class SpringApplicationServiceTest {
 					try {
 						SpringApplicationService.main(args);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -84,7 +83,6 @@ public class SpringApplicationServiceTest {
 			Assert.assertFalse(CollectionUtils.isEmpty(props));
 
 			Assert.assertEquals(props.getProperty("app.env"), "DEV");
-			Assert.assertEquals(props.getProperty("app.profile"), "PROFILE_A");
 
 			final Map<String, String> env = ctx.getBean("env", Map.class);
 			Assert.assertNotNull(env);
@@ -111,7 +109,6 @@ public class SpringApplicationServiceTest {
 					try {
 						SpringApplicationService.main(args);
 					} catch (Exception e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}

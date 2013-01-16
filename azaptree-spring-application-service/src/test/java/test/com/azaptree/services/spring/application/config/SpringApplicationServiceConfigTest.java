@@ -22,6 +22,7 @@ package test.com.azaptree.services.spring.application.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 
 import javax.xml.bind.JAXBException;
 
@@ -45,6 +46,14 @@ public class SpringApplicationServiceConfigTest {
 		}
 	}
 
+	@SuppressWarnings("unused")
+	@Test(expectedExceptions = { IllegalArgumentException.class })
+	public void testInvalidXmlConfig() throws IOException, ClassNotFoundException, JAXBException {
+		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service-invalidConfigClass.xml")) {
+			new SpringApplicationServiceConfig(is);
+		}
+	}
+
 	@Test
 	public void testValidXmlConfig1() throws IOException, ClassNotFoundException, JAXBException {
 		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service.xml")) {
@@ -55,85 +64,16 @@ public class SpringApplicationServiceConfigTest {
 			final Class<?>[] configClasses = config.getConfigurationClasses();
 			Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
 			Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
-
-			Assert.assertNull(config.getConfigurationPackages());
+			final Properties props = config.getJvmSystemProperties();
+			Assert.assertNotNull(props);
+			Assert.assertEquals(props.getProperty("app.env"), "DEV");
 		}
-	}
-
-	@Test
-	public void testValidXmlConfig2() throws IOException, ClassNotFoundException, JAXBException {
-		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service2.xml")) {
-			final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(is);
-			log.info(config.toString());
-
-			Assert.assertEquals(config.getConfigurationPackages().length, 1);
-			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
-
-			Assert.assertNull(config.getConfigurationClasses());
-		}
-	}
-
-	@Test
-	public void testValidXmlConfig3() throws IOException, ClassNotFoundException, JAXBException {
-		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service3.xml")) {
-			final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(is);
-			log.info(config.toString());
-
-			Assert.assertEquals(config.getConfigurationPackages().length, 1);
-			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
-
-			Assert.assertEquals(config.getConfigurationClasses().length, 2);
-			final Class<?>[] configClasses = config.getConfigurationClasses();
-			Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
-			Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
-		}
-	}
-
-	@Test
-	public void testValidXmlConfig4() throws IOException, ClassNotFoundException, JAXBException {
-		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service4.xml")) {
-			final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig(is);
-			log.info(config.toString());
-
-			Assert.assertEquals(config.getConfigurationPackages().length, 1);
-			Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
-
-			Assert.assertEquals(config.getConfigurationClasses().length, 2);
-			final Class<?>[] configClasses = config.getConfigurationClasses();
-			Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
-			Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
-
-			Assert.assertNotNull(config.getJvmSystemProperties());
-			Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
-			Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
-		}
-	}
-
-	@Test
-	public void testValidXmlConfig4_fileResource() throws IOException, ClassNotFoundException, JAXBException {
-		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("file:src/test/resources/spring-application-service4.xml");
-		log.info(config.toString());
-
-		Assert.assertEquals(config.getConfigurationPackages().length, 1);
-		Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
-
-		Assert.assertEquals(config.getConfigurationClasses().length, 2);
-		final Class<?>[] configClasses = config.getConfigurationClasses();
-		Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
-		Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
-
-		Assert.assertNotNull(config.getJvmSystemProperties());
-		Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
-		Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
 	}
 
 	@Test
 	public void testValidXmlConfig4_ClasspathResource() throws IOException, ClassNotFoundException, JAXBException {
-		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("classpath:spring-application-service4.xml");
+		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("classpath:spring-application-service.xml");
 		log.info(config.toString());
-
-		Assert.assertEquals(config.getConfigurationPackages().length, 1);
-		Assert.assertTrue(ArrayUtils.contains(config.getConfigurationPackages(), ApplicationSpringConfig.class.getPackage()));
 
 		Assert.assertEquals(config.getConfigurationClasses().length, 2);
 		final Class<?>[] configClasses = config.getConfigurationClasses();
@@ -142,15 +82,21 @@ public class SpringApplicationServiceConfigTest {
 
 		Assert.assertNotNull(config.getJvmSystemProperties());
 		Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
-		Assert.assertEquals(config.getJvmSystemProperties().get("app.profile"), "PROFILE_A");
+
 	}
 
-	@SuppressWarnings("unused")
-	@Test(expectedExceptions = { IllegalArgumentException.class })
-	public void testInvalidXmlConfig() throws IOException, ClassNotFoundException, JAXBException {
-		try (final InputStream is = getClass().getResourceAsStream("/spring-application-service-invalidConfigClass.xml")) {
-			new SpringApplicationServiceConfig(is);
-		}
+	@Test
+	public void testValidXmlConfig4_fileResource() throws IOException, ClassNotFoundException, JAXBException {
+		final SpringApplicationServiceConfig config = new SpringApplicationServiceConfig("file:src/test/resources/spring-application-service.xml");
+		log.info(config.toString());
+
+		Assert.assertEquals(config.getConfigurationClasses().length, 2);
+		final Class<?>[] configClasses = config.getConfigurationClasses();
+		Assert.assertTrue(ArrayUtils.contains(configClasses, ApplicationSpringConfig.class));
+		Assert.assertTrue(ArrayUtils.contains(configClasses, WebApplicationSpringConfig.class));
+
+		Assert.assertNotNull(config.getJvmSystemProperties());
+		Assert.assertEquals(config.getJvmSystemProperties().get("app.env"), "DEV");
 	}
 
 }

@@ -34,6 +34,7 @@ import java.util.Properties;
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.SchemaOutputResolver;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.util.JAXBSource;
@@ -47,6 +48,7 @@ import javax.xml.validation.Validator;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -55,16 +57,14 @@ import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 import org.xml.sax.SAXException;
 
+import com.azaptree.services.commons.xml.XmlUtils;
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationClasses;
-import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationPackages;
 import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties;
 import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties.Prop;
 
 public class SpringApplicationServiceConfig {
 
 	private Class<?>[] configurationClasses;
-
-	private Package[] configurationPackages;
 
 	private Properties jvmSystemProperties;
 
@@ -87,11 +87,6 @@ public class SpringApplicationServiceConfig {
 		if (ArrayUtils.isNotEmpty(configurationClasses)) {
 			for (final Class<?> c : configurationClasses) {
 				ctx.register(c);
-			}
-		}
-		if (ArrayUtils.isNotEmpty(configurationPackages)) {
-			for (final Package p : configurationPackages) {
-				ctx.scan(p.getName());
 			}
 		}
 
@@ -126,15 +121,6 @@ public class SpringApplicationServiceConfig {
 	}
 
 	/**
-	 * Packages to scan for Spring Configuration classes - used to configure a Spring ApplicationContext using Java based configuration
-	 * 
-	 * @return
-	 */
-	public Package[] getConfigurationPackages() {
-		return configurationPackages;
-	}
-
-	/**
 	 * Before creating the Spring ApplicationContext, the specified JVM system properties will be set
 	 * 
 	 * @return
@@ -146,15 +132,15 @@ public class SpringApplicationServiceConfig {
 	private void init(final InputStream xml) throws JAXBException, ClassNotFoundException {
 		Assert.notNull(xml, "xml is required");
 		final SpringApplicationService config = parse(xml);
+		log(config);
 		loadConfigurationClasses(config);
-		loadConfigurationPackages(config);
 		loadJvmSystemProperties(config);
 	}
 
 	private void loadConfigurationClasses(final SpringApplicationService config) throws ClassNotFoundException {
-		final ClassLoader cl = getClass().getClassLoader();
 		final ConfigurationClasses configurationClasses = config.getConfigurationClasses();
 		if (configurationClasses != null && !CollectionUtils.isEmpty(configurationClasses.getClazz())) {
+			final ClassLoader cl = getClass().getClassLoader();
 			final List<Class<?>> configClasses = new ArrayList<>(configurationClasses.getClazz().size());
 			for (final String clazz : configurationClasses.getClazz()) {
 				final Class<?> c = cl.loadClass(clazz.trim());
@@ -169,17 +155,6 @@ public class SpringApplicationServiceConfig {
 
 	}
 
-	private void loadConfigurationPackages(final SpringApplicationService config) {
-		final ConfigurationPackages configurationPackages = config.getConfigurationPackages();
-		if (configurationPackages != null && !CollectionUtils.isEmpty(configurationPackages.getPackage())) {
-			final List<Package> packages = new ArrayList<>(configurationPackages.getPackage().size());
-			for (final String pkg : configurationPackages.getPackage()) {
-				packages.add(Package.getPackage(pkg.trim()));
-			}
-			this.configurationPackages = packages.toArray(new Package[packages.size()]);
-		}
-	}
-
 	private void loadJvmSystemProperties(final SpringApplicationService config) {
 		final JvmSystemProperties props = config.getJvmSystemProperties();
 		if (props != null && !CollectionUtils.isEmpty(props.getProp())) {
@@ -188,6 +163,25 @@ public class SpringApplicationServiceConfig {
 				jvmSystemProperties.setProperty(prop.getName(), prop.getValue().trim());
 			}
 		}
+	}
+
+	private void log(final SpringApplicationService config) {
+		final StringWriter sw = new StringWriter();
+		final Marshaller m;
+		try {
+			final JAXBContext ctx = JAXBContext.newInstance(SpringApplicationService.class.getPackage().getName());
+			m = ctx.createMarshaller();
+		} catch (final JAXBException e) {
+			throw new IllegalStateException("Failed to create marshller ", e);
+		}
+
+		try {
+			m.marshal(config, sw);
+		} catch (final JAXBException e) {
+			throw new IllegalStateException("Failed to marshal SpringApplicationService", e);
+		}
+
+		LoggerFactory.getLogger(getClass()).info("XML config:\n{}", XmlUtils.prettyFormatXml(sw.toString(), 4));
 	}
 
 	private SpringApplicationService parse(final InputStream xml) throws JAXBException {
@@ -217,13 +211,6 @@ public class SpringApplicationServiceConfig {
 				names[i] = configurationClasses[i].getName();
 			}
 			sb.append("configurationClasses", Arrays.toString(names));
-		}
-		if (ArrayUtils.isNotEmpty(configurationPackages)) {
-			final String[] names = new String[configurationPackages.length];
-			for (int i = 0; i < names.length; i++) {
-				names[i] = configurationPackages[i].getName();
-			}
-			sb.append("configurationPackages", Arrays.toString(names));
 		}
 
 		if (!CollectionUtils.isEmpty(jvmSystemProperties)) {

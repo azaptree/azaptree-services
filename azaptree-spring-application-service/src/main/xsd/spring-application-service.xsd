@@ -20,18 +20,11 @@
 						</sequence>
 					</complexType>
 				</element>
-				<element name="configuration-packages" minOccurs="0">
-					<complexType>
-						<annotation>
-							<documentation><![CDATA[List of packages to scan for Spring configuration classes]]></documentation>
-						</annotation>
-						<sequence>
-							<element name="package" type="string" maxOccurs="unbounded" />
-						</sequence>
-					</complexType>
-				</element>
 				<element name="jvm-system-properties" minOccurs="0">
 					<complexType>
+						<annotation>
+							<documentation><![CDATA[JVM properties that are set before the Spring ApplicationContext is created]]></documentation>
+						</annotation>
 						<sequence>
 							<element name="prop" maxOccurs="unbounded">
 								<complexType>
