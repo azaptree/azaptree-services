@@ -24,5 +24,10 @@
 			<groupId>com.jolbox</groupId>
 			<artifactId>bonecp</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.azaptree</groupId>
+			<artifactId>azaptree-command-service</artifactId>
+			<version>0.0.4-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>
