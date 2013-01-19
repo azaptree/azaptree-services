@@ -1,4 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.azaptree</groupId>
 	<artifactId>azaptree-services</artifactId>
@@ -68,6 +69,32 @@
 				<artifactId>spring-webmvc</artifactId>
 				<version>${springframework.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-aop</artifactId>
+				<version>${springframework.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-expression</artifactId>
+				<version>${springframework.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-core</artifactId>
+				<version>${spring-security.version}</version>				
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-web</artifactId>
+				<version>${spring-security.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.security</groupId>
+				<artifactId>spring-security-config</artifactId>
+				<version>${spring-security.version}</version>
+			</dependency>
 			<!-- END : Spring -->
 
 			<dependency>
@@ -103,6 +130,12 @@
 				<version>${com.fasterxml.jackson.core.version}</version>
 			</dependency>
 			<!-- END: fasterxml -->
+
+			<dependency>
+				<groupId>com.thoughtworks.xstream</groupId>
+				<artifactId>xstream</artifactId>
+				<version>1.4.3</version>
+			</dependency>
 
 			<dependency>
 				<groupId>org.hibernate</groupId>
@@ -164,6 +197,29 @@
 				<groupId>org.eclipse.jetty</groupId>
 				<artifactId>jetty-client</artifactId>
 				<version>${org.eclipse.jetty.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.shiro</groupId>
+				<artifactId>shiro-core</artifactId>
+				<version>${shiro.version}</version>
+				<exclusions>
+					<exclusion>
+						<artifactId>slf4j-api</artifactId>
+						<groupId>org.slf4j</groupId>
+					</exclusion>
+				</exclusions>
+			</dependency>
+
+			<dependency>
+				<groupId>postgresql</groupId>
+				<artifactId>postgresql</artifactId>
+				<version>${postgresql.jdbc.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.jolbox</groupId>
+				<artifactId>bonecp</artifactId>
+				<version>0.8.0-rc1</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -232,9 +288,12 @@
 
 	<properties>
 		<springframework.version>3.2.0.RELEASE</springframework.version>
+		<spring-security.version>3.1.3.RELEASE</spring-security.version>
 		<com.fasterxml.jackson.core.version>2.1.0</com.fasterxml.jackson.core.version>
 		<license.licenseName>apache_v2</license.licenseName>
 		<org.eclipse.jetty.version>8.1.8.v20121106</org.eclipse.jetty.version>
+		<shiro.version>1.2.1</shiro.version>
+		<postgresql.jdbc.version>9.1-901.jdbc4</postgresql.jdbc.version>
 	</properties>
 
 	<build>
@@ -418,6 +477,7 @@
 		<module>azaptree-http-service</module>
 		<module>azaptree-command-http-service</module>
 		<module>azaptree-wadl-jaxb</module>
+		<module>azaptree-security-service</module>
 	</modules>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
