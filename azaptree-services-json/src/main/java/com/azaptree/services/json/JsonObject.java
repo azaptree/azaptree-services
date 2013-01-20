@@ -10,7 +10,7 @@ package com.azaptree.services.json;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,6 +20,7 @@ package com.azaptree.services.json;
  * #L%
  */
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -31,12 +32,12 @@ import java.io.OutputStream;
  * 
  */
 public interface JsonObject {
-	void init(InputStream json);
+	void init(InputStream json) throws IOException;
 
 	void init(String json);
 
 	String toJson();
 
-	void writeJson(OutputStream os);
+	void writeJson(OutputStream os) throws IOException;
 
 }
