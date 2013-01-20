@@ -32,6 +32,8 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.azaptree.services.domain.entity.EntityAuditlogRecord.AuditAction;
+import com.azaptree.services.domain.entity.impl.DomainEntityAuditLogRecord;
 import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
 import com.azaptree.services.json.JsonUtils;
 import com.fasterxml.jackson.core.JsonParser;
@@ -329,5 +331,23 @@ public class DomainVersionedEntityTest {
 		final ByteArrayInputStream bis = new ByteArrayInputStream(user.toJson().getBytes("UTF-8"));
 		final User user4 = new User(bis);
 		Assert.assertEquals(user4, user);
+
+		final DomainEntityAuditLogRecord auditLogRecord = new DomainEntityAuditLogRecord(user4, AuditAction.UPDATED);
+		log.info("auditLogRecord: {}", auditLogRecord);
+		Assert.assertEquals(auditLogRecord.getAuditAction(), auditLogRecord.getAuditAction());
+		Assert.assertEquals(auditLogRecord.getAuditedEntityId(), user4.getEntityId());
+		Assert.assertEquals(auditLogRecord.getEntityType(), User.class.getName());
+		Assert.assertEquals(new User(auditLogRecord.getEntityJson()), user4);
+		Assert.assertTrue(auditLogRecord.getEntityAuditlogRecordCreatedOn() > 0);
+		Assert.assertNotNull(auditLogRecord.getEntityId());
+
+		final DomainEntityAuditLogRecord auditLogRecord2 = new DomainEntityAuditLogRecord();
+		auditLogRecord2.init(auditLogRecord.toJson());
+		Assert.assertEquals(auditLogRecord2.getAuditAction(), auditLogRecord.getAuditAction());
+		Assert.assertEquals(auditLogRecord2.getAuditedEntityId(), user4.getEntityId());
+		Assert.assertEquals(auditLogRecord2.getEntityType(), User.class.getName());
+		Assert.assertEquals(new User(auditLogRecord2.getEntityJson()), user4);
+		Assert.assertTrue(auditLogRecord2.getEntityAuditlogRecordCreatedOn() > 0);
+		Assert.assertNotNull(auditLogRecord2.getEntityId());
 	}
 }
