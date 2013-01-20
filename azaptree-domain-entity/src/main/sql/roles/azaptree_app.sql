@@ -1,0 +1,6 @@
+-- Role: azaptree_app
+
+-- DROP ROLE azaptree_app;
+
+CREATE ROLE azaptree_app
+  NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION;

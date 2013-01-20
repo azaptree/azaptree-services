@@ -25,12 +25,21 @@ import java.util.UUID;
 public interface EntityAuditlogRecord extends Entity {
 
 	public enum AuditAction {
-		CREATED,
-		UPDATED,
-		DELETED
+		CREATED(0),
+		UPDATED(1),
+		DELETED(2);
+
+		public final int id;
+
+		private AuditAction(final int id) {
+			this.id = id;
+		}
+
 	}
 
 	AuditAction getAuditAction();
+
+	UUID getAuditedEntityId();
 
 	/**
 	 * Epoch time
@@ -39,7 +48,7 @@ public interface EntityAuditlogRecord extends Entity {
 	 */
 	long getEntityAuditlogRecordCreatedOn();
 
-	UUID getAuditedEntityId();
+	String getEntityJson();
 
 	/**
 	 * Should map the the Entity Class
@@ -47,6 +56,4 @@ public interface EntityAuditlogRecord extends Entity {
 	 * @return
 	 */
 	String getEntityType();
-
-	String getEntityJson();
 }
