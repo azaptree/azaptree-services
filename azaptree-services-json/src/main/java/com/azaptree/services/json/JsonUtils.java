@@ -39,8 +39,10 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.guava.GuavaModule;
 
 /**
+ * Guava module is registered by default because it is a core library that is used by azaptree-services.
  * 
  * @author alfio
  * 
@@ -71,6 +73,7 @@ public abstract class JsonUtils {
 		normalizingObjectMapper.setSerializationInclusion(Include.NON_NULL);
 		normalizingObjectMapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
+		register(new GuavaModule());
 	}
 
 	public static <T> T convert(final Map<String, Object> propertyMap, final Class<T> typeRef) {

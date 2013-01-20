@@ -42,9 +42,6 @@ import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.Module;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.google.common.base.Optional;
 
 public class JsonUtilsTest {
@@ -58,13 +55,6 @@ public class JsonUtilsTest {
 	private List<String> stringList;
 
 	private Optional<Boolean> optionalBoolean = Optional.absent();
-
-	static {
-		final Module[] modules = { new GuavaModule(), new JodaModule() };
-		for (final Module module : modules) {
-			JsonUtils.register(module);
-		}
-	}
 
 	@BeforeTest
 	public void beforeTest() {
