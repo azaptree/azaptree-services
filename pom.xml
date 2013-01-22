@@ -492,6 +492,7 @@
 		<module>azaptree-security-service</module>
 		<module>azaptree-domain-entity</module>
 		<module>azaptree-services-json</module>
+		<module>azaptree-shiro-realm</module>
 	</modules>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>

@@ -25,9 +25,9 @@ import java.util.UUID;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.Entity;
-import com.azaptree.services.domain.entity.EntityAuditlogRecord;
+import com.azaptree.services.domain.entity.EntityAuditLogRecord;
 
-public class DomainEntityAuditLogRecord extends DomainEntity implements EntityAuditlogRecord {
+public class DomainEntityAuditLogRecord extends DomainEntity implements EntityAuditLogRecord {
 	private UUID auditedEntityId;
 
 	private AuditAction auditAction;

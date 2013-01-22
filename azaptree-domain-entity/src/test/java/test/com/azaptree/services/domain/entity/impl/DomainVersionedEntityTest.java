@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.azaptree.services.domain.entity.EntityAuditlogRecord.AuditAction;
+import com.azaptree.services.domain.entity.EntityAuditLogRecord.AuditAction;
 import com.azaptree.services.domain.entity.impl.DomainEntityAuditLogRecord;
 import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
 import com.azaptree.services.json.JsonUtils;

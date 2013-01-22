@@ -1,8 +1,8 @@
-package com.azaptree.services.security.domain;
+package com.azaptree.services.domain.entity;
 
 /*
  * #%L
- * AZAPTREE SECURITY SERVICE
+ * AZAPTREE-DOMAIN-ENTITY
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,18 +20,40 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
-import com.azaptree.services.domain.entity.VersionedEntity;
+import java.util.UUID;
 
-/**
- * The Subject's entity id is used as the Subject's primary principal.
- * 
- * Applications will need to map the subject to an application specific principal.
- * For example, when a new user is created by an application, the application may use the user's e-mail address as the primary principal. The application will
- * then need to create a new Subject that is mapped to the user.
- * 
- * @author alfio
- * 
- */
-public interface Subject extends VersionedEntity {
+public interface EntityAuditLogRecord extends Entity {
 
+	public enum AuditAction {
+		CREATED(0),
+		UPDATED(1),
+		DELETED(2);
+
+		public final int id;
+
+		private AuditAction(final int id) {
+			this.id = id;
+		}
+
+	}
+
+	AuditAction getAuditAction();
+
+	UUID getAuditedEntityId();
+
+	/**
+	 * Epoch time
+	 * 
+	 * @return
+	 */
+	long getEntityAuditlogRecordCreatedOn();
+
+	String getEntityJson();
+
+	/**
+	 * Should map the the Entity Class
+	 * 
+	 * @return
+	 */
+	String getEntityType();
 }

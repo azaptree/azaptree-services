@@ -1,26 +1,40 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <groupId>com.azaptree</groupId>
-    <artifactId>azaptree-services</artifactId>
-    <version>0.0.4-SNAPSHOT</version>
-  </parent>
-  <artifactId>azaptree-domain-entity</artifactId>
-  <name>AZAPTREE-DOMAIN-ENTITY</name>
-  <description>Defines the base Entity domain object.</description>
-  <dependencies>
-  	<dependency>
-  		<groupId>com.google.guava</groupId>
-  		<artifactId>guava</artifactId>
-  	</dependency>
-  	<dependency>
-  		<groupId>com.azaptree</groupId>
-  		<artifactId>azaptree-services-json</artifactId>
-  		<version>0.0.4-SNAPSHOT</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>commons-beanutils</groupId>
-  		<artifactId>commons-beanutils</artifactId>
-  	</dependency>
-  </dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.azaptree</groupId>
+		<artifactId>azaptree-services</artifactId>
+		<version>0.0.4-SNAPSHOT</version>
+	</parent>
+	<artifactId>azaptree-domain-entity</artifactId>
+	<name>AZAPTREE-DOMAIN-ENTITY</name>
+	<description>Defines the base Entity domain object.</description>
+	<dependencies>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.azaptree</groupId>
+			<artifactId>azaptree-services-json</artifactId>
+			<version>0.0.4-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aspects</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-tx</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+		</dependency>
+	</dependencies>
 </project>

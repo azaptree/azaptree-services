@@ -1,8 +1,8 @@
-package com.azaptree.services.security.domain;
+package com.azaptree.services.domain.entity.dao;
 
 /*
  * #%L
- * AZAPTREE SECURITY SERVICE
+ * AZAPTREE-DOMAIN-ENTITY
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,8 +20,34 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
-import com.azaptree.services.domain.entity.VersionedEntity;
+public class SortField {
+	private String fieldName;
 
-public interface Principal extends VersionedEntity {
+	private boolean ascending;
+
+	public SortField() {
+	}
+
+	public SortField(final String fieldName, final boolean ascending) {
+		super();
+		this.fieldName = fieldName;
+		this.ascending = ascending;
+	}
+
+	public String getFieldName() {
+		return fieldName;
+	}
+
+	public boolean isAscending() {
+		return ascending;
+	}
+
+	public void setAscending(final boolean ascending) {
+		this.ascending = ascending;
+	}
+
+	public void setFieldName(final String fieldName) {
+		this.fieldName = fieldName;
+	}
 
 }

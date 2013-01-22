@@ -1,8 +1,8 @@
-package com.azaptree.services.domain.entity;
+package com.azaptree.services.security.domain.impl;
 
 /*
  * #%L
- * AZAPTREE-DOMAIN-ENTITY
+ * AZAPTREE SECURITY SERVICE
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,40 +20,9 @@ package com.azaptree.services.domain.entity;
  * #L%
  */
 
-import java.util.UUID;
+import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
+import com.azaptree.services.security.domain.Subject;
 
-public interface EntityAuditlogRecord extends Entity {
+public class SubjectImpl extends DomainVersionedEntity implements Subject {
 
-	public enum AuditAction {
-		CREATED(0),
-		UPDATED(1),
-		DELETED(2);
-
-		public final int id;
-
-		private AuditAction(final int id) {
-			this.id = id;
-		}
-
-	}
-
-	AuditAction getAuditAction();
-
-	UUID getAuditedEntityId();
-
-	/**
-	 * Epoch time
-	 * 
-	 * @return
-	 */
-	long getEntityAuditlogRecordCreatedOn();
-
-	String getEntityJson();
-
-	/**
-	 * Should map the the Entity Class
-	 * 
-	 * @return
-	 */
-	String getEntityType();
 }

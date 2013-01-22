@@ -20,18 +20,20 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
+import java.util.UUID;
+
 import com.azaptree.services.domain.entity.VersionedEntity;
 
 /**
- * The Subject's entity id is used as the Subject's primary principal.
- * 
- * Applications will need to map the subject to an application specific principal.
- * For example, when a new user is created by an application, the application may use the user's e-mail address as the primary principal. The application will
- * then need to create a new Subject that is mapped to the user.
+ * For security reasons, the actual credential is not known - only its hash.
  * 
  * @author alfio
  * 
  */
-public interface Subject extends VersionedEntity {
+public interface HashedCredential extends VersionedEntity, Hash {
+
+	String getName();
+
+	UUID getSubjecId();
 
 }

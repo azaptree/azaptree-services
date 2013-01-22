@@ -1,8 +1,8 @@
-package com.azaptree.services.security.domain;
+package com.azaptree.services.domain.entity.dao;
 
 /*
  * #%L
- * AZAPTREE SECURITY SERVICE
+ * AZAPTREE-DOMAIN-ENTITY
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,8 +20,29 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
-import com.azaptree.services.domain.entity.VersionedEntity;
+public class Page {
 
-public interface Credential extends VersionedEntity {
+	private int pageSize;
+
+	private int page;
+
+	public Page() {
+	}
+
+	public int getPageSize() {
+		return pageSize;
+	}
+
+	public void setPageSize(int pageSize) {
+		this.pageSize = pageSize;
+	}
+
+	public int getPage() {
+		return page;
+	}
+
+	public void setPage(int page) {
+		this.page = page;
+	}
 
 }
