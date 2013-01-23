@@ -24,6 +24,7 @@ import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +61,10 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 			ds.setValidationQuery("select 1");
 			ds.setLogValidationErrors(true);
 			ds.setInitialSize(10);
+			ds.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;" +
+			        "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;" +
+			        "org.apache.tomcat.jdbc.pool.interceptor.SlowQueryReport");
+			ds.setTimeBetweenEvictionRunsMillis(30000);
 
 			return ds;
 		}
@@ -83,13 +88,22 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	public void test_create_findById_delete() {
 		final long now = System.currentTimeMillis();
 		final Subject temp = new SubjectImpl();
+		final StopWatch stopWatch = new StopWatch();
+		stopWatch.start();
 		final Subject subject = subjectDao.create(temp);
+		stopWatch.stop();
+		log.info("create time: {}", stopWatch.getTime());
+		stopWatch.reset();
 		Assert.assertNotNull(subject.getEntityId());
 		Assert.assertTrue(subject.getEntityCreatedOn() >= now);
 
 		log.info("subject: {}", subject);
 
+		stopWatch.start();
 		final Subject subject2 = subjectDao.findById(subject.getEntityId());
+		stopWatch.stop();
+		log.info("findById time: {}", stopWatch.getTime());
+		stopWatch.reset();
 		Assert.assertNotNull(subject2);
 		Assert.assertEquals(subject2, subject);
 
@@ -97,7 +111,10 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 		Assert.assertNull(subjectDao.findById(UUID.randomUUID()));
 
+		stopWatch.start();
 		Assert.assertTrue(subjectDao.delete(subject.getEntityId()));
+		stopWatch.stop();
+		log.info("delete time: {}", stopWatch.getTime());
 		Assert.assertNull(subjectDao.findById(subject.getEntityId()));
 	}
 

@@ -24,6 +24,8 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.lang3.time.DateFormatUtils;
 import org.springframework.util.Assert;
 
+import com.azaptree.services.command.CommandKey;
+
 /**
  * 
  * Used to record command execution metrics.
@@ -32,13 +34,15 @@ import org.springframework.util.Assert;
  * 
  */
 public class CommandExcecutionMetric {
+	private final CommandKey key;
 	private final long executionTimeStart;
 	private long executionTimeEnd;
 	private boolean success = true;
 	private Throwable throwable;
 
-	public CommandExcecutionMetric() {
-		super();
+	public CommandExcecutionMetric(final CommandKey key) {
+		Assert.notNull(key, "key is required");
+		this.key = key;
 		executionTimeStart = System.currentTimeMillis();
 	}
 
@@ -66,6 +70,10 @@ public class CommandExcecutionMetric {
 		return executionTimeStart;
 	}
 
+	public CommandKey getKey() {
+		return key;
+	}
+
 	public Throwable getThrowable() {
 		return throwable;
 	}
@@ -80,9 +88,11 @@ public class CommandExcecutionMetric {
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder(128);
-		sb.append("CommandExcecutionMetric [executionTimeStart=").append(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(executionTimeStart));
-		sb.append("executionTime=").append(executionTimeEnd - executionTimeStart).append(" msec, success=").append(success);
+		final StringBuilder sb = new StringBuilder(256);
+		sb.append("CommandExcecutionMetric [key=");
+		key.toString(sb);
+		sb.append(", executionTimeStart=").append(DateFormatUtils.ISO_DATETIME_TIME_ZONE_FORMAT.format(executionTimeStart));
+		sb.append(", executionTime=").append(executionTimeEnd - executionTimeStart).append(" msec, success=").append(success);
 		if (throwable != null) {
 			sb.append(", throwable=").append(ExceptionUtils.getStackTrace(throwable));
 		}
@@ -90,4 +100,5 @@ public class CommandExcecutionMetric {
 
 		return sb.toString();
 	}
+
 }

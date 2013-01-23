@@ -38,7 +38,6 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 	private final int hashCode;
 
 	public CommandKey(final String catalogName, final String commandName) {
-		super();
 		Assert.hasText(catalogName);
 		Assert.hasText(commandName);
 		this.catalogName = catalogName;
@@ -103,7 +102,11 @@ public class CommandKey implements Serializable, Comparable<CommandKey> {
 
 	@Override
 	public String toString() {
-		return new StringBuilder(catalogName).append(CatalogFactory.DELIMITER).append(commandName).toString();
+		return toString(new StringBuilder(64));
+	}
+
+	public String toString(StringBuilder sb) {
+		return sb.append(catalogName).append(CatalogFactory.DELIMITER).append(commandName).toString();
 	}
 
 }
