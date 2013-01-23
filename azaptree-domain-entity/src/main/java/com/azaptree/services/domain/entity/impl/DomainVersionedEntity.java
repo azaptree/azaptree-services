@@ -58,6 +58,10 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 	 * @param lastupdatedByEntityId
 	 */
 	public void created(final UUID createdByEntityId) {
+		if (this.entityId != null) {
+			throw new IllegalStateException("This entity has already been created: entityId = " + entityId);
+		}
+		this.entityId = UUID.randomUUID();
 		entityVersion = 1;
 		this.createdByEntityId = createdByEntityId;
 		this.entityCreatedOn = System.currentTimeMillis();
@@ -138,6 +142,7 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 	 * For any other field, JSON parsing is delegated to init(JsonParser parser)
 	 * 
 	 */
+	@SuppressWarnings("incomplete-switch")
 	@Override
 	public void init(InputStream json) throws IOException {
 		try (final JsonParser parser = JsonUtils.createJsonParser(json)) {
@@ -161,6 +166,7 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 					} else {
 						init(parser);
 					}
+					break;
 				}
 			}
 		}
@@ -200,6 +206,9 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 	 * @param lastupdatedByEntityId
 	 */
 	public void updated(final UUID lastupdatedByEntityId) {
+		if (this.entityId == null) {
+			throw new IllegalStateException("The entity has not yet been created : entityId == null");
+		}
 		entityVersion++;
 		updatedByEntityId = lastupdatedByEntityId;
 		entityUpdatedOn = System.currentTimeMillis();

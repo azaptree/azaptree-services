@@ -1,3 +1,5 @@
+package test.com.azaptree.services.security.dao;
+
 /*
  * #%L
  * AZAPTREE SECURITY SERVICE
@@ -17,35 +19,31 @@
  * limitations under the License.
  * #L%
  */
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
 
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.Transactional;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
-@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
-@ContextConfiguration(classes = { PostGresqlDataSourceTest.Config.class })
-public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
-	private final Logger log = LoggerFactory.getLogger(getClass());
+import com.azaptree.services.security.dao.SubjectDAO;
+import com.azaptree.services.security.domain.Subject;
+import com.azaptree.services.security.domain.impl.SubjectImpl;
+
+@ContextConfiguration(classes = SubjectDAOTest.Config.class)
+public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
+	final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Configuration
 	public static class Config {
-
 		@Bean(destroyMethod = "close")
 		public DataSource dataSource() {
 			org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
@@ -65,35 +63,35 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
-		JdbcTemplate JdbcTemplate() {
+		public JdbcTemplate jdbcTemplate() {
 			return new JdbcTemplate(dataSource());
 		}
-	}
 
-	@Autowired
-	private DataSource ds;
-
-	@Autowired
-	private JdbcTemplate jdbc;
-
-	@Transactional
-	@Test
-	public void testConnection() throws SQLException {
-		try (final Connection conn = ds.getConnection()) {
-			final Statement stmt = conn.createStatement();
-			for (int i = 0; i < 100; i++) {
-				try (final ResultSet rs = stmt.executeQuery("select NOW()")) {
-					rs.next();
-					log.info("testConnection(): NOW() = {}", rs.getTimestamp(1));
-				}
-			}
+		@Bean
+		public SubjectDAO subjectDao() {
+			return new SubjectDAO(jdbcTemplate());
 		}
 	}
 
+	@Autowired
+	private SubjectDAO subjectDao;
+
 	@Transactional
 	@Test
-	public void testJdbcTemplate() {
-		final Timestamp ts = jdbc.queryForObject("select NOW()", Timestamp.class);
-		log.info("testJdbcTemplate(): NOW() = {}", ts);
+	public void testCreate() {
+		final long now = System.currentTimeMillis();
+		final Subject temp = new SubjectImpl();
+		final Subject subject = subjectDao.create(temp);
+		Assert.assertNotNull(subject.getEntityId());
+		Assert.assertTrue(subject.getEntityCreatedOn() >= now);
+
+		log.info("subject: {}", subject);
+
+		final Subject subject2 = subjectDao.findById(subject.getEntityId());
+		Assert.assertNotNull(subject2);
+		Assert.assertEquals(subject2, subject);
+
+		log.info("subject2: {}", subject2);
 	}
+
 }

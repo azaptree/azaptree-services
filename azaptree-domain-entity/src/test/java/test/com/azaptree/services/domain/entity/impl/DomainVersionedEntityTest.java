@@ -302,7 +302,6 @@ public class DomainVersionedEntityTest {
 
 		final User user = new User();
 		user.setAddress(address);
-		user.setEntityId(UUID.randomUUID());
 		user.setFname("Alfio");
 		user.setLname("Zappala");
 		user.setAge(39);

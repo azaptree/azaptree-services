@@ -10,7 +10,7 @@ package com.azaptree.services.domain.entity.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,11 +29,9 @@ public class Page {
 	public Page() {
 	}
 
-	public int getPageSize() {
-		return pageSize;
-	}
-
-	public void setPageSize(int pageSize) {
+	public Page(final int page, final int pageSize) {
+		super();
+		this.page = page;
 		this.pageSize = pageSize;
 	}
 
@@ -41,8 +39,16 @@ public class Page {
 		return page;
 	}
 
-	public void setPage(int page) {
+	public int getPageSize() {
+		return pageSize;
+	}
+
+	public void setPage(final int page) {
 		this.page = page;
+	}
+
+	public void setPageSize(final int pageSize) {
+		this.pageSize = pageSize;
 	}
 
 }

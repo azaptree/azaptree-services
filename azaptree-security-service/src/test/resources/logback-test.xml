@@ -33,7 +33,7 @@
 	
 	<logger name="com.azaptree.services.http" level="DEBUG" />
 	
-	<root level="info">
+	<root level="debug">
 		<appender-ref ref="ASYNC" />
 	</root>
 </configuration>
