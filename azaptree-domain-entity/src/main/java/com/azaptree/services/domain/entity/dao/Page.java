@@ -1,5 +1,7 @@
 package com.azaptree.services.domain.entity.dao;
 
+import org.springframework.util.Assert;
+
 /*
  * #%L
  * AZAPTREE-DOMAIN-ENTITY
@@ -22,15 +24,13 @@ package com.azaptree.services.domain.entity.dao;
 
 public class Page {
 
-	private int pageSize;
+	private final int pageSize;
 
-	private int page;
-
-	public Page() {
-	}
+	private final int page;
 
 	public Page(final int page, final int pageSize) {
-		super();
+		Assert.isTrue(page >= 0, "contraint check failed: page >= 0");
+		Assert.isTrue(pageSize >= 1, "contraint check failed: pageSize >= 1");
 		this.page = page;
 		this.pageSize = pageSize;
 	}
@@ -41,14 +41,6 @@ public class Page {
 
 	public int getPageSize() {
 		return pageSize;
-	}
-
-	public void setPage(final int page) {
-		this.page = page;
-	}
-
-	public void setPageSize(final int pageSize) {
-		this.pageSize = pageSize;
 	}
 
 }

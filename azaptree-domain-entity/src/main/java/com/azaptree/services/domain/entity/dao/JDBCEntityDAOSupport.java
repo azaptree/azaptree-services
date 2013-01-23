@@ -10,7 +10,7 @@ package com.azaptree.services.domain.entity.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,21 +20,66 @@ package com.azaptree.services.domain.entity.dao;
  * #L%
  */
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.Entity;
+import com.google.common.collect.ImmutableMap;
 
 public abstract class JDBCEntityDAOSupport<T extends Entity> implements EntityDAO<T> {
 
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	protected final JdbcTemplate jdbc;
 
+	/**
+	 * Maps entity field to table column
+	 */
+	protected Map<String, String> fieldColumnMappings = new HashMap<>();
+
 	public JDBCEntityDAOSupport(final JdbcTemplate jdbc) {
 		Assert.notNull(jdbc, "jdbc is required");
 		this.jdbc = jdbc;
+		initFieldColumnMappings();
+		buildImmutableFieldColumnMappings();
+	}
+
+	protected void buildImmutableFieldColumnMappings() {
+		fieldColumnMappings = ImmutableMap.<String, String> builder().putAll(fieldColumnMappings).build();
+	}
+
+	protected void check(final Page page, final SortField... fields) {
+		Assert.notNull(page, "page is required");
+		checkEntityField(fields);
+	}
+
+	protected void checkEntityField(final SortField... field) {
+		if (ArrayUtils.isEmpty(field)) {
+			return;
+		}
+		for (final SortField f : field) {
+			Assert.isTrue(fieldColumnMappings.containsKey(f.getFieldName()), "Invalid field: " + field);
+		}
+	}
+
+	@Override
+	public Set<String> getEntityFields() {
+		return fieldColumnMappings.keySet();
+	}
+
+	/**
+	 * <code>
+	 * EntityId -> entity_id
+	 * </code>
+	 */
+	protected void initFieldColumnMappings() {
+		fieldColumnMappings.put("EntityId", "entity_id");
 	}
 
 }

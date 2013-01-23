@@ -20,6 +20,8 @@ package test.com.azaptree.services.security.dao;
  * #L%
  */
 
+import java.util.UUID;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -78,7 +80,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
-	public void testCreate() {
+	public void test_create_findById_delete() {
 		final long now = System.currentTimeMillis();
 		final Subject temp = new SubjectImpl();
 		final Subject subject = subjectDao.create(temp);
@@ -92,6 +94,11 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		Assert.assertEquals(subject2, subject);
 
 		log.info("subject2: {}", subject2);
+
+		Assert.assertNull(subjectDao.findById(UUID.randomUUID()));
+
+		Assert.assertTrue(subjectDao.delete(subject.getEntityId()));
+		Assert.assertNull(subjectDao.findById(subject.getEntityId()));
 	}
 
 }

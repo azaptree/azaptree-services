@@ -20,6 +20,7 @@ package com.azaptree.services.domain.entity.dao;
  * #L%
  */
 
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Repository;
@@ -43,6 +44,8 @@ public interface EntityDAO<T extends Entity> {
 	SearchResults<T> findByExample(T example, Page page, SortField... sort);
 
 	T findById(UUID id);
+
+	Set<String> getEntityFields();
 
 	void update(T entity);
 }

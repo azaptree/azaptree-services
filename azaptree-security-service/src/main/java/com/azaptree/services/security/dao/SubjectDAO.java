@@ -23,7 +23,6 @@ package com.azaptree.services.security.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.util.List;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
@@ -92,18 +91,23 @@ public class SubjectDAO extends JDBCEntityDAOSupport<Subject> {
 
 	@Override
 	public boolean delete(final UUID id) {
-		// TODO Auto-generated method stub
-		return false;
+		Assert.notNull(id, "id is required");
+		final String sql = "delete from t_subject where entity_id = ?";
+		return jdbc.update(sql, id) > 0;
 	}
 
 	@Override
 	public SearchResults<Subject> findAll(final Page page, final SortField... sort) {
+		check(page, sort);
+		// TODO
 		return null;
 	}
 
 	@Override
 	public SearchResults<Subject> findByExample(final Subject example, final Page page, final SortField... sort) {
-		// TODO Auto-generated method stub
+		Assert.notNull(example, "example is required");
+		check(page, sort);
+		// TODO
 		return null;
 	}
 

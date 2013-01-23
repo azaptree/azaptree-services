@@ -1,5 +1,7 @@
 package com.azaptree.services.domain.entity.dao;
 
+import org.springframework.util.Assert;
+
 /*
  * #%L
  * AZAPTREE-DOMAIN-ENTITY
@@ -10,7 +12,7 @@ package com.azaptree.services.domain.entity.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,15 +23,12 @@ package com.azaptree.services.domain.entity.dao;
  */
 
 public class SortField {
-	private String fieldName;
+	private final String fieldName;
 
-	private boolean ascending;
-
-	public SortField() {
-	}
+	private final boolean ascending;
 
 	public SortField(final String fieldName, final boolean ascending) {
-		super();
+		Assert.hasText(fieldName, "fieldName is required");
 		this.fieldName = fieldName;
 		this.ascending = ascending;
 	}
@@ -40,14 +39,6 @@ public class SortField {
 
 	public boolean isAscending() {
 		return ascending;
-	}
-
-	public void setAscending(final boolean ascending) {
-		this.ascending = ascending;
-	}
-
-	public void setFieldName(final String fieldName) {
-		this.fieldName = fieldName;
 	}
 
 }
