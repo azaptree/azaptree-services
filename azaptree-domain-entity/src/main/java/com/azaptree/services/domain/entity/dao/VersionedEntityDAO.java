@@ -20,38 +20,27 @@ package com.azaptree.services.domain.entity.dao;
  * #L%
  */
 
-import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.stereotype.Repository;
+import com.azaptree.services.domain.entity.VersionedEntity;
 
-import com.azaptree.services.domain.entity.Entity;
-
-@Repository
-public interface EntityDAO<T extends Entity> {
-
-	T create(T entity);
+public interface VersionedEntityDAO<T extends VersionedEntity> extends EntityDAO<T> {
 
 	/**
+	 * The returned entity should be used after the update.
 	 * 
-	 * @param id
-	 * @return false if there was no entity found with specified id
-	 */
-	boolean delete(UUID id);
-
-	SearchResults<T> findAll(Page page, SortField... sort);
-
-	SearchResults<T> findByExample(T example, Page page, SortField... sort);
-
-	T findById(UUID id);
-
-	Set<String> getEntityFields();
-
-	/**
-	 * The returned entity should be used after the update
+	 * VersionedEntity.updated() is called before executing the database update.
 	 * 
 	 * @param entity
 	 * @return
+	 * @throws StaleObjectException
+	 *             if the entity version does not match what is in the database
 	 */
-	T update(T entity);
+	@Override
+	T update(T entity) throws DAOException, StaleObjectException, ObjectNotFoundException;
+
+	T update(T entity, UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException;
+
+	T create(T entity, UUID createdBy);
+
 }

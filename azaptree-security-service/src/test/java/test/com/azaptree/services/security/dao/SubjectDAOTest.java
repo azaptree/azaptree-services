@@ -37,6 +37,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
+import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
@@ -116,6 +118,37 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		stopWatch.stop();
 		log.info("delete time: {}", stopWatch.getTime());
 		Assert.assertNull(subjectDao.findById(subject.getEntityId()));
+	}
+
+	@Transactional
+	@Test
+	public void test_update() {
+		final Subject temp = new SubjectImpl();
+		final Subject subject = subjectDao.create(temp);
+		final Subject updatedSubject = subjectDao.update(subject);
+		Assert.assertNotNull(updatedSubject);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), subject.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), subject.getEntityVersion());
+
+		log.info("subject : {}", subject);
+		log.info("updatedSubject : {}", updatedSubject);
+	}
+
+	@Transactional
+	@Test(expectedExceptions = StaleObjectException.class)
+	public void test_update_staleObject() {
+		final Subject temp = new SubjectImpl();
+		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
+		subject.updated();
+		subjectDao.update(subject);
+	}
+
+	@Transactional
+	@Test(expectedExceptions = ObjectNotFoundException.class)
+	public void test_update_objectNotFound() {
+		final SubjectImpl subject = new SubjectImpl();
+		subject.created();
+		subjectDao.update(subject);
 	}
 
 }

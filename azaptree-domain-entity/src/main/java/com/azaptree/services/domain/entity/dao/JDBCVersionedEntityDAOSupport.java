@@ -10,7 +10,7 @@ package com.azaptree.services.domain.entity.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,10 +21,11 @@ package com.azaptree.services.domain.entity.dao;
  */
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.VersionedEntity;
 
-public abstract class JDBCVersionedEntityDAOSupport<T extends VersionedEntity> extends JDBCEntityDAOSupport<T> {
+public abstract class JDBCVersionedEntityDAOSupport<T extends VersionedEntity> extends JDBCEntityDAOSupport<T> implements VersionedEntityDAO<T> {
 
 	public JDBCVersionedEntityDAOSupport(final JdbcTemplate jdbc) {
 		super(jdbc);
@@ -38,6 +39,21 @@ public abstract class JDBCVersionedEntityDAOSupport<T extends VersionedEntity> e
 		fieldColumnMappings.put("CreatedByEntityId", "entity_created_by");
 		fieldColumnMappings.put("EntityUpdatedOn", "entity_updated_on");
 		fieldColumnMappings.put("UpdatedByEntityId", "entity_updated_by");
+	}
+
+	protected void validateForUpdate(VersionedEntity entity) {
+		Assert.notNull(entity, "entity is required");
+		Assert.notNull(entity.getEntityId(), "entityId must not be null");
+		Assert.notNull(entity.getEntityCreatedOn(), "entityCreatedOn must not be null");
+		Assert.isTrue(entity.getEntityVersion() > 0, "entityVersion must be > 0");
+
+		final VersionedEntity current = findById(entity.getEntityId());
+		if (current == null) {
+			throw new ObjectNotFoundException();
+		}
+		if (current.getEntityVersion() != entity.getEntityVersion()) {
+			throw new StaleObjectException();
+		}
 	}
 
 }

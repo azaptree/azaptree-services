@@ -32,16 +32,19 @@ import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.Assert;
 
-import com.azaptree.services.domain.entity.dao.JDBCEntityDAOSupport;
+import com.azaptree.services.domain.entity.dao.DAOException;
+import com.azaptree.services.domain.entity.dao.JDBCVersionedEntityDAOSupport;
+import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
 import com.azaptree.services.domain.entity.dao.Page;
 import com.azaptree.services.domain.entity.dao.SearchResults;
 import com.azaptree.services.domain.entity.dao.SortField;
+import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 import com.google.common.base.Optional;
 
 @Repository
-public class SubjectDAO extends JDBCEntityDAOSupport<Subject> {
+public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 
 	private final RowMapper<Subject> rowMapper = new RowMapper<Subject>() {
 
@@ -70,12 +73,12 @@ public class SubjectDAO extends JDBCEntityDAOSupport<Subject> {
 
 	@Override
 	public Subject create(final Subject entity) {
-		Assert.notNull(entity);
+		Assert.notNull(entity, "entity is required");
 
 		final SubjectImpl subject = new SubjectImpl();
 		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 
-		subject.created(createdBy.isPresent() ? createdBy.get() : null);
+		subject.created();
 		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by) values (?,?,?,?,?,?)";
 
 		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
@@ -84,6 +87,26 @@ public class SubjectDAO extends JDBCEntityDAOSupport<Subject> {
 		        subject.getEntityVersion(),
 		        new Timestamp(subject.getEntityCreatedOn()),
 		        createdBy.isPresent() ? createdBy.get() : null,
+		        new Timestamp(subject.getEntityUpdatedOn()),
+		        updatedBy.isPresent() ? updatedBy.get() : null);
+		return subject;
+	}
+
+	@Override
+	public Subject create(final Subject entity, final UUID createdBy) {
+		Assert.notNull(entity, "entity is required");
+		Assert.notNull(createdBy, "createdBy is required");
+		final SubjectImpl subject = new SubjectImpl();
+
+		subject.created(createdBy);
+		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by) values (?,?,?,?,?,?)";
+
+		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
+		jdbc.update(sql,
+		        subject.getEntityId(),
+		        subject.getEntityVersion(),
+		        new Timestamp(subject.getEntityCreatedOn()),
+		        createdBy,
 		        new Timestamp(subject.getEntityUpdatedOn()),
 		        updatedBy.isPresent() ? updatedBy.get() : null);
 		return subject;
@@ -125,9 +148,42 @@ public class SubjectDAO extends JDBCEntityDAOSupport<Subject> {
 	}
 
 	@Override
-	public void update(final Subject entity) {
-		// TODO Auto-generated method stub
+	public Subject update(final Subject entity) {
+		validateForUpdate(entity);
 
+		final String sql = "update t_subject set entity_version = ?, entity_updated_on = ?,entity_updated_by = ? where entity_id = ? and entity_version = ?";
+		final SubjectImpl updatedSubject = new SubjectImpl(entity);
+		updatedSubject.updated();
+		final Optional<UUID> optionalUpdatedBy = updatedSubject.getUpdatedByEntityId();
+		final UUID updatedById = optionalUpdatedBy.isPresent() ? optionalUpdatedBy.get() : null;
+		final int updateCount = jdbc.update(sql,
+		        updatedSubject.getEntityVersion(),
+		        new Timestamp(updatedSubject.getEntityUpdatedOn()),
+		        updatedById,
+		        updatedSubject.getEntityId(), entity.getEntityVersion());
+		if (updateCount == 0) {
+			throw new StaleObjectException();
+		}
+
+		return updatedSubject;
 	}
 
+	@Override
+	public Subject update(final Subject entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
+		validateForUpdate(entity);
+
+		final String sql = "update t_subject set entity_version = ?, entity_updated_on = ?,entity_updated_by = ? where entity_id = ? and entity_version = ?";
+		final SubjectImpl updatedSubject = new SubjectImpl(entity);
+		updatedSubject.updated(updatedBy);
+		final int updateCount = jdbc.update(sql,
+		        updatedSubject.getEntityVersion(),
+		        new Timestamp(updatedSubject.getEntityUpdatedOn()),
+		        updatedBy,
+		        updatedSubject.getEntityId(), entity.getEntityVersion());
+		if (updateCount == 0) {
+			throw new StaleObjectException();
+		}
+
+		return updatedSubject;
+	}
 }

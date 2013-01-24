@@ -62,8 +62,23 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 			throw new IllegalStateException("This entity has already been created: entityId = " + entityId);
 		}
 		this.entityId = UUID.randomUUID();
-		entityVersion = 1;
+		this.entityVersion = 1;
 		this.createdByEntityId = createdByEntityId;
+		this.entityCreatedOn = System.currentTimeMillis();
+		this.entityUpdatedOn = this.entityCreatedOn;
+	}
+
+	/**
+	 * Call this method when the entity is updated to increment its version and update its lastupdatedByEntityId
+	 * 
+	 * @param lastupdatedByEntityId
+	 */
+	public void created() {
+		if (this.entityId != null) {
+			throw new IllegalStateException("This entity has already been created: entityId = " + entityId);
+		}
+		this.entityId = UUID.randomUUID();
+		entityVersion = 1;
 		this.entityCreatedOn = System.currentTimeMillis();
 		this.entityUpdatedOn = this.entityCreatedOn;
 	}
@@ -211,6 +226,19 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 		}
 		entityVersion++;
 		updatedByEntityId = lastupdatedByEntityId;
+		entityUpdatedOn = System.currentTimeMillis();
+	}
+
+	/**
+	 * Call this method when the entity is updated before it is persisted to increment its version and update its lastupdatedByEntityId
+	 * 
+	 * @param lastupdatedByEntityId
+	 */
+	public void updated() {
+		if (this.entityId == null) {
+			throw new IllegalStateException("The entity has not yet been created : entityId == null");
+		}
+		entityVersion++;
 		entityUpdatedOn = System.currentTimeMillis();
 	}
 
