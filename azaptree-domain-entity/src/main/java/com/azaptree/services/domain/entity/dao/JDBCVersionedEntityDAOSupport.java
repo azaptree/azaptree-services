@@ -27,8 +27,8 @@ import com.azaptree.services.domain.entity.VersionedEntity;
 
 public abstract class JDBCVersionedEntityDAOSupport<T extends VersionedEntity> extends JDBCEntityDAOSupport<T> implements VersionedEntityDAO<T> {
 
-	public JDBCVersionedEntityDAOSupport(final JdbcTemplate jdbc) {
-		super(jdbc);
+	public JDBCVersionedEntityDAOSupport(final JdbcTemplate jdbc, String table) {
+		super(jdbc, table);
 	}
 
 	@Override

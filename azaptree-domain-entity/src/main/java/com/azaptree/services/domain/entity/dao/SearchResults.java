@@ -10,7 +10,7 @@ package com.azaptree.services.domain.entity.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,23 +22,22 @@ package com.azaptree.services.domain.entity.dao;
 
 import java.util.List;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
+import org.springframework.util.Assert;
+
 public class SearchResults<T> {
 
-	private Page page;
+	private final Page page;
 
-	private int returnCount;
+	private final long totalCount;
 
-	private int totalCount;
+	private final List<T> data;
 
-	private List<T> data;
-
-	public SearchResults() {
-	}
-
-	public SearchResults(final Page page, final int returnCount, final int totalCount, final List<T> data) {
-		super();
+	public SearchResults(final Page page, final long totalCount, final List<T> data) {
+		Assert.notNull(page, "page is required");
+		Assert.notNull(data, "data is required");
 		this.page = page;
-		this.returnCount = returnCount;
 		this.totalCount = totalCount;
 		this.data = data;
 	}
@@ -52,27 +51,21 @@ public class SearchResults<T> {
 	}
 
 	public int getReturnCount() {
-		return returnCount;
+		return data.size();
 	}
 
-	public int getTotalCount() {
+	public long getTotalCount() {
 		return totalCount;
 	}
 
-	public void setData(final List<T> data) {
-		this.data = data;
-	}
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, ToStringStyle.MULTI_LINE_STYLE)
+		        .append("page", page)
+		        .append("totalCount", totalCount)
+		        .append("returnCount", getReturnCount())
+		        .toString();
 
-	public void setPage(final Page page) {
-		this.page = page;
-	}
-
-	public void setReturnCount(final int returnCount) {
-		this.returnCount = returnCount;
-	}
-
-	public void setTotalCount(final int totalCount) {
-		this.totalCount = totalCount;
 	}
 
 }

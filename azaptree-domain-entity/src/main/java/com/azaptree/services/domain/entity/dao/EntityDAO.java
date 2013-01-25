@@ -32,6 +32,8 @@ public interface EntityDAO<T extends Entity> {
 
 	T create(T entity);
 
+	long getTotalCount();
+
 	/**
 	 * 
 	 * @param id

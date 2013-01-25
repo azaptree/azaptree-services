@@ -26,7 +26,6 @@ import java.sql.Timestamp;
 import java.util.UUID;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -68,7 +67,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	};
 
 	public SubjectDAO(final JdbcTemplate jdbc) {
-		super(jdbc);
+		super(jdbc, "t_subject");
 	}
 
 	@Override
@@ -113,20 +112,6 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	}
 
 	@Override
-	public boolean delete(final UUID id) {
-		Assert.notNull(id, "id is required");
-		final String sql = "delete from t_subject where entity_id = ?";
-		return jdbc.update(sql, id) > 0;
-	}
-
-	@Override
-	public SearchResults<Subject> findAll(final Page page, final SortField... sort) {
-		check(page, sort);
-		// TODO
-		return null;
-	}
-
-	@Override
 	public SearchResults<Subject> findByExample(final Subject example, final Page page, final SortField... sort) {
 		Assert.notNull(example, "example is required");
 		check(page, sort);
@@ -135,16 +120,8 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	}
 
 	@Override
-	public Subject findById(final UUID id) {
-		Assert.notNull(id, "id is required");
-		final String sql = "select * from t_subject where entity_id = ?";
-		final Object[] args = { id };
-		try {
-			return jdbc.queryForObject(sql, args, rowMapper);
-		} catch (final IncorrectResultSizeDataAccessException e) {
-			return null;
-		}
-
+	protected RowMapper<Subject> getRowMapper() {
+		return rowMapper;
 	}
 
 	@Override

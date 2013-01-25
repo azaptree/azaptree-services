@@ -28,16 +28,24 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 import org.springframework.transaction.annotation.Transactional;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
+import com.azaptree.services.domain.entity.dao.Page;
+import com.azaptree.services.domain.entity.dao.SearchResults;
+import com.azaptree.services.domain.entity.dao.SortField;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.Subject;
@@ -45,13 +53,13 @@ import com.azaptree.services.security.domain.impl.SubjectImpl;
 
 @ContextConfiguration(classes = SubjectDAOTest.Config.class)
 public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
-	final Logger log = LoggerFactory.getLogger(getClass());
 
+	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
-	public static class Config {
+	public static class Config implements TransactionManagementConfigurer {
 		@Bean(destroyMethod = "close")
 		public DataSource dataSource() {
-			org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+			final org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
 			ds.setDefaultAutoCommit(false);
 			ds.setDriverClassName("org.postgresql.Driver");
 			ds.setUrl("jdbc:postgresql://localhost:5433/azaptree");
@@ -67,6 +75,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 			        "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;" +
 			        "org.apache.tomcat.jdbc.pool.interceptor.SlowQueryReport");
 			ds.setTimeBetweenEvictionRunsMillis(30000);
+			ds.setRollbackOnReturn(true);
 
 			return ds;
 		}
@@ -80,7 +89,19 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		public SubjectDAO subjectDao() {
 			return new SubjectDAO(jdbcTemplate());
 		}
+
+		@Bean
+		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
+			return new DataSourceTransactionManager(dataSource());
+		}
+
+		@Override
+		public PlatformTransactionManager annotationDrivenTransactionManager() {
+			return dataSourceTransactionManager();
+		}
 	}
+
+	final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private SubjectDAO subjectDao;
@@ -122,6 +143,68 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
+	public void test_findAll() {
+		for (int i = 0; i < 500; i++) {
+			subjectDao.create(new SubjectImpl());
+		}
+
+		final long totalCount = subjectDao.getTotalCount();
+		// Records may have been inserted outside of this test
+		Assert.assertTrue(totalCount >= 500);
+
+		for (int i = 0; i < 3; i++) {
+			final SearchResults<Subject> searchResults = subjectDao.findAll(new Page(i, 20));
+			Assert.assertEquals(searchResults.getReturnCount(), 20);
+			Assert.assertEquals(searchResults.getData().size(), 20);
+			Assert.assertTrue(searchResults.getTotalCount() >= 500);
+
+			for (final Subject subject : searchResults.getData()) {
+				log.info(subject.toJson());
+			}
+		}
+	}
+
+	@Transactional
+	@Test
+	public void test_findAll_sorted() {
+		for (int i = 0; i < 500; i++) {
+			subjectDao.create(new SubjectImpl(), UUID.randomUUID());
+		}
+
+		final long totalCount = subjectDao.getTotalCount();
+		// Records may have been inserted outside of this test
+		Assert.assertTrue(totalCount >= 500);
+
+		for (int i = 0; i < 3; i++) {
+			final SearchResults<Subject> searchResults = subjectDao.findAll(new Page(i, 20));
+			Assert.assertEquals(searchResults.getReturnCount(), 20);
+			Assert.assertEquals(searchResults.getData().size(), 20);
+			Assert.assertTrue(searchResults.getTotalCount() >= 500);
+
+			for (final Subject subject : searchResults.getData()) {
+				log.info(subject.toJson());
+			}
+		}
+
+		for (int i = 0; i < 3; i++) {
+			final SearchResults<Subject> searchResults = subjectDao.findAll(new Page(i, 20), new SortField("EntityId", true));
+			Assert.assertEquals(searchResults.getReturnCount(), 20);
+			Assert.assertEquals(searchResults.getData().size(), 20);
+			Assert.assertTrue(searchResults.getTotalCount() >= 500);
+
+			Subject prev = null;
+			for (final Subject subject : searchResults.getData()) {
+				log.info(subject.toJson());
+				if (prev != null) {
+					Assert.assertTrue(subject.getEntityId().compareTo(prev.getEntityId()) > 0);
+				}
+				prev = subject;
+			}
+		}
+	}
+
+	@Transactional
+	@Test
 	public void test_update() {
 		final Subject temp = new SubjectImpl();
 		final Subject subject = subjectDao.create(temp);
@@ -132,6 +215,20 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 		log.info("subject : {}", subject);
 		log.info("updatedSubject : {}", updatedSubject);
+
+		final Subject updatedSubject2 = subjectDao.update(updatedSubject, UUID.randomUUID());
+		Assert.assertNotNull(updatedSubject2);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
+		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
+	}
+
+	@Transactional
+	@Test(expectedExceptions = ObjectNotFoundException.class)
+	public void test_update_objectNotFound() {
+		final SubjectImpl subject = new SubjectImpl();
+		subject.created();
+		subjectDao.update(subject);
 	}
 
 	@Transactional
@@ -140,14 +237,6 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		final Subject temp = new SubjectImpl();
 		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
 		subject.updated();
-		subjectDao.update(subject);
-	}
-
-	@Transactional
-	@Test(expectedExceptions = ObjectNotFoundException.class)
-	public void test_update_objectNotFound() {
-		final SubjectImpl subject = new SubjectImpl();
-		subject.created();
 		subjectDao.update(subject);
 	}
 

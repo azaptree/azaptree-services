@@ -32,19 +32,22 @@ import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 import org.springframework.transaction.annotation.Transactional;
 import org.testng.annotations.Test;
 
-@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 @ContextConfiguration(classes = { PostGresqlDataSourceTest.Config.class })
 public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Configuration
-	public static class Config {
+	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
+	public static class Config implements TransactionManagementConfigurer {
 
 		@Bean(destroyMethod = "close")
 		public DataSource dataSource() {
@@ -60,6 +63,7 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 			ds.setValidationQuery("select 1");
 			ds.setLogValidationErrors(true);
 			ds.setInitialSize(10);
+			ds.setRollbackOnReturn(true);
 
 			return ds;
 		}
@@ -68,6 +72,17 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 		JdbcTemplate JdbcTemplate() {
 			return new JdbcTemplate(dataSource());
 		}
+
+		@Bean
+		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
+			return new DataSourceTransactionManager(dataSource());
+		}
+
+		@Override
+		public PlatformTransactionManager annotationDrivenTransactionManager() {
+			return dataSourceTransactionManager();
+		}
+
 	}
 
 	@Autowired
@@ -80,11 +95,12 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 	@Test
 	public void testConnection() throws SQLException {
 		try (final Connection conn = ds.getConnection()) {
-			final Statement stmt = conn.createStatement();
-			for (int i = 0; i < 100; i++) {
-				try (final ResultSet rs = stmt.executeQuery("select NOW()")) {
-					rs.next();
-					log.info("testConnection(): NOW() = {}", rs.getTimestamp(1));
+			try (final Statement stmt = conn.createStatement()) {
+				for (int i = 0; i < 100; i++) {
+					try (final ResultSet rs = stmt.executeQuery("select NOW()")) {
+						rs.next();
+						log.info("testConnection(): NOW() = {}", rs.getTimestamp(1));
+					}
 				}
 			}
 		}
@@ -95,5 +111,29 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 	public void testJdbcTemplate() {
 		final Timestamp ts = jdbc.queryForObject("select NOW()", Timestamp.class);
 		log.info("testJdbcTemplate(): NOW() = {}", ts);
+	}
+
+	@Transactional
+	public void executeBadSQL() throws SQLException {
+		try (final Connection conn = ds.getConnection()) {
+			try (final Statement stmt = conn.createStatement()) {
+				for (int i = 0; i < 100; i++) {
+					try (final ResultSet rs = stmt.executeQuery("select * from asfsdfsdf")) {
+					}
+				}
+			}
+		}
+	}
+
+	@Test
+	public void testTransactionRollback() throws SQLException {
+		try {
+			executeBadSQL();
+		} catch (SQLException e) {
+			log.info("EXPECTED EXCEPTION");
+		}
+
+		testConnection();
+		testJdbcTemplate();
 	}
 }

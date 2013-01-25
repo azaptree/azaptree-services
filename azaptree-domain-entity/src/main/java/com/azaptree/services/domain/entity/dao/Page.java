@@ -35,6 +35,10 @@ public class Page {
 		this.pageSize = pageSize;
 	}
 
+	public long getOffset() {
+		return page * pageSize;
+	}
+
 	public int getPage() {
 		return page;
 	}
@@ -43,4 +47,9 @@ public class Page {
 		return pageSize;
 	}
 
+	@Override
+	public String toString() {
+		return String.format("{pageSize=%d, page=%d}", pageSize, page);
+
+	}
 }
