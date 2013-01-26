@@ -43,8 +43,6 @@ public interface EntityDAO<T extends Entity> {
 
 	SearchResults<T> findAll(Page page, SortField... sort);
 
-	SearchResults<T> findByExample(T example, Page page, SortField... sort);
-
 	T findById(UUID id);
 
 	Set<String> getEntityFields();

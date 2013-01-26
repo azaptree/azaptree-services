@@ -17,10 +17,8 @@
  * limitations under the License.
  * #L%
  */
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 
 import javax.sql.DataSource;
@@ -32,7 +30,9 @@ import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -43,15 +43,18 @@ import org.testng.annotations.Test;
 
 @ContextConfiguration(classes = { PostGresqlDataSourceTest.Config.class })
 public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
 	@Configuration
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	public static class Config implements TransactionManagementConfigurer {
 
+		@Override
+		public PlatformTransactionManager annotationDrivenTransactionManager() {
+			return dataSourceTransactionManager();
+		}
+
 		@Bean(destroyMethod = "close")
 		public DataSource dataSource() {
-			org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
+			final org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
 			ds.setDefaultAutoCommit(false);
 			ds.setDriverClassName("org.postgresql.Driver");
 			ds.setUrl("jdbc:postgresql://localhost:5433/azaptree");
@@ -63,9 +66,14 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 			ds.setValidationQuery("select 1");
 			ds.setLogValidationErrors(true);
 			ds.setInitialSize(10);
-			ds.setRollbackOnReturn(true);
+			ds.setCommitOnReturn(true);
 
 			return ds;
+		}
+
+		@Bean
+		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
+			return new DataSourceTransactionManager(new LazyConnectionDataSourceProxy(dataSource()));
 		}
 
 		@Bean
@@ -73,36 +81,52 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 			return new JdbcTemplate(dataSource());
 		}
 
-		@Bean
-		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
-			return new DataSourceTransactionManager(dataSource());
-		}
-
-		@Override
-		public PlatformTransactionManager annotationDrivenTransactionManager() {
-			return dataSourceTransactionManager();
-		}
-
 	}
 
-	@Autowired
-	private DataSource ds;
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private JdbcTemplate jdbc;
 
 	@Transactional
+	public void executeBadSQL() {
+		try {
+			jdbc.update("delete from asfsdfsdf");
+		} catch (final Exception e) {
+			throw new RuntimeException();
+		}
+	}
+
+	@Transactional(readOnly = true)
+	public void executeGoodSQL() {
+		try {
+			jdbc.query("select NOW()", new RowCallbackHandler() {
+
+				@Override
+				public void processRow(final ResultSet rs) throws SQLException {
+					log.info("testConnection(): NOW() = {}", rs.getTimestamp(1));
+				}
+			});
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@Transactional
 	@Test
-	public void testConnection() throws SQLException {
-		try (final Connection conn = ds.getConnection()) {
-			try (final Statement stmt = conn.createStatement()) {
-				for (int i = 0; i < 100; i++) {
-					try (final ResultSet rs = stmt.executeQuery("select NOW()")) {
-						rs.next();
+	public void testConnection() {
+		try {
+			for (int i = 0; i < 100; i++) {
+				jdbc.query("select NOW()", new RowCallbackHandler() {
+
+					@Override
+					public void processRow(final ResultSet rs) throws SQLException {
 						log.info("testConnection(): NOW() = {}", rs.getTimestamp(1));
 					}
-				}
+				});
 			}
+		} catch (final Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -113,27 +137,14 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 		log.info("testJdbcTemplate(): NOW() = {}", ts);
 	}
 
-	@Transactional
-	public void executeBadSQL() throws SQLException {
-		try (final Connection conn = ds.getConnection()) {
-			try (final Statement stmt = conn.createStatement()) {
-				for (int i = 0; i < 100; i++) {
-					try (final ResultSet rs = stmt.executeQuery("select * from asfsdfsdf")) {
-					}
-				}
-			}
-		}
-	}
-
 	@Test
-	public void testTransactionRollback() throws SQLException {
+	public void testTransactionRollback() {
 		try {
 			executeBadSQL();
-		} catch (SQLException e) {
-			log.info("EXPECTED EXCEPTION");
+		} catch (final Exception e) {
+			log.info("testTransactionRollback() : ignoring exception from executeBadSQL() - transaction should have been rolled back");
 		}
 
-		testConnection();
-		testJdbcTemplate();
+		executeGoodSQL();
 	}
 }

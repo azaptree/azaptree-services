@@ -57,6 +57,11 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
 	public static class Config implements TransactionManagementConfigurer {
+		@Override
+		public PlatformTransactionManager annotationDrivenTransactionManager() {
+			return dataSourceTransactionManager();
+		}
+
 		@Bean(destroyMethod = "close")
 		public DataSource dataSource() {
 			final org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
@@ -75,9 +80,14 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 			        "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;" +
 			        "org.apache.tomcat.jdbc.pool.interceptor.SlowQueryReport");
 			ds.setTimeBetweenEvictionRunsMillis(30000);
-			ds.setRollbackOnReturn(true);
+			ds.setCommitOnReturn(true);
 
 			return ds;
+		}
+
+		@Bean
+		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
+			return new DataSourceTransactionManager(dataSource());
 		}
 
 		@Bean
@@ -88,16 +98,6 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		@Bean
 		public SubjectDAO subjectDao() {
 			return new SubjectDAO(jdbcTemplate());
-		}
-
-		@Bean
-		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
-			return new DataSourceTransactionManager(dataSource());
-		}
-
-		@Override
-		public PlatformTransactionManager annotationDrivenTransactionManager() {
-			return dataSourceTransactionManager();
 		}
 	}
 
@@ -201,6 +201,39 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 				prev = subject;
 			}
 		}
+	}
+
+	/**
+	 * Test that a Subject can be created after a transaction is rolled back
+	 */
+	@Transactional
+	@Test
+	public void test_objectNotFound_create() {
+		try {
+			final SubjectImpl subject = new SubjectImpl();
+			subject.created();
+			subjectDao.update(subject);
+		} catch (final ObjectNotFoundException e) {
+			log.info("test_objectNotFound_create(): ignoring ObjectNotFoundException");
+		}
+
+		test_update();
+
+	}
+
+	/**
+	 * Test that a Subject can be created after a transaction is rolled back
+	 */
+	@Test
+	public void test_objectNotFound_create2() {
+		try {
+			test_update_staleObject();
+		} catch (final StaleObjectException e) {
+			log.info("test_objectNotFound_create2(): ignoring {}", e.getClass().getName());
+		}
+
+		test_update();
+
 	}
 
 	@Transactional

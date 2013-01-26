@@ -34,9 +34,6 @@ import org.springframework.util.Assert;
 import com.azaptree.services.domain.entity.dao.DAOException;
 import com.azaptree.services.domain.entity.dao.JDBCVersionedEntityDAOSupport;
 import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
-import com.azaptree.services.domain.entity.dao.Page;
-import com.azaptree.services.domain.entity.dao.SearchResults;
-import com.azaptree.services.domain.entity.dao.SortField;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
@@ -109,14 +106,6 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        new Timestamp(subject.getEntityUpdatedOn()),
 		        updatedBy.isPresent() ? updatedBy.get() : null);
 		return subject;
-	}
-
-	@Override
-	public SearchResults<Subject> findByExample(final Subject example, final Page page, final SortField... sort) {
-		Assert.notNull(example, "example is required");
-		check(page, sort);
-		// TODO
-		return null;
 	}
 
 	@Override
