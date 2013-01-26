@@ -20,30 +20,13 @@ package com.azaptree.services.security.domain.impl;
  * #L%
  */
 
-import org.springframework.util.Assert;
-
-import com.azaptree.services.domain.entity.VersionedEntity;
 import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
 import com.azaptree.services.security.domain.Subject;
 
 public class SubjectImpl extends DomainVersionedEntity implements Subject {
 
-	public SubjectImpl(final VersionedEntity entity) {
-		Assert.notNull(entity, "entity is required");
-		this.setEntityId(entity.getEntityId());
-		this.setEntityCreatedOn(entity.getEntityCreatedOn());
-		if (entity.getCreatedByEntityId().isPresent()) {
-			this.setCreatedBy(entity.getCreatedByEntityId().get());
-		} else {
-			this.setCreatedBy(null);
-		}
-		this.setEntityUpdatedOn(entity.getEntityUpdatedOn());
-		if (entity.getUpdatedByEntityId().isPresent()) {
-			this.setUpdatedBy(entity.getUpdatedByEntityId().get());
-		} else {
-			this.setUpdatedBy(null);
-		}
-		this.setEntityVersion(entity.getEntityVersion());
+	public SubjectImpl(final Subject entity) {
+		super(entity);
 	}
 
 	public SubjectImpl() {

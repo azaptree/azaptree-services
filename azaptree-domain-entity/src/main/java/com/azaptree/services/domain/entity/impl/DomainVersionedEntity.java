@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.VersionedEntity;
 import com.azaptree.services.json.JsonUtils;
@@ -42,6 +43,24 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 	protected UUID createdByEntityId, updatedByEntityId;
 
 	public DomainVersionedEntity() {
+	}
+
+	public DomainVersionedEntity(final VersionedEntity entity) {
+		Assert.notNull(entity, "entity is required");
+		this.setEntityId(entity.getEntityId());
+		this.setEntityCreatedOn(entity.getEntityCreatedOn());
+		if (entity.getCreatedByEntityId().isPresent()) {
+			this.setCreatedBy(entity.getCreatedByEntityId().get());
+		} else {
+			this.setCreatedBy(null);
+		}
+		this.setEntityUpdatedOn(entity.getEntityUpdatedOn());
+		if (entity.getUpdatedByEntityId().isPresent()) {
+			this.setUpdatedBy(entity.getUpdatedByEntityId().get());
+		} else {
+			this.setUpdatedBy(null);
+		}
+		this.setEntityVersion(entity.getEntityVersion());
 	}
 
 	public DomainVersionedEntity(final InputStream json) throws IOException {

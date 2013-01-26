@@ -109,7 +109,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject update(final Subject entity) {
 		validateForUpdate(entity);
 
-		final String sql = "update t_subject set entity_version = ?, entity_updated_on = ?,entity_updated_by = ? where entity_id = ? and entity_version = ?";
+		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
 		final SubjectImpl updatedSubject = new SubjectImpl(entity);
 		updatedSubject.updated();
 		final Optional<UUID> optionalUpdatedBy = updatedSubject.getUpdatedByEntityId();
@@ -130,7 +130,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject update(final Subject entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
 		validateForUpdate(entity);
 
-		final String sql = "update t_subject set entity_version = ?, entity_updated_on = ?,entity_updated_by = ? where entity_id = ? and entity_version = ?";
+		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
 		final SubjectImpl updatedSubject = new SubjectImpl(entity);
 		updatedSubject.updated(updatedBy);
 		final int updateCount = jdbc.update(sql,

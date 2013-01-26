@@ -41,21 +41,63 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	private final int hashIterations;
 	private final byte[] salt;
 
+	/**
+	 * Copy constructor
+	 * 
+	 * @param entity
+	 */
+	public HashedCredentialImpl(final HashedCredential entity) {
+		super(entity);
+		validate(entity.getSubjecId(), entity.getName(), entity.getHash(), entity.getHashAlgorithm(), entity.getHashIterations(), entity.getSalt());
+		subjectId = entity.getSubjecId();
+		name = entity.getName();
+		hash = entity.getHash();
+		hashAlgorithm = entity.getHashAlgorithm();
+		hashIterations = entity.getHashIterations();
+		salt = entity.getSalt();
+	}
+
+	/**
+	 * Purpose is to create new HashedCredentials
+	 * 
+	 * @param subjectId
+	 * @param name
+	 * @param hash
+	 * @param hashAlgorithm
+	 * @param hashIterations
+	 * @param salt
+	 */
 	public HashedCredentialImpl(final UUID subjectId, final String name, final byte[] hash, final String hashAlgorithm, final int hashIterations,
 	        final byte[] salt) {
-		Assert.notNull(subjectId, "subjectId is required");
-		Assert.hasText(name);
-		Assert.isTrue(ArrayUtils.isNotEmpty(salt), "salt is required");
-		Assert.hasText(hashAlgorithm, "hashAlgorithm is required");
-		try {
-			MessageDigest.getInstance(hashAlgorithm);
-		} catch (final NoSuchAlgorithmException e) {
-			throw new IllegalArgumentException("Unknown algorithm : " + hashAlgorithm, e);
-		}
-		Assert.isTrue(hashIterations > 0, "contraint failed: hashIterations > 0");
-
+		validate(subjectId, name, hash, hashAlgorithm, hashIterations, salt);
 		this.subjectId = subjectId;
 		this.name = name;
+		this.hash = hash;
+		this.hashAlgorithm = hashAlgorithm;
+		this.hashIterations = hashIterations;
+		this.salt = salt;
+	}
+
+	/**
+	 * Use case: Purpose is to update an existing HashedCredential. Because all fields are final, we need to create a new instance that copies over the
+	 * VersionEntity fields and updates the HashedCredential specific fields
+	 * 
+	 * 
+	 * @param entity
+	 *            only used to copy over the VersionedEntity fields and the HashedCredential subject idendifying unique key fields : subjectId, name
+	 * @param subjectId
+	 * @param name
+	 * @param hash
+	 * @param hashAlgorithm
+	 * @param hashIterations
+	 * @param salt
+	 */
+	public HashedCredentialImpl(final HashedCredential entity, final byte[] hash, final String hashAlgorithm,
+	        final int hashIterations, final byte[] salt) {
+		super(entity);
+		validate(entity.getSubjecId(), entity.getName(), hash, hashAlgorithm, hashIterations, salt);
+		this.subjectId = entity.getSubjecId();
+		this.name = entity.getName();
 		this.hash = hash;
 		this.hashAlgorithm = hashAlgorithm;
 		this.hashIterations = hashIterations;
@@ -110,6 +152,22 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	@Override
 	public int hashCode() {
 		return ByteSource.Util.bytes(hash).toBase64().hashCode();
+	}
+
+	private void validate(final UUID subjectId, final String name, final byte[] hash, final String hashAlgorithm, final int hashIterations,
+	        final byte[] salt) {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.hasText(name);
+		Assert.isTrue(ArrayUtils.isNotEmpty(hash), "hash is required");
+		Assert.isTrue(ArrayUtils.isNotEmpty(salt), "salt is required");
+		Assert.hasText(hashAlgorithm, "hashAlgorithm is required");
+		try {
+			MessageDigest.getInstance(hashAlgorithm);
+		} catch (final NoSuchAlgorithmException e) {
+			throw new IllegalArgumentException("Unknown algorithm : " + hashAlgorithm, e);
+		}
+		Assert.isTrue(hashIterations > 0, "contraint failed: hashIterations > 0");
+
 	}
 
 }

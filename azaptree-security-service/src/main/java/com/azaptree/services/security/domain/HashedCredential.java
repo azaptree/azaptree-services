@@ -27,6 +27,8 @@ import com.azaptree.services.domain.entity.VersionedEntity;
 /**
  * For security reasons, the actual credential is not known - only its hash.
  * 
+ * Unique key constraint: subjectId + name
+ * 
  * @author alfio
  * 
  */

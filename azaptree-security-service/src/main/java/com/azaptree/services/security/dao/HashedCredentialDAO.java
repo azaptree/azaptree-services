@@ -10,7 +10,7 @@ package com.azaptree.services.security.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -141,14 +141,62 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 
 	@Override
 	public HashedCredential update(final HashedCredential entity) throws DAOException, StaleObjectException, ObjectNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		validateForUpdate(entity);
+
+		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?" +
+		        " where entity_id=? and entity_version=?";
+		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
+		updatedEntity.updated();
+		final Optional<UUID> optionalUpdatedBy = updatedEntity.getUpdatedByEntityId();
+		final UUID updatedById = optionalUpdatedBy.isPresent() ? optionalUpdatedBy.get() : null;
+		final int updateCount = jdbc.update(sql,
+		        updatedEntity.getEntityVersion(),
+		        new Timestamp(updatedEntity.getEntityUpdatedOn()),
+		        updatedById,
+		        entity.getName(),
+		        entity.getSubjecId(),
+		        entity.getHash(),
+		        entity.getHashAlgorithm(),
+		        entity.getHashIterations(),
+		        entity.getSalt(),
+		        updatedEntity.getEntityId(),
+		        entity.getEntityVersion());
+		if (updateCount == 0) {
+			throw new StaleObjectException();
+		}
+
+		return updatedEntity;
 	}
 
 	@Override
 	public HashedCredential update(final HashedCredential entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
-		// TODO Auto-generated method stub
-		return null;
+		validateForUpdate(entity);
+
+		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?" +
+		        " where entity_id=? and entity_version=?";
+		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
+		updatedEntity.updated(updatedBy);
+		final Optional<UUID> optionalUpdatedBy = updatedEntity.getUpdatedByEntityId();
+		final UUID updatedById = optionalUpdatedBy.isPresent() ? optionalUpdatedBy.get() : null;
+		final int updateCount = jdbc.update(sql,
+		        updatedEntity.getEntityVersion(),
+		        new Timestamp(updatedEntity.getEntityUpdatedOn()),
+		        updatedById,
+		        entity.getName(),
+		        entity.getSubjecId(),
+		        entity.getHash(),
+		        entity.getHashAlgorithm(),
+		        entity.getHashIterations(),
+		        entity.getSalt(),
+		        updatedEntity.getEntityId(),
+		        entity.getEntityVersion());
+		if (updateCount == 0) {
+			throw new StaleObjectException();
+		}
+
+		return updatedEntity;
 	}
 
 }
