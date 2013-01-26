@@ -21,11 +21,9 @@ package com.azaptree.services.security.dao;
  */
 
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -35,6 +33,7 @@ import com.azaptree.services.domain.entity.dao.DAOException;
 import com.azaptree.services.domain.entity.dao.JDBCVersionedEntityDAOSupport;
 import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
+import com.azaptree.services.domain.entity.dao.VersionedEntityRowMapperSupport;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 import com.google.common.base.Optional;
@@ -42,25 +41,18 @@ import com.google.common.base.Optional;
 @Repository
 public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 
-	private final RowMapper<Subject> rowMapper = new RowMapper<Subject>() {
+	private final RowMapper<Subject> rowMapper = new VersionedEntityRowMapperSupport<Subject>() {
 
 		@Override
-		public Subject mapRow(final ResultSet rs, final int rowNum) throws SQLException {
-			final SubjectImpl subject = new SubjectImpl();
-			subject.setEntityId(UUID.fromString(rs.getString("entity_id")));
-			subject.setEntityVersion(rs.getLong("entity_version"));
-			subject.setEntityCreatedOn(rs.getTimestamp("entity_created_on").getTime());
-			final String createdBy = rs.getString("entity_created_by");
-			if (StringUtils.isNotBlank(createdBy)) {
-				subject.setCreatedBy(UUID.fromString(createdBy));
-			}
-			subject.setEntityUpdatedOn(rs.getTimestamp("entity_updated_on").getTime());
-			final String updatedBy = rs.getString("entity_updated_by");
-			if (StringUtils.isNotBlank(updatedBy)) {
-				subject.setUpdatedBy(UUID.fromString(updatedBy));
-			}
-			return subject;
+		protected Subject createEntity(final ResultSet rs, int rowNum) {
+			return new SubjectImpl();
 		}
+
+		@Override
+		protected Subject mapRow(final Subject entity, final ResultSet rs, final int rowNum) {
+			return entity;
+		}
+
 	};
 
 	public SubjectDAO(final JdbcTemplate jdbc) {
