@@ -21,6 +21,7 @@ package com.azaptree.services.security.dao;
  */
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.UUID;
 
@@ -35,6 +36,7 @@ import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.domain.entity.dao.VersionedEntityRowMapperSupport;
 import com.azaptree.services.security.domain.Subject;
+import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 import com.google.common.base.Optional;
 
@@ -44,12 +46,15 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	private final RowMapper<Subject> rowMapper = new VersionedEntityRowMapperSupport<Subject>() {
 
 		@Override
-		protected Subject createEntity(final ResultSet rs, int rowNum) {
+		protected Subject createEntity(final ResultSet rs, final int rowNum) {
 			return new SubjectImpl();
 		}
 
 		@Override
-		protected Subject mapRow(final Subject entity, final ResultSet rs, final int rowNum) {
+		protected Subject mapRow(final Subject entity, final ResultSet rs, final int rowNum) throws SQLException {
+			final SubjectImpl subject = (SubjectImpl) entity;
+			subject.setMaxSessions(rs.getInt("max_sessions"));
+			subject.setStatus(Status.getStatus(rs.getInt("status")));
 			return entity;
 		}
 
@@ -63,11 +68,11 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject create(final Subject entity) {
 		Assert.notNull(entity, "entity is required");
 
-		final SubjectImpl subject = new SubjectImpl();
+		final SubjectImpl subject = new SubjectImpl(entity);
 		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 
 		subject.created();
-		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by) values (?,?,?,?,?,?)";
+		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
 
 		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
 		jdbc.update(sql,
@@ -76,7 +81,9 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        new Timestamp(subject.getEntityCreatedOn()),
 		        createdBy.isPresent() ? createdBy.get() : null,
 		        new Timestamp(subject.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null);
+		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        subject.getMaxSessions(),
+		        subject.getStatus().code);
 		return subject;
 	}
 
@@ -84,10 +91,10 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject create(final Subject entity, final UUID createdBy) {
 		Assert.notNull(entity, "entity is required");
 		Assert.notNull(createdBy, "createdBy is required");
-		final SubjectImpl subject = new SubjectImpl();
+		final SubjectImpl subject = new SubjectImpl(entity);
 
 		subject.created(createdBy);
-		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by) values (?,?,?,?,?,?)";
+		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
 
 		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
 		jdbc.update(sql,
@@ -96,7 +103,9 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        new Timestamp(subject.getEntityCreatedOn()),
 		        createdBy,
 		        new Timestamp(subject.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null);
+		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        subject.getMaxSessions(),
+		        subject.getStatus().code);
 		return subject;
 	}
 

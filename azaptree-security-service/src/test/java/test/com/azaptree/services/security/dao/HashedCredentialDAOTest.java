@@ -53,6 +53,7 @@ import com.azaptree.services.security.dao.HashedCredentialDAO;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.HashedCredential;
 import com.azaptree.services.security.domain.Subject;
+import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 
@@ -136,7 +137,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_create_findById_cascade_delete() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -165,7 +166,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_create_findById_delete() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -201,7 +202,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_create_withCreatedBy_findById_delete() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -239,7 +240,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_findBySubjectId() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -259,7 +260,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_findBySubjectIdAndName() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -277,7 +278,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_subjectHasCredential() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -294,7 +295,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_update() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
@@ -330,7 +331,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_update_with_updatedBy() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();

@@ -49,6 +49,7 @@ import com.azaptree.services.domain.entity.dao.SortField;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.Subject;
+import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 
 @ContextConfiguration(classes = SubjectDAOTest.Config.class)
@@ -110,7 +111,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Test
 	public void test_create_findById_delete() {
 		final long now = System.currentTimeMillis();
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final StopWatch stopWatch = new StopWatch();
 		stopWatch.start();
 		final Subject subject = subjectDao.create(temp);
@@ -145,7 +146,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Test
 	public void test_findAll() {
 		for (int i = 0; i < 500; i++) {
-			subjectDao.create(new SubjectImpl());
+			subjectDao.create(new SubjectImpl(Status.ACTIVATED));
 		}
 
 		final long totalCount = subjectDao.getTotalCount();
@@ -168,7 +169,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Test
 	public void test_findAll_sorted() {
 		for (int i = 0; i < 500; i++) {
-			subjectDao.create(new SubjectImpl(), UUID.randomUUID());
+			subjectDao.create(new SubjectImpl(Status.ACTIVATED), UUID.randomUUID());
 		}
 
 		final long totalCount = subjectDao.getTotalCount();
@@ -210,7 +211,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Test
 	public void test_objectNotFound_create() {
 		try {
-			final SubjectImpl subject = new SubjectImpl();
+			final SubjectImpl subject = new SubjectImpl(Status.ACTIVATED);
 			subject.created();
 			subjectDao.update(subject);
 		} catch (final ObjectNotFoundException e) {
@@ -239,7 +240,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_update() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
 		final Subject updatedSubject = subjectDao.update(subject);
 		Assert.assertNotNull(updatedSubject);
@@ -259,7 +260,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test(expectedExceptions = ObjectNotFoundException.class)
 	public void test_update_objectNotFound() {
-		final SubjectImpl subject = new SubjectImpl();
+		final SubjectImpl subject = new SubjectImpl(Status.ACTIVATED);
 		subject.created();
 		subjectDao.update(subject);
 	}
@@ -267,7 +268,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test(expectedExceptions = StaleObjectException.class)
 	public void test_update_staleObject() {
-		final Subject temp = new SubjectImpl();
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
 		subject.updated();
 		subjectDao.update(subject);

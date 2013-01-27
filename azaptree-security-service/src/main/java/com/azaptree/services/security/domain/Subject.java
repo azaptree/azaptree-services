@@ -34,4 +34,40 @@ import com.azaptree.services.domain.entity.VersionedEntity;
  */
 public interface Subject extends VersionedEntity {
 
+	public enum Status {
+		LOCKED(0),
+		ACTIVATED(1),
+		INACTIVATED(2),
+		TERMINATED(3);
+
+		public static Status getStatus(final int code) {
+			switch (code) {
+			case 0:
+				return LOCKED;
+			case 1:
+				return ACTIVATED;
+			case 2:
+				return INACTIVATED;
+			case 3:
+				return TERMINATED;
+			default:
+				throw new IllegalArgumentException("Invalid code: " + code);
+			}
+		}
+
+		public final int code;
+
+		private Status(final int code) {
+			this.code = code;
+		}
+	}
+
+	int getMaxSessions();
+
+	Status getStatus();
+
+	void setMaxSessions(int maxSessions);
+
+	void setStatus(Status status);
+
 }

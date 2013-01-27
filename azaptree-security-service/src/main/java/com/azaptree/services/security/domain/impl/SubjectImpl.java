@@ -20,17 +20,58 @@ package com.azaptree.services.security.domain.impl;
  * #L%
  */
 
+import org.springframework.util.Assert;
+
 import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
 import com.azaptree.services.security.domain.Subject;
 
 public class SubjectImpl extends DomainVersionedEntity implements Subject {
 
-	public SubjectImpl(final Subject entity) {
-		super(entity);
-	}
+	private Status status;
+
+	private int maxSessions = 1;
 
 	public SubjectImpl() {
 		super();
+	}
+
+	public SubjectImpl(final Status status) {
+		super();
+		setStatus(status);
+	}
+
+	public SubjectImpl(final Status status, final int maxSessions) {
+		super();
+		setStatus(status);
+		setMaxSessions(maxSessions);
+	}
+
+	public SubjectImpl(final Subject entity) {
+		super(entity);
+		setStatus(entity.getStatus());
+		setMaxSessions(entity.getMaxSessions());
+	}
+
+	@Override
+	public int getMaxSessions() {
+		return maxSessions;
+	}
+
+	@Override
+	public Status getStatus() {
+		return status;
+	}
+
+	@Override
+	public void setMaxSessions(final int maxSessions) {
+		Assert.isTrue(maxSessions > 0, "constraint check failed: maxSessions > 0");
+		this.maxSessions = maxSessions;
+	}
+
+	@Override
+	public void setStatus(final Status status) {
+		Assert.notNull(status, "status is required");
+		this.status = status;
 	}
 
 }
