@@ -40,10 +40,12 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 import org.eclipse.jetty.client.ContentExchange;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpExchange;
+import org.eclipse.jetty.http.HttpStatus;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.AbstractHandler;
+import org.eclipse.jetty.server.handler.HandlerList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,6 +62,7 @@ import com.azaptree.services.http.HttpService;
 import com.azaptree.services.http.HttpServiceConfig;
 import com.azaptree.services.http.HttpServiceJmxApi;
 import com.azaptree.services.http.handler.AsyncSuspendContinueHttpHandlerSupport;
+import com.azaptree.services.http.handler.SecureAllFilterHandler;
 import com.azaptree.services.http.impl.ExecutorThreadPoolWithGracefulShutdown;
 import com.azaptree.services.http.impl.HttpServiceImpl;
 
@@ -176,6 +179,11 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
+		public HttpService httpService8084() {
+			return new HttpServiceImpl(httpServiceConfig8084());
+		}
+
+		@Bean
 		public HttpServiceConfig httpServiceConfig8080() {
 			final HttpServiceConfig config = new HttpServiceConfig("http-service", new HttpHandler(0));
 			config.setGracefulShutdownTimeoutSecs(30);
@@ -204,6 +212,20 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			final HttpServiceConfig config = new HttpServiceConfig("http-service", asyncHttpHandlerThrowsException(), Executors.newCachedThreadPool(), 8083);
 			config.setGracefulShutdownTimeoutSecs(30);
 			return config;
+		}
+
+		@Bean
+		public HttpServiceConfig httpServiceConfig8084() {
+			final HttpServiceConfig config = new HttpServiceConfig("http-service", secureHandlerList(), Executors.newCachedThreadPool(), 8084);
+			config.setGracefulShutdownTimeoutSecs(30);
+			return config;
+		}
+
+		@Bean
+		public Handler secureHandlerList() {
+			final HandlerList handlerList = new HandlerList();
+			handlerList.setHandlers(new Handler[] { new SecureAllFilterHandler(), asyncHttpHandler() });
+			return handlerList;
 		}
 	}
 
@@ -283,6 +305,12 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 
 	@Resource(name = "httpServiceConfig8083")
 	private HttpServiceConfig httpServiceConfig8083;
+
+	@Resource(name = "httpService8084")
+	private HttpService httpService8084;
+
+	@Resource(name = "httpServiceConfig8084")
+	private HttpServiceConfig httpServiceConfig8084;
 
 	@Autowired
 	private HttpClient client;
@@ -378,6 +406,23 @@ public class HttpServiceTest extends AbstractTestNGSpringContextTests {
 			Assert.assertEquals(exchangeState, HttpExchange.STATUS_COMPLETED);
 
 			log.info("test_httpService8083_asyncServerHandlerThrowsException(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(),
+			        exchange.getResponseContent());
+		}
+	}
+
+	@Test
+	public void test_httpService8084_secureAllFilter() throws Exception {
+		for (int i = 0; i < 3; i++) {
+			final ContentExchange exchange = new ContentExchange(true);
+			exchange.setMethod("GET");
+			exchange.setURL(String.format("http://localhost:%d/test_httpService8084", httpServiceConfig8084.getPort()));
+			client.send(exchange);
+
+			final int exchangeState = exchange.waitForDone();
+			Assert.assertEquals(exchangeState, HttpExchange.STATUS_COMPLETED);
+			Assert.assertEquals(exchange.getResponseStatus(), HttpStatus.FORBIDDEN_403);
+
+			log.info("test_httpService8084_secureAllFilter(): exchange.getResponseContent(): {} -> {}", exchange.getStatus(),
 			        exchange.getResponseContent());
 		}
 	}
