@@ -23,9 +23,17 @@ package com.azaptree.services.security.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
 
@@ -37,8 +45,9 @@ import com.azaptree.services.domain.entity.dao.VersionedEntityRowMapperSupport;
 import com.azaptree.services.security.domain.HashedCredential;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
 
-public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCredential> {
+public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCredential> implements HashedCredentialRepository {
 
 	private final RowMapper<HashedCredential> rowMapper = new VersionedEntityRowMapperSupport<HashedCredential>() {
 
@@ -124,6 +133,31 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	}
 
 	@Override
+	public Set<HashedCredential> findBySubjectId(final UUID subjectId) throws DAOException {
+		Assert.notNull(subjectId, "subjectId is required");
+		final String sql = "select * from t_hashed_credential where subject_id = ?";
+		final Object[] args = { subjectId };
+		final List<HashedCredential> rs = jdbc.query(sql, args, rowMapper);
+		if (rs.isEmpty()) {
+			return Collections.emptySet();
+		}
+		return ImmutableSet.<HashedCredential> builder().addAll(rs).build();
+	}
+
+	@Override
+	public HashedCredential findBySubjectIdAndName(final UUID subjectId, final String name) {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.hasText(name, "name is required");
+		final String sql = "select * from t_hashed_credential where subject_id = ? and name = ?";
+		final Object[] args = { subjectId, name };
+		try {
+			return jdbc.queryForObject(sql, args, rowMapper);
+		} catch (final IncorrectResultSizeDataAccessException e) {
+			return null;
+		}
+	}
+
+	@Override
 	protected RowMapper<HashedCredential> getRowMapper() {
 		return rowMapper;
 	}
@@ -137,6 +171,26 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		fieldColumnMappings.put("HashAlgorithm", "hash_algorithm");
 		fieldColumnMappings.put("HashIterations", "hash_iterations");
 		fieldColumnMappings.put("Salt", "salt");
+	}
+
+	@Override
+	public boolean subjectHasCredential(final UUID subjectId, final String name, final byte[] hash) {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.hasText(name, "name is required");
+		Assert.isTrue(ArrayUtils.isNotEmpty(hash), "hash is required");
+		final String sql = "select hash from t_hashed_credential where subject_id = ? and name = ?";
+		final Object[] args = { subjectId, name };
+		return jdbc.query(sql, args, new ResultSetExtractor<Boolean>() {
+
+			@Override
+			public Boolean extractData(final ResultSet rs) throws SQLException, DataAccessException {
+				if (rs.next()) {
+					return Arrays.equals(rs.getBytes(1), hash);
+				}
+
+				return false;
+			}
+		});
 	}
 
 	@Override
@@ -198,5 +252,4 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 
 		return updatedEntity;
 	}
-
 }

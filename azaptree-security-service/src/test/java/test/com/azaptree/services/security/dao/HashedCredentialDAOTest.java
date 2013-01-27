@@ -21,6 +21,7 @@ package test.com.azaptree.services.security.dao;
  */
 
 import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.sql.DataSource;
@@ -142,7 +143,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 		final Hash hash = hashService.computeHash(hashRequest);
 		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hash.getBytes(), hash.getAlgorithmName(),
 		        hash.getIterations(), hash.getSalt().getBytes());
-		HashedCredential savedPassword = hashedCredentialDAO.create(password);
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
 
 		Assert.assertNotNull(savedPassword);
 		Assert.assertNotNull(savedPassword.getEntityId());
@@ -233,6 +234,61 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 
 		hashedCredentialDAO.delete(savedPassword.getEntityId());
 		Assert.assertNull(hashedCredentialDAO.findById(savedPassword.getEntityId()));
+	}
+
+	@Transactional
+	@Test
+	public void test_findBySubjectId() {
+		final Subject temp = new SubjectImpl();
+		final Subject subject = subjectDao.create(temp);
+
+		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
+		final Hash hash = hashService.computeHash(hashRequest);
+		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hash.getBytes(), hash.getAlgorithmName(),
+		        hash.getIterations(), hash.getSalt().getBytes());
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
+
+		final Set<HashedCredential> credentials = hashedCredentialDAO.findBySubjectId(subject.getEntityId());
+		Assert.assertFalse(credentials.isEmpty());
+		Assert.assertEquals(credentials.size(), 1);
+		Assert.assertTrue(credentials.contains(savedPassword));
+
+		Assert.assertTrue(hashedCredentialDAO.findBySubjectId(savedPassword.getEntityId()).isEmpty());
+	}
+
+	@Transactional
+	@Test
+	public void test_findBySubjectIdAndName() {
+		final Subject temp = new SubjectImpl();
+		final Subject subject = subjectDao.create(temp);
+
+		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
+		final Hash hash = hashService.computeHash(hashRequest);
+		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hash.getBytes(), hash.getAlgorithmName(),
+		        hash.getIterations(), hash.getSalt().getBytes());
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
+
+		final HashedCredential retrievedCredential = hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getName());
+		Assert.assertEquals(retrievedCredential, savedPassword);
+
+		Assert.assertNull(hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getEntityId().toString()));
+	}
+
+	@Transactional
+	@Test
+	public void test_subjectHasCredential() {
+		final Subject temp = new SubjectImpl();
+		final Subject subject = subjectDao.create(temp);
+
+		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
+		final Hash hash = hashService.computeHash(hashRequest);
+		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hash.getBytes(), hash.getAlgorithmName(),
+		        hash.getIterations(), hash.getSalt().getBytes());
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
+
+		Assert.assertTrue(hashedCredentialDAO.subjectHasCredential(subject.getEntityId(), savedPassword.getName(), savedPassword.getHash()));
+		Assert.assertFalse(hashedCredentialDAO.subjectHasCredential(subject.getEntityId(), savedPassword.getName(), hashService.computeHash(hashRequest)
+		        .getBytes()));
 	}
 
 	@Transactional
