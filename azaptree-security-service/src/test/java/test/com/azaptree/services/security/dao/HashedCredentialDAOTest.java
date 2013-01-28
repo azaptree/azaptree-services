@@ -48,12 +48,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import com.azaptree.services.security.config.HashServiceConfig;
 import com.azaptree.services.security.dao.HashedCredentialDAO;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.HashedCredential;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.Subject.Status;
+import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 
