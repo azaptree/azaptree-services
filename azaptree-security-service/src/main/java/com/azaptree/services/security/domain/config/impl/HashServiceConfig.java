@@ -23,6 +23,7 @@ package com.azaptree.services.security.domain.config.impl;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Objects;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,10 +34,10 @@ import org.apache.shiro.crypto.hash.HashService;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.util.Assert;
 
-import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
+import com.azaptree.services.domain.entity.impl.DomainEntity;
 import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 
-public class HashServiceConfig extends DomainVersionedEntity implements HashServiceConfiguration {
+public class HashServiceConfig extends DomainEntity implements HashServiceConfiguration {
 	private final String name;
 
 	private final byte[] privateSalt;
@@ -98,6 +99,25 @@ public class HashServiceConfig extends DomainVersionedEntity implements HashServ
 	}
 
 	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		final HashServiceConfig other = (HashServiceConfig) obj;
+		return Objects.equals(name, other.name)
+		        && Objects.equals(hashIterations, other.hashIterations)
+		        && Objects.equals(hashAlgorithmName, other.hashAlgorithmName)
+		        && Objects.equals(secureRandomNumberGeneratorNextBytesSize, other.secureRandomNumberGeneratorNextBytesSize)
+		        && ArrayUtils.isEquals(privateSalt, other.privateSalt);
+	}
+
+	@Override
 	public String getHashAlgorithmName() {
 		return hashAlgorithmName;
 	}
@@ -120,6 +140,11 @@ public class HashServiceConfig extends DomainVersionedEntity implements HashServ
 	@Override
 	public int getSecureRandomNumberGeneratorNextBytesSize() {
 		return secureRandomNumberGeneratorNextBytesSize;
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(name);
 	}
 
 	@Override

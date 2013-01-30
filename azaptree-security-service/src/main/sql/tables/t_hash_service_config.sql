@@ -24,11 +24,6 @@
 CREATE TABLE azaptree.t_hash_service_config
 (
 -- Inherited from table azaptree.t_versioned_entity:  entity_id uuid NOT NULL,
--- Inherited from table azaptree.t_versioned_entity:  entity_version bigint NOT NULL,
--- Inherited from table azaptree.t_versioned_entity:  entity_created_on timestamp with time zone NOT NULL,
--- Inherited from table azaptree.t_versioned_entity:  entity_created_by uuid,
--- Inherited from table azaptree.t_versioned_entity:  entity_updated_on timestamp with time zone NOT NULL,
--- Inherited from table azaptree.t_versioned_entity:  entity_updated_by uuid,
   name text NOT NULL,
   private_salt bytea NOT NULL,
   hash_iterations integer NOT NULL,
@@ -37,7 +32,7 @@ CREATE TABLE azaptree.t_hash_service_config
   CONSTRAINT pk_hash_service_config PRIMARY KEY (entity_id),
   CONSTRAINT uk_hash_service_config UNIQUE (name)
 )
-INHERITS (azaptree.t_versioned_entity)
+INHERITS (azaptree.t_entity)
 WITH (
   OIDS=FALSE
 );

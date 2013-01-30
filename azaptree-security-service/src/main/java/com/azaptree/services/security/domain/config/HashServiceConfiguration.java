@@ -22,9 +22,9 @@ package com.azaptree.services.security.domain.config;
 
 import org.apache.shiro.crypto.hash.HashService;
 
-import com.azaptree.services.domain.entity.VersionedEntity;
+import com.azaptree.services.domain.entity.Entity;
 
-public interface HashServiceConfiguration extends VersionedEntity {
+public interface HashServiceConfiguration extends Entity {
 
 	/**
 	 * Creates a HashService instance based on this configuration
