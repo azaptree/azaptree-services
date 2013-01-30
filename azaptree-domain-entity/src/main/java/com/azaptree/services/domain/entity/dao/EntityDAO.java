@@ -32,8 +32,6 @@ public interface EntityDAO<T extends Entity> {
 
 	T create(T entity);
 
-	long getTotalCount();
-
 	/**
 	 * 
 	 * @param id
@@ -41,11 +39,15 @@ public interface EntityDAO<T extends Entity> {
 	 */
 	boolean delete(UUID id);
 
+	boolean exists(final UUID id);
+
 	SearchResults<T> findAll(Page page, SortField... sort);
 
 	T findById(UUID id);
 
 	Set<String> getEntityFields();
+
+	long getTotalCount();
 
 	/**
 	 * The returned entity should be used after the update

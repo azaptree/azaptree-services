@@ -41,19 +41,23 @@ public abstract class JDBCVersionedEntityDAOSupport<T extends VersionedEntity> e
 		fieldColumnMappings.put("UpdatedByEntityId", "entity_updated_by");
 	}
 
+	/**
+	 * 
+	 * @param entity
+	 * 
+	 * @throws ObjectNotFoundException
+	 *             if the entity does not exist in the database
+	 */
 	protected void validateForUpdate(VersionedEntity entity) {
 		Assert.notNull(entity, "entity is required");
 		Assert.notNull(entity.getEntityId(), "entityId must not be null");
 		Assert.notNull(entity.getEntityCreatedOn(), "entityCreatedOn must not be null");
 		Assert.isTrue(entity.getEntityVersion() > 0, "entityVersion must be > 0");
 
-		final VersionedEntity current = findById(entity.getEntityId());
-		if (current == null) {
+		if (!exists(entity.getEntityId())) {
 			throw new ObjectNotFoundException();
 		}
-		if (current.getEntityVersion() != entity.getEntityVersion()) {
-			throw new StaleObjectException();
-		}
+
 	}
 
 }

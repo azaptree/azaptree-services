@@ -266,12 +266,29 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	}
 
 	@Transactional
+	@Test(expectedExceptions = ObjectNotFoundException.class)
+	public void test_update_withCreatedBy_objectNotFound() {
+		final SubjectImpl subject = new SubjectImpl(Status.ACTIVATED);
+		subject.created();
+		subjectDao.update(subject, UUID.randomUUID());
+	}
+
+	@Transactional
 	@Test(expectedExceptions = StaleObjectException.class)
 	public void test_update_staleObject() {
 		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
 		subject.updated();
 		subjectDao.update(subject);
+	}
+
+	@Transactional
+	@Test(expectedExceptions = StaleObjectException.class)
+	public void test_update_withCreatedBy_staleObject() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
+		subject.updated();
+		subjectDao.update(subject, UUID.randomUUID());
 	}
 
 }

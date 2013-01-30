@@ -83,6 +83,7 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 		this.entityId = UUID.randomUUID();
 		this.entityVersion = 1;
 		this.createdByEntityId = createdByEntityId;
+		this.updatedByEntityId = createdByEntityId;
 		this.entityCreatedOn = System.currentTimeMillis();
 		this.entityUpdatedOn = this.entityCreatedOn;
 	}

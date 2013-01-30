@@ -79,21 +79,21 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 
 		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjecId(), hashedCredential.getName(), hashedCredential.getHash(),
 		        hashedCredential.getHashAlgorithm(), hashedCredential.getHashIterations(), hashedCredential.getSalt());
-		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 
 		entity.created();
 		final String sql = "insert into t_hashed_credential "
 		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt)"
 		        + " values (?,?,?,?,?,?,?,?,?,?,?,?)";
 
-		final Optional<UUID> updatedBy = entity.getUpdatedByEntityId();
+		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
+		final UUID createdByUUID = createdBy.isPresent() ? createdBy.get() : null;
 		jdbc.update(sql,
 		        entity.getEntityId(),
 		        entity.getEntityVersion(),
 		        new Timestamp(entity.getEntityCreatedOn()),
-		        createdBy.isPresent() ? createdBy.get() : null,
+		        createdByUUID,
 		        new Timestamp(entity.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        createdByUUID,
 		        entity.getName(),
 		        entity.getSubjecId(),
 		        entity.getHash(),
@@ -115,14 +115,13 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt)"
 		        + " values (?,?,?,?,?,?,?,?,?,?,?,?)";
 
-		final Optional<UUID> updatedBy = entity.getUpdatedByEntityId();
 		jdbc.update(sql,
 		        entity.getEntityId(),
 		        entity.getEntityVersion(),
 		        new Timestamp(entity.getEntityCreatedOn()),
 		        createdBy,
 		        new Timestamp(entity.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        createdBy,
 		        entity.getName(),
 		        entity.getSubjecId(),
 		        entity.getHash(),
@@ -217,7 +216,11 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {
-			throw new StaleObjectException();
+			if (exists(updatedEntity.getEntityId())) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
 		}
 
 		return updatedEntity;
@@ -247,7 +250,11 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {
-			throw new StaleObjectException();
+			if (exists(updatedEntity.getEntityId())) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
 		}
 
 		return updatedEntity;

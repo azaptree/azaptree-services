@@ -69,19 +69,19 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		Assert.notNull(entity, "entity is required");
 
 		final SubjectImpl subject = new SubjectImpl(entity);
-		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
-
 		subject.created();
+
 		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
 
-		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
+		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
+		final UUID createdByUUID = createdBy.isPresent() ? createdBy.get() : null;
 		jdbc.update(sql,
 		        subject.getEntityId(),
 		        subject.getEntityVersion(),
 		        new Timestamp(subject.getEntityCreatedOn()),
-		        createdBy.isPresent() ? createdBy.get() : null,
+		        createdByUUID,
 		        new Timestamp(subject.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        createdByUUID,
 		        subject.getMaxSessions(),
 		        subject.getStatus().code);
 		return subject;
@@ -96,14 +96,13 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		subject.created(createdBy);
 		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
 
-		final Optional<UUID> updatedBy = subject.getUpdatedByEntityId();
 		jdbc.update(sql,
 		        subject.getEntityId(),
 		        subject.getEntityVersion(),
 		        new Timestamp(subject.getEntityCreatedOn()),
 		        createdBy,
 		        new Timestamp(subject.getEntityUpdatedOn()),
-		        updatedBy.isPresent() ? updatedBy.get() : null,
+		        createdBy,
 		        subject.getMaxSessions(),
 		        subject.getStatus().code);
 		return subject;
@@ -129,7 +128,11 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        updatedById,
 		        updatedSubject.getEntityId(), entity.getEntityVersion());
 		if (updateCount == 0) {
-			throw new StaleObjectException();
+			if (exists(entity.getEntityId())) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
 		}
 
 		return updatedSubject;
@@ -148,7 +151,11 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        updatedBy,
 		        updatedSubject.getEntityId(), entity.getEntityVersion());
 		if (updateCount == 0) {
-			throw new StaleObjectException();
+			if (exists(entity.getEntityId())) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
 		}
 
 		return updatedSubject;

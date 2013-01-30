@@ -119,6 +119,19 @@ public abstract class JDBCEntityDAOSupport<T extends Entity> implements EntityDA
 	}
 
 	@Override
+	public boolean exists(final UUID id) {
+		Assert.notNull(id, "id is required");
+		final String sql = new StringBuilder("select 1 from ").append(table).append(" where entity_id = ?").toString();
+		final Object[] args = { id };
+		try {
+			jdbc.queryForInt(sql, args);
+			return true;
+		} catch (final IncorrectResultSizeDataAccessException e) {
+			return false;
+		}
+	}
+
+	@Override
 	public SearchResults<T> findAll(final Page page, final SortField... sort) {
 		check(page, sort);
 		final StringBuilder sql = new StringBuilder("select * from t_subject");
