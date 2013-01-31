@@ -36,6 +36,18 @@ public interface HashedCredential extends VersionedEntity, Hash {
 
 	String getName();
 
-	UUID getSubjecId();
+	/**
+	 * UUID of Subject that owns this HashedCredential
+	 * 
+	 * @return
+	 */
+	UUID getSubjectId();
+
+	/**
+	 * UUID of HashServiceConfiguration that was used to configure a HashService for this HashedCredential
+	 * 
+	 * @return
+	 */
+	UUID getHashServiceConfigurationId();
 
 }

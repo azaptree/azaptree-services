@@ -48,6 +48,8 @@ public interface SecurityService {
 
 	HashService getHashService(UUID hashServiceConfiguationId);
 
+	HashService getHashService(String name);
+
 	RandomNumberGenerator getRandomNumberGenerator();
 
 	Subject getSubject(UUID subjectId);

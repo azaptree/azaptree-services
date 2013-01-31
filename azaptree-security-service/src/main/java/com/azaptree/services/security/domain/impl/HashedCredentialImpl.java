@@ -36,6 +36,7 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 
 	private final String name;
 	protected final UUID subjectId;
+	protected final UUID hashServiceConfigurationId;
 	protected final byte[] hash;
 	private final String hashAlgorithm;
 	private final int hashIterations;
@@ -48,34 +49,15 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	 */
 	public HashedCredentialImpl(final HashedCredential entity) {
 		super(entity);
-		validate(entity.getSubjecId(), entity.getName(), entity.getHash(), entity.getHashAlgorithm(), entity.getHashIterations(), entity.getSalt());
-		subjectId = entity.getSubjecId();
+		validate(entity.getSubjectId(), entity.getName(), entity.getHashServiceConfigurationId(), entity.getHash(), entity.getHashAlgorithm(),
+		        entity.getHashIterations(), entity.getSalt());
+		subjectId = entity.getSubjectId();
+		hashServiceConfigurationId = entity.getHashServiceConfigurationId();
 		name = entity.getName();
 		hash = entity.getHash();
 		hashAlgorithm = entity.getHashAlgorithm();
 		hashIterations = entity.getHashIterations();
 		salt = entity.getSalt();
-	}
-
-	/**
-	 * Purpose is to create new HashedCredentials
-	 * 
-	 * @param subjectId
-	 * @param name
-	 * @param hash
-	 * @param hashAlgorithm
-	 * @param hashIterations
-	 * @param salt
-	 */
-	public HashedCredentialImpl(final UUID subjectId, final String name, final byte[] hash, final String hashAlgorithm, final int hashIterations,
-	        final byte[] salt) {
-		validate(subjectId, name, hash, hashAlgorithm, hashIterations, salt);
-		this.subjectId = subjectId;
-		this.name = name;
-		this.hash = hash;
-		this.hashAlgorithm = hashAlgorithm;
-		this.hashIterations = hashIterations;
-		this.salt = salt;
 	}
 
 	/**
@@ -95,9 +77,32 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	public HashedCredentialImpl(final HashedCredential entity, final byte[] hash, final String hashAlgorithm,
 	        final int hashIterations, final byte[] salt) {
 		super(entity);
-		validate(entity.getSubjecId(), entity.getName(), hash, hashAlgorithm, hashIterations, salt);
-		this.subjectId = entity.getSubjecId();
+		validate(entity.getSubjectId(), entity.getName(), entity.getHashServiceConfigurationId(), hash, hashAlgorithm, hashIterations, salt);
+		this.subjectId = entity.getSubjectId();
+		this.hashServiceConfigurationId = entity.getHashServiceConfigurationId();
 		this.name = entity.getName();
+		this.hash = hash;
+		this.hashAlgorithm = hashAlgorithm;
+		this.hashIterations = hashIterations;
+		this.salt = salt;
+	}
+
+	/**
+	 * Purpose is to create new HashedCredentials
+	 * 
+	 * @param subjectId
+	 * @param name
+	 * @param hash
+	 * @param hashAlgorithm
+	 * @param hashIterations
+	 * @param salt
+	 */
+	public HashedCredentialImpl(final UUID subjectId, final String name, final UUID hashServiceConfigurationId, final byte[] hash, final String hashAlgorithm,
+	        final int hashIterations, final byte[] salt) {
+		validate(subjectId, name, hashServiceConfigurationId, hash, hashAlgorithm, hashIterations, salt);
+		this.hashServiceConfigurationId = hashServiceConfigurationId;
+		this.subjectId = subjectId;
+		this.name = name;
 		this.hash = hash;
 		this.hashAlgorithm = hashAlgorithm;
 		this.hashIterations = hashIterations;
@@ -135,6 +140,11 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	}
 
 	@Override
+	public UUID getHashServiceConfigurationId() {
+		return hashServiceConfigurationId;
+	}
+
+	@Override
 	public String getName() {
 		return name;
 	}
@@ -145,7 +155,7 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	}
 
 	@Override
-	public UUID getSubjecId() {
+	public UUID getSubjectId() {
 		return subjectId;
 	}
 
@@ -154,10 +164,12 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		return ByteSource.Util.bytes(hash).toBase64().hashCode();
 	}
 
-	private void validate(final UUID subjectId, final String name, final byte[] hash, final String hashAlgorithm, final int hashIterations,
+	private void validate(final UUID subjectId, final String name, final UUID hashServiceConfigurationId, final byte[] hash, final String hashAlgorithm,
+	        final int hashIterations,
 	        final byte[] salt) {
 		Assert.notNull(subjectId, "subjectId is required");
 		Assert.hasText(name);
+		Assert.notNull(hashServiceConfigurationId, "hashServiceConfigurationId is required");
 		Assert.isTrue(ArrayUtils.isNotEmpty(hash), "hash is required");
 		Assert.isTrue(ArrayUtils.isNotEmpty(salt), "salt is required");
 		Assert.hasText(hashAlgorithm, "hashAlgorithm is required");

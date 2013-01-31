@@ -24,6 +24,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
 
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.util.Assert;
@@ -36,7 +37,7 @@ import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 
-public class HashServiceConfigurationDAO extends JDBCEntityDAOSupport<HashServiceConfiguration> {
+public class HashServiceConfigurationDAO extends JDBCEntityDAOSupport<HashServiceConfiguration> implements HashServiceConfigurationRepository {
 	private final RowMapper<HashServiceConfiguration> rowMapper = new EntityRowMapperSupport<HashServiceConfiguration>() {
 
 		@Override
@@ -82,8 +83,29 @@ public class HashServiceConfigurationDAO extends JDBCEntityDAOSupport<HashServic
 	}
 
 	@Override
+	public HashServiceConfiguration findByName(final String name) {
+		Assert.hasText(name, "name is required");
+		final Object[] args = { name };
+		try {
+			return jdbc.queryForObject("select * from t_hash_service_config where name = ?", args, rowMapper);
+		} catch (final IncorrectResultSizeDataAccessException e) {
+			return null;
+		}
+	}
+
+	@Override
 	protected RowMapper<HashServiceConfiguration> getRowMapper() {
 		return rowMapper;
+	}
+
+	@Override
+	protected void initFieldColumnMappings() {
+		super.initFieldColumnMappings();
+		fieldColumnMappings.put("Name", "name");
+		fieldColumnMappings.put("PrivateSalt", "private_salt");
+		fieldColumnMappings.put("HashAlgorithmName", "hash_algorithm");
+		fieldColumnMappings.put("HashIterations", "hash_iterations");
+		fieldColumnMappings.put("SecureRandomNumberGeneratorNextBytesSize", "secure_rand_next_bytes_size");
 	}
 
 	/**

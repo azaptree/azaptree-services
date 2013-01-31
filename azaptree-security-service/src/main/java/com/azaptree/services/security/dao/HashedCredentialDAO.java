@@ -54,13 +54,14 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		@Override
 		protected HashedCredential createEntity(final ResultSet rs, final int rowNum) throws SQLException {
 			final UUID subjectId = (UUID) rs.getObject("subject_id");
+			final UUID hashServiceConfigId = (UUID) rs.getObject("hash_service_config_id");
 			final String name = rs.getString("name");
 			final byte[] hash = rs.getBytes("hash");
 			final String hashAlgorithm = rs.getString("hash_algorithm");
 			final int hashIterations = rs.getInt("hash_iterations");
 			final byte[] salt = rs.getBytes("salt");
 
-			return new HashedCredentialImpl(subjectId, name, hash, hashAlgorithm, hashIterations, salt);
+			return new HashedCredentialImpl(subjectId, name, hashServiceConfigId, hash, hashAlgorithm, hashIterations, salt);
 		}
 
 		@Override
@@ -77,13 +78,14 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential create(final HashedCredential hashedCredential) {
 		Assert.notNull(hashedCredential, "hashedCredential is required");
 
-		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjecId(), hashedCredential.getName(), hashedCredential.getHash(),
+		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjectId(), hashedCredential.getName(),
+		        hashedCredential.getHashServiceConfigurationId(), hashedCredential.getHash(),
 		        hashedCredential.getHashAlgorithm(), hashedCredential.getHashIterations(), hashedCredential.getSalt());
 
 		entity.created();
 		final String sql = "insert into t_hashed_credential "
-		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt)"
-		        + " values (?,?,?,?,?,?,?,?,?,?,?,?)";
+		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id)"
+		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 		final UUID createdByUUID = createdBy.isPresent() ? createdBy.get() : null;
@@ -95,11 +97,12 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        new Timestamp(entity.getEntityUpdatedOn()),
 		        createdByUUID,
 		        entity.getName(),
-		        entity.getSubjecId(),
+		        entity.getSubjectId(),
 		        entity.getHash(),
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
-		        entity.getSalt());
+		        entity.getSalt(),
+		        entity.getHashServiceConfigurationId());
 		return entity;
 	}
 
@@ -107,13 +110,14 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential create(final HashedCredential hashedCredential, final UUID createdBy) {
 		Assert.notNull(hashedCredential, "hashedCredential is required");
 
-		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjecId(), hashedCredential.getName(), hashedCredential.getHash(),
-		        hashedCredential.getHashAlgorithm(), hashedCredential.getHashIterations(), hashedCredential.getSalt());
+		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjectId(), hashedCredential.getName(),
+		        hashedCredential.getHashServiceConfigurationId(), hashedCredential.getHash(), hashedCredential.getHashAlgorithm(),
+		        hashedCredential.getHashIterations(), hashedCredential.getSalt());
 
 		entity.created(createdBy);
 		final String sql = "insert into t_hashed_credential "
-		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt)"
-		        + " values (?,?,?,?,?,?,?,?,?,?,?,?)";
+		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id)"
+		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		jdbc.update(sql,
 		        entity.getEntityId(),
@@ -123,11 +127,12 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        new Timestamp(entity.getEntityUpdatedOn()),
 		        createdBy,
 		        entity.getName(),
-		        entity.getSubjecId(),
+		        entity.getSubjectId(),
 		        entity.getHash(),
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
-		        entity.getSalt());
+		        entity.getSalt(),
+		        entity.getHashServiceConfigurationId());
 		return entity;
 	}
 
@@ -170,6 +175,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		fieldColumnMappings.put("HashAlgorithm", "hash_algorithm");
 		fieldColumnMappings.put("HashIterations", "hash_iterations");
 		fieldColumnMappings.put("Salt", "salt");
+		fieldColumnMappings.put("HashServiceConfigurationId", "hash_service_config_id");
 	}
 
 	@Override
@@ -197,7 +203,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		validateForUpdate(entity);
 
 		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
-		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?" +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?" +
 		        " where entity_id=? and entity_version=?";
 		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
 		updatedEntity.updated();
@@ -208,11 +214,12 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        new Timestamp(updatedEntity.getEntityUpdatedOn()),
 		        updatedById,
 		        entity.getName(),
-		        entity.getSubjecId(),
+		        entity.getSubjectId(),
 		        entity.getHash(),
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
 		        entity.getSalt(),
+		        entity.getHashServiceConfigurationId(),
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {
@@ -231,7 +238,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		validateForUpdate(entity);
 
 		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
-		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?" +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?" +
 		        " where entity_id=? and entity_version=?";
 		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
 		updatedEntity.updated(updatedBy);
@@ -242,11 +249,12 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        new Timestamp(updatedEntity.getEntityUpdatedOn()),
 		        updatedById,
 		        entity.getName(),
-		        entity.getSubjecId(),
+		        entity.getSubjectId(),
 		        entity.getHash(),
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
 		        entity.getSalt(),
+		        entity.getHashServiceConfigurationId(),
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {
