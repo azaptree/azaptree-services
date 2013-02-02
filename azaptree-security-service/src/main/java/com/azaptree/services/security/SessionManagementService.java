@@ -87,11 +87,10 @@ public interface SessionManagementService {
 	 * 
 	 * @param sessionId
 	 * @param key
-	 * @return
 	 * @throws SessionManagementServiceException
 	 * @throws UnknownSessionException
 	 */
-	String removeAttribute(UUID sessionId, String key) throws SessionManagementServiceException, UnknownSessionException;
+	void removeAttribute(UUID sessionId, String key) throws SessionManagementServiceException, UnknownSessionException;
 
 	/**
 	 * 

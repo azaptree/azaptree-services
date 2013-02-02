@@ -42,12 +42,4 @@ ALTER TABLE azaptree.t_session_attribute
 GRANT ALL ON TABLE azaptree.t_session_attribute TO postgres;
 GRANT SELECT, UPDATE, INSERT, DELETE ON TABLE azaptree.t_session_attribute TO azaptree_app;
 
--- Index: azaptree.fki_session_attribute_session
-
--- DROP INDEX azaptree.fki_session_attribute_session;
-
-CREATE INDEX fki_session_attribute_session
-  ON azaptree.t_session_attribute
-  USING btree
-  (session_id);
 

@@ -10,7 +10,7 @@ package com.azaptree.services.security.domain;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,9 +20,18 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
+import java.util.UUID;
+
 import com.azaptree.services.domain.entity.Entity;
 
 public interface SessionAttribute extends Entity {
+	UUID getSessionId();
+
+	/**
+	 * Attribute value as JSON
+	 * 
+	 * @return
+	 */
 	String getJson();
 
 	String getName();
