@@ -10,7 +10,7 @@ package com.azaptree.services.security;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -33,17 +33,20 @@ public class SubjectAuthenticationToken implements AuthenticationToken {
 	private static final long serialVersionUID = 1L;
 
 	private final UUID subjectId;
-	private final Map<String, String> credentials;
+	private final Map<String, Object> credentials;
 
-	public SubjectAuthenticationToken(final UUID subjectId, final Map<String, String> credentials) {
+	public SubjectAuthenticationToken(final UUID subjectId, final Map<String, Object> credentials) {
 		Assert.notNull(subjectId, "subjectId is required");
 		Assert.isTrue(!CollectionUtils.isEmpty(credentials));
 		this.subjectId = subjectId;
-		this.credentials = ImmutableMap.<String, String> builder().putAll(credentials).build();
+		this.credentials = ImmutableMap.<String, Object> builder().putAll(credentials).build();
 	}
 
+	/**
+	 * @return Map<String,String> key = credential name, value = credential value
+	 */
 	@Override
-	public Map<String, String> getCredentials() {
+	public Map<String, Object> getCredentials() {
 		return credentials;
 	}
 

@@ -20,21 +20,27 @@ package com.azaptree.services.security;
  * #L%
  */
 
-import java.util.UUID;
+public class SessionManagementServiceException extends SecurityServiceException {
 
-import org.apache.shiro.crypto.hash.HashService;
+	private static final long serialVersionUID = 1L;
 
-public interface SecurityService {
+	public SessionManagementServiceException() {
+	}
 
-	/**
-	 * In order for the subject to be authenticated, there must exist a Subject with the same UUID and matching credentials - all credentials must match.
-	 * 
-	 * @param token
-	 * @return SubjectAuthenticationInfo if authentication was successful
-	 */
-	SubjectAuthenticationInfo authenticate(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
+	public SessionManagementServiceException(final String message) {
+		super(message);
+	}
 
-	HashService getHashService(String name) throws SecurityServiceException;
+	public SessionManagementServiceException(final String message, final Throwable cause) {
+		super(message, cause);
+	}
 
-	HashService getHashService(UUID hashServiceConfiguationId) throws SecurityServiceException;
+	public SessionManagementServiceException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
+
+	public SessionManagementServiceException(final Throwable cause) {
+		super(cause);
+	}
+
 }

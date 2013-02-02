@@ -20,21 +20,14 @@ package com.azaptree.services.security;
  * #L%
  */
 
+import java.util.Set;
 import java.util.UUID;
 
-import org.apache.shiro.crypto.hash.HashService;
+public interface SubjectAuthenticationInfo {
 
-public interface SecurityService {
+	String getSessionId();
 
-	/**
-	 * In order for the subject to be authenticated, there must exist a Subject with the same UUID and matching credentials - all credentials must match.
-	 * 
-	 * @param token
-	 * @return SubjectAuthenticationInfo if authentication was successful
-	 */
-	SubjectAuthenticationInfo authenticate(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
+	Set<UUID> getHashedCredentialIds();
 
-	HashService getHashService(String name) throws SecurityServiceException;
-
-	HashService getHashService(UUID hashServiceConfiguationId) throws SecurityServiceException;
+	UUID getSubjectId();
 }
