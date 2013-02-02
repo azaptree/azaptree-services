@@ -22,9 +22,11 @@ package test.com.azaptree.services.security.dao;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.UUID;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,8 +54,6 @@ import com.azaptree.services.security.domain.impl.SubjectImpl;
 
 @ContextConfiguration(classes = { SessionDAOTest.Config.class })
 public class SessionDAOTest extends AbstractTestNGSpringContextTests {
-	private final Logger log = LoggerFactory.getLogger(getClass());
-
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
 	public static class Config implements TransactionManagementConfigurer {
@@ -96,21 +96,93 @@ public class SessionDAOTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
-		public SubjectDAO subjectDao() {
-			return new SubjectDAO(jdbcTemplate());
-		}
-
-		@Bean
 		public SessionDAO sessionDao() {
 			return new SessionDAO(jdbcTemplate());
 		}
+
+		@Bean
+		public SubjectDAO subjectDao() {
+			return new SubjectDAO(jdbcTemplate());
+		}
 	}
+
+	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private SessionDAO sessionDAO;
 
 	@Autowired
 	private SubjectDAO subjectDAO;
+
+	@Test
+	@Transactional
+	public void test_deleteSessionsBySubjectId() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		sessionDAO.deleteSessionsBySubjectId(subject.getEntityId());
+		Assert.assertNull(sessionDAO.findById(session.getEntityId()));
+	}
+
+	@Test
+	@Transactional
+	public void test_getSessionIdsBySubject() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		final UUID[] uuids = sessionDAO.getSessionIdsBySubject(subject.getEntityId());
+		Assert.assertEquals(uuids.length, 1);
+		Assert.assertTrue(ArrayUtils.contains(uuids, session.getEntityId()));
+	}
+
+	@Test
+	@Transactional
+	public void test_touchSession() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		Assert.assertTrue(sessionDAO.touchSession(session.getEntityId()));
+		final Session session3 = sessionDAO.findById(session.getEntityId());
+		Assert.assertTrue(session3.getLastAccessedOn() > session2.getLastAccessedOn());
+	}
+
+	@Transactional
+	@Test
+	public void testCascadeDelete() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		subjectDAO.delete(subject.getEntityId());
+		Assert.assertNull(sessionDAO.findById(session.getEntityId()));
+	}
 
 	@Transactional
 	@Test
@@ -139,7 +211,28 @@ public class SessionDAOTest extends AbstractTestNGSpringContextTests {
 		log.info("session2: {}", session2);
 		Assert.assertNotNull(session2);
 		Assert.assertEquals(session2, session);
+	}
 
+	@Transactional
+	@Test
+	public void testDelete() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		sessionDAO.delete(session.getEntityId());
+		Assert.assertNull(sessionDAO.findById(session.getEntityId()));
+	}
+
+	@Test(expectedExceptions = { UnsupportedOperationException.class })
+	public void testUpdateNotSupported() {
+		sessionDAO.update(new SessionImpl(UUID.randomUUID()));
 	}
 
 }

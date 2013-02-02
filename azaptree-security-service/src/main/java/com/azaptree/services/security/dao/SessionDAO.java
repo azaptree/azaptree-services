@@ -23,17 +23,21 @@ package com.azaptree.services.security.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.dao.EntityRowMapperSupport;
 import com.azaptree.services.domain.entity.dao.JDBCEntityDAOSupport;
 import com.azaptree.services.security.domain.Session;
 import com.azaptree.services.security.domain.impl.SessionImpl;
 
-public class SessionDAO extends JDBCEntityDAOSupport<Session> {
+public class SessionDAO extends JDBCEntityDAOSupport<Session> implements SessionRepository {
 
 	public RowMapper<Session> rowMapper = new EntityRowMapperSupport<Session>() {
 
@@ -75,13 +79,41 @@ public class SessionDAO extends JDBCEntityDAOSupport<Session> {
 	}
 
 	@Override
+	public int deleteSessionsBySubjectId(final UUID subjectId) {
+		Assert.notNull(subjectId, "subjectId is required");
+		final String sql = "delete from t_session where subject_id = ?";
+		return jdbc.update(sql, subjectId);
+	}
+
+	@Override
 	protected RowMapper<Session> getRowMapper() {
 		return rowMapper;
+	}
+
+	@Override
+	public UUID[] getSessionIdsBySubject(final UUID subjectId) {
+		final String sql = "select entity_id from t_session where subject_id = ?";
+		final Object[] args = { subjectId };
+		final List<UUID> sessionIds = new LinkedList<>();
+		jdbc.query(sql, args, new RowCallbackHandler() {
+
+			@Override
+			public void processRow(final ResultSet rs) throws SQLException {
+				sessionIds.add((UUID) rs.getObject(1));
+			}
+		});
+		return sessionIds.toArray(new UUID[sessionIds.size()]);
+	}
+
+	@Override
+	public boolean touchSession(final UUID sessionId) {
+		Assert.notNull(sessionId, "sessionId is required");
+		final String sql = "update t_session set last_accessed_on = ? where entity_id = ?";
+		return jdbc.update(sql, new Timestamp(System.currentTimeMillis()), sessionId) > 0;
 	}
 
 	@Override
 	public Session update(final Session entity) {
 		throw new UnsupportedOperationException();
 	}
-
 }
