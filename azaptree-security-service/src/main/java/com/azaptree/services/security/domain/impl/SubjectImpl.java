@@ -28,8 +28,12 @@ import com.azaptree.services.security.domain.Subject;
 public class SubjectImpl extends DomainVersionedEntity implements Subject {
 
 	private Status status;
+	private long statusTimestamp;
 
 	private int maxSessions = 1;
+
+	private int consecutiveAuthenticationFailedCount;
+	private long lastTimeAuthenticationFailed;
 
 	public SubjectImpl() {
 		super();
@@ -53,6 +57,16 @@ public class SubjectImpl extends DomainVersionedEntity implements Subject {
 	}
 
 	@Override
+	public int getConsecutiveAuthenticationFailedCount() {
+		return consecutiveAuthenticationFailedCount;
+	}
+
+	@Override
+	public long getLastTimeAuthenticationFailed() {
+		return lastTimeAuthenticationFailed;
+	}
+
+	@Override
 	public int getMaxSessions() {
 		return maxSessions;
 	}
@@ -60,6 +74,30 @@ public class SubjectImpl extends DomainVersionedEntity implements Subject {
 	@Override
 	public Status getStatus() {
 		return status;
+	}
+
+	@Override
+	public long getStatusTimestamp() {
+		return statusTimestamp;
+	}
+
+	@Override
+	public void incrementConsecutiveAuthenticationFailedCount() {
+		consecutiveAuthenticationFailedCount++;
+		lastTimeAuthenticationFailed = System.currentTimeMillis();
+	}
+
+	@Override
+	public void resetConsecutiveAuthenticationFailedCount() {
+		consecutiveAuthenticationFailedCount = 0;
+	}
+
+	public void setConsecutiveAuthenticationFailedCount(final int consecutiveAuthenticationFailedCount) {
+		this.consecutiveAuthenticationFailedCount = consecutiveAuthenticationFailedCount;
+	}
+
+	public void setLastTimeAuthenticationFailed(final long lastTimeAutenticationFailed) {
+		this.lastTimeAuthenticationFailed = lastTimeAutenticationFailed;
 	}
 
 	@Override
@@ -72,6 +110,11 @@ public class SubjectImpl extends DomainVersionedEntity implements Subject {
 	public void setStatus(final Status status) {
 		Assert.notNull(status, "status is required");
 		this.status = status;
+		statusTimestamp = System.currentTimeMillis();
+	}
+
+	public void setStatusTimestamp(final long statusTimestamp) {
+		this.statusTimestamp = statusTimestamp;
 	}
 
 }

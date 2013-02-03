@@ -29,6 +29,11 @@ CREATE TABLE azaptree.t_subject
 -- Inherited from table azaptree.t_versioned_entity:  entity_created_by uuid,
 -- Inherited from table azaptree.t_versioned_entity:  entity_updated_on timestamp with time zone NOT NULL,
 -- Inherited from table azaptree.t_versioned_entity:  entity_updated_by uuid,
+  max_sessions integer NOT NULL DEFAULT 1,
+  status integer NOT NULL,
+  status_timestamp timestamp with time zone NOT NULL,
+  consec_auth_failed_count smallint NOT NULL DEFAULT 0,
+  last_auth_failed_ts timestamp with time zone,
   CONSTRAINT pk_subject PRIMARY KEY (entity_id)
 )
 INHERITS (azaptree.t_versioned_entity)
@@ -48,4 +53,5 @@ CREATE INDEX idx_subject_id_version
   ON azaptree.t_subject
   USING btree
   (entity_id, entity_version);
+
 

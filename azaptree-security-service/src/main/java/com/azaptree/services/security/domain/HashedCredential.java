@@ -20,9 +20,11 @@ package com.azaptree.services.security.domain;
  * #L%
  */
 
+import java.util.Date;
 import java.util.UUID;
 
 import com.azaptree.services.domain.entity.VersionedEntity;
+import com.google.common.base.Optional;
 
 /**
  * For security reasons, the actual credential is not known - only its hash.
@@ -49,5 +51,12 @@ public interface HashedCredential extends VersionedEntity, Hash {
 	 * @return
 	 */
 	UUID getHashServiceConfigurationId();
+
+	/**
+	 * A credential may have a policy that it expires after a certain time.
+	 * 
+	 * @return
+	 */
+	Optional<Date> getExpiresOn();
 
 }

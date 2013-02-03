@@ -36,6 +36,7 @@ CREATE TABLE azaptree.t_hashed_credential
   hash_iterations integer NOT NULL DEFAULT 1024,
   salt bytea NOT NULL,
   hash_service_config_id uuid NOT NULL,
+  expires_on timestamp with time zone,
   CONSTRAINT pk_hashed_credential PRIMARY KEY (entity_id),
   CONSTRAINT fk_hashed_credential_hash_service_config FOREIGN KEY (hash_service_config_id)
       REFERENCES azaptree.t_hash_service_config (entity_id) MATCH SIMPLE
@@ -71,4 +72,3 @@ CREATE INDEX fki_hashed_credential_subject
   ON azaptree.t_hashed_credential
   USING btree
   (subject_id);
-

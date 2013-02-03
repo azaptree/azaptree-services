@@ -23,6 +23,7 @@ package com.azaptree.services.security.domain.impl;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.UUID;
 
 import org.apache.commons.lang3.ArrayUtils;
@@ -31,16 +32,18 @@ import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.impl.DomainVersionedEntity;
 import com.azaptree.services.security.domain.HashedCredential;
+import com.google.common.base.Optional;
 
 public class HashedCredentialImpl extends DomainVersionedEntity implements HashedCredential {
 
-	private final String name;
+	protected final String name;
 	protected final UUID subjectId;
 	protected final UUID hashServiceConfigurationId;
 	protected final byte[] hash;
-	private final String hashAlgorithm;
-	private final int hashIterations;
-	private final byte[] salt;
+	protected final String hashAlgorithm;
+	protected final int hashIterations;
+	protected final byte[] salt;
+	protected final Date expiresOn;
 
 	/**
 	 * Copy constructor
@@ -51,13 +54,15 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		super(entity);
 		validate(entity.getSubjectId(), entity.getName(), entity.getHashServiceConfigurationId(), entity.getHash(), entity.getHashAlgorithm(),
 		        entity.getHashIterations(), entity.getSalt());
-		subjectId = entity.getSubjectId();
-		hashServiceConfigurationId = entity.getHashServiceConfigurationId();
-		name = entity.getName();
-		hash = entity.getHash();
-		hashAlgorithm = entity.getHashAlgorithm();
-		hashIterations = entity.getHashIterations();
-		salt = entity.getSalt();
+		this.subjectId = entity.getSubjectId();
+		this.hashServiceConfigurationId = entity.getHashServiceConfigurationId();
+		this.name = entity.getName();
+		this.hash = entity.getHash();
+		this.hashAlgorithm = entity.getHashAlgorithm();
+		this.hashIterations = entity.getHashIterations();
+		this.salt = entity.getSalt();
+		final Optional<Date> expiration = entity.getExpiresOn();
+		this.expiresOn = expiration.isPresent() ? expiration.get() : null;
 	}
 
 	/**
@@ -75,16 +80,17 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	 * @param salt
 	 */
 	public HashedCredentialImpl(final HashedCredential entity, final byte[] hash, final String hashAlgorithm,
-	        final int hashIterations, final byte[] salt) {
+	        final int hashIterations, final byte[] salt, final Date expiresOn) {
 		super(entity);
 		validate(entity.getSubjectId(), entity.getName(), entity.getHashServiceConfigurationId(), hash, hashAlgorithm, hashIterations, salt);
-		this.subjectId = entity.getSubjectId();
-		this.hashServiceConfigurationId = entity.getHashServiceConfigurationId();
-		this.name = entity.getName();
+		subjectId = entity.getSubjectId();
+		hashServiceConfigurationId = entity.getHashServiceConfigurationId();
+		name = entity.getName();
 		this.hash = hash;
 		this.hashAlgorithm = hashAlgorithm;
 		this.hashIterations = hashIterations;
 		this.salt = salt;
+		this.expiresOn = expiresOn;
 	}
 
 	/**
@@ -98,7 +104,7 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 	 * @param salt
 	 */
 	public HashedCredentialImpl(final UUID subjectId, final String name, final UUID hashServiceConfigurationId, final byte[] hash, final String hashAlgorithm,
-	        final int hashIterations, final byte[] salt) {
+	        final int hashIterations, final byte[] salt, final Date expiresOn) {
 		validate(subjectId, name, hashServiceConfigurationId, hash, hashAlgorithm, hashIterations, salt);
 		this.hashServiceConfigurationId = hashServiceConfigurationId;
 		this.subjectId = subjectId;
@@ -107,6 +113,7 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		this.hashAlgorithm = hashAlgorithm;
 		this.hashIterations = hashIterations;
 		this.salt = salt;
+		this.expiresOn = expiresOn;
 	}
 
 	@Override
@@ -122,6 +129,14 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		}
 		final HashedCredentialImpl other = (HashedCredentialImpl) obj;
 		return Arrays.equals(hash, other.hash);
+	}
+
+	@Override
+	public Optional<Date> getExpiresOn() {
+		if (expiresOn == null) {
+			return Optional.absent();
+		}
+		return Optional.of(expiresOn);
 	}
 
 	@Override

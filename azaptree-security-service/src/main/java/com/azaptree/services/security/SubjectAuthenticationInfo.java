@@ -25,7 +25,7 @@ import java.util.UUID;
 
 public interface SubjectAuthenticationInfo {
 
-	String getSessionId();
+	UUID getSessionId();
 
 	Set<UUID> getHashedCredentialIds();
 

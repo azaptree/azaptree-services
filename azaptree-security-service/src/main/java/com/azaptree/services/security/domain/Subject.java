@@ -62,9 +62,35 @@ public interface Subject extends VersionedEntity {
 		}
 	}
 
+	/**
+	 * 
+	 * @return
+	 */
+	int getConsecutiveAuthenticationFailedCount();
+
+	/**
+	 * The last time an authentication attempt failed - epoch time
+	 * 
+	 * A value of 0, means there never was an authentication failed attempt.
+	 * 
+	 * @return
+	 */
+	long getLastTimeAuthenticationFailed();
+
 	int getMaxSessions();
 
 	Status getStatus();
+
+	/**
+	 * The last time the status was updated - epoch time
+	 * 
+	 * @return
+	 */
+	long getStatusTimestamp();
+
+	void incrementConsecutiveAuthenticationFailedCount();
+
+	void resetConsecutiveAuthenticationFailedCount();
 
 	void setMaxSessions(int maxSessions);
 

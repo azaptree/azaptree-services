@@ -25,6 +25,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -60,8 +61,9 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 			final String hashAlgorithm = rs.getString("hash_algorithm");
 			final int hashIterations = rs.getInt("hash_iterations");
 			final byte[] salt = rs.getBytes("salt");
+			final Timestamp expiresOn = rs.getTimestamp("expires_on");
 
-			return new HashedCredentialImpl(subjectId, name, hashServiceConfigId, hash, hashAlgorithm, hashIterations, salt);
+			return new HashedCredentialImpl(subjectId, name, hashServiceConfigId, hash, hashAlgorithm, hashIterations, salt, expiresOn);
 		}
 
 		@Override
@@ -78,14 +80,23 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential create(final HashedCredential hashedCredential) {
 		Assert.notNull(hashedCredential, "hashedCredential is required");
 
-		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjectId(), hashedCredential.getName(),
-		        hashedCredential.getHashServiceConfigurationId(), hashedCredential.getHash(),
-		        hashedCredential.getHashAlgorithm(), hashedCredential.getHashIterations(), hashedCredential.getSalt());
+		final Optional<Date> expiresOn = hashedCredential.getExpiresOn();
+		final Date expiresOnValue = expiresOn.isPresent() ? expiresOn.get() : null;
+
+		final HashedCredentialImpl entity = new HashedCredentialImpl(
+		        hashedCredential.getSubjectId(),
+		        hashedCredential.getName(),
+		        hashedCredential.getHashServiceConfigurationId(),
+		        hashedCredential.getHash(),
+		        hashedCredential.getHashAlgorithm(),
+		        hashedCredential.getHashIterations(),
+		        hashedCredential.getSalt(),
+		        expiresOnValue);
 
 		entity.created();
 		final String sql = "insert into t_hashed_credential "
-		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id)"
-		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id,expires_on)"
+		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 		final UUID createdByUUID = createdBy.isPresent() ? createdBy.get() : null;
@@ -102,7 +113,8 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
 		        entity.getSalt(),
-		        entity.getHashServiceConfigurationId());
+		        entity.getHashServiceConfigurationId(),
+		        expiresOnValue);
 		return entity;
 	}
 
@@ -110,14 +122,23 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential create(final HashedCredential hashedCredential, final UUID createdBy) {
 		Assert.notNull(hashedCredential, "hashedCredential is required");
 
-		final HashedCredentialImpl entity = new HashedCredentialImpl(hashedCredential.getSubjectId(), hashedCredential.getName(),
-		        hashedCredential.getHashServiceConfigurationId(), hashedCredential.getHash(), hashedCredential.getHashAlgorithm(),
-		        hashedCredential.getHashIterations(), hashedCredential.getSalt());
+		final Optional<Date> expiresOn = hashedCredential.getExpiresOn();
+		final Date expiresOnValue = expiresOn.isPresent() ? expiresOn.get() : null;
+
+		final HashedCredentialImpl entity = new HashedCredentialImpl(
+		        hashedCredential.getSubjectId(),
+		        hashedCredential.getName(),
+		        hashedCredential.getHashServiceConfigurationId(),
+		        hashedCredential.getHash(),
+		        hashedCredential.getHashAlgorithm(),
+		        hashedCredential.getHashIterations(),
+		        hashedCredential.getSalt(),
+		        expiresOnValue);
 
 		entity.created(createdBy);
 		final String sql = "insert into t_hashed_credential "
-		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id)"
-		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		        + "(entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,name,subject_id,hash,hash_algorithm,hash_iterations,salt,hash_service_config_id,expires_on)"
+		        + " values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 		jdbc.update(sql,
 		        entity.getEntityId(),
@@ -132,7 +153,8 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        entity.getHashAlgorithm(),
 		        entity.getHashIterations(),
 		        entity.getSalt(),
-		        entity.getHashServiceConfigurationId());
+		        entity.getHashServiceConfigurationId(),
+		        expiresOnValue);
 		return entity;
 	}
 
@@ -176,6 +198,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		fieldColumnMappings.put("HashIterations", "hash_iterations");
 		fieldColumnMappings.put("Salt", "salt");
 		fieldColumnMappings.put("HashServiceConfigurationId", "hash_service_config_id");
+		fieldColumnMappings.put("ExpiresOn", "expires_on");
 	}
 
 	@Override
@@ -202,8 +225,11 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential update(final HashedCredential entity) throws DAOException, StaleObjectException, ObjectNotFoundException {
 		validateForUpdate(entity);
 
+		final Optional<Date> expiresOn = entity.getExpiresOn();
+		final Date expiresOnValue = expiresOn.isPresent() ? expiresOn.get() : null;
+
 		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
-		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?" +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?,expires_on=?" +
 		        " where entity_id=? and entity_version=?";
 		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
 		updatedEntity.updated();
@@ -220,6 +246,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        entity.getHashIterations(),
 		        entity.getSalt(),
 		        entity.getHashServiceConfigurationId(),
+		        expiresOnValue,
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {
@@ -237,8 +264,11 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	public HashedCredential update(final HashedCredential entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
 		validateForUpdate(entity);
 
+		final Optional<Date> expiresOn = entity.getExpiresOn();
+		final Date expiresOnValue = expiresOn.isPresent() ? expiresOn.get() : null;
+
 		final String sql = "update t_hashed_credential set entity_version=?, entity_updated_on=?,entity_updated_by=?," +
-		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?" +
+		        "name=?,subject_id=?,hash=?,hash_algorithm=?,hash_iterations=?,salt=?,hash_service_config_id=?,expires_on=?" +
 		        " where entity_id=? and entity_version=?";
 		final HashedCredentialImpl updatedEntity = new HashedCredentialImpl(entity);
 		updatedEntity.updated(updatedBy);
@@ -255,6 +285,7 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 		        entity.getHashIterations(),
 		        entity.getSalt(),
 		        entity.getHashServiceConfigurationId(),
+		        expiresOnValue,
 		        updatedEntity.getEntityId(),
 		        entity.getEntityVersion());
 		if (updateCount == 0) {

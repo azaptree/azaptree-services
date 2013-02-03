@@ -27,19 +27,24 @@ import org.apache.shiro.authc.AuthenticationToken;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import com.google.common.collect.ImmutableMap;
-
 public class SubjectAuthenticationToken implements AuthenticationToken {
 	private static final long serialVersionUID = 1L;
 
 	private final UUID subjectId;
 	private final Map<String, Object> credentials;
 
+	private final boolean rememberMe;
+
 	public SubjectAuthenticationToken(final UUID subjectId, final Map<String, Object> credentials) {
+		this(subjectId, credentials, false);
+	}
+
+	public SubjectAuthenticationToken(final UUID subjectId, final Map<String, Object> credentials, final boolean rememberMe) {
 		Assert.notNull(subjectId, "subjectId is required");
 		Assert.isTrue(!CollectionUtils.isEmpty(credentials));
 		this.subjectId = subjectId;
-		this.credentials = ImmutableMap.<String, Object> builder().putAll(credentials).build();
+		this.credentials = credentials;
+		this.rememberMe = rememberMe;
 	}
 
 	/**
@@ -57,6 +62,10 @@ public class SubjectAuthenticationToken implements AuthenticationToken {
 
 	public UUID getSubjectId() {
 		return subjectId;
+	}
+
+	public boolean isRememberMe() {
+		return rememberMe;
 	}
 
 }

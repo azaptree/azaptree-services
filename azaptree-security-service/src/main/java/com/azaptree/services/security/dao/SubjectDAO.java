@@ -55,6 +55,12 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 			final SubjectImpl subject = (SubjectImpl) entity;
 			subject.setMaxSessions(rs.getInt("max_sessions"));
 			subject.setStatus(Status.getStatus(rs.getInt("status")));
+			subject.setStatusTimestamp(rs.getTimestamp("status_timestamp").getTime());
+			subject.setConsecutiveAuthenticationFailedCount(rs.getInt("consec_auth_failed_count"));
+			final Timestamp lastTimeAutenticationFailed = rs.getTimestamp("last_auth_failed_ts");
+			if (lastTimeAutenticationFailed != null) {
+				subject.setLastTimeAuthenticationFailed(lastTimeAutenticationFailed.getTime());
+			}
 			return entity;
 		}
 
@@ -71,7 +77,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		final SubjectImpl subject = new SubjectImpl(entity);
 		subject.created();
 
-		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
+		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status,status_timestamp,consec_auth_failed_count,last_auth_failed_ts) values (?,?,?,?,?,?,?,?,?,?,?)";
 
 		final Optional<UUID> createdBy = entity.getCreatedByEntityId();
 		final UUID createdByUUID = createdBy.isPresent() ? createdBy.get() : null;
@@ -83,7 +89,10 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        new Timestamp(subject.getEntityUpdatedOn()),
 		        createdByUUID,
 		        subject.getMaxSessions(),
-		        subject.getStatus().code);
+		        subject.getStatus().code,
+		        new Timestamp(subject.getStatusTimestamp()),
+		        subject.getConsecutiveAuthenticationFailedCount(),
+		        subject.getLastTimeAuthenticationFailed() > 0 ? new Timestamp(subject.getLastTimeAuthenticationFailed()) : null);
 		return subject;
 	}
 
@@ -94,7 +103,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		final SubjectImpl subject = new SubjectImpl(entity);
 
 		subject.created(createdBy);
-		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status) values (?,?,?,?,?,?,?,?)";
+		final String sql = "insert into t_subject (entity_id,entity_version,entity_created_on,entity_created_by,entity_updated_on,entity_updated_by,max_sessions,status,status_timestamp,consec_auth_failed_count,last_auth_failed_ts) values (?,?,?,?,?,?,?,?,?,?,?)";
 
 		jdbc.update(sql,
 		        subject.getEntityId(),
@@ -104,7 +113,10 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        new Timestamp(subject.getEntityUpdatedOn()),
 		        createdBy,
 		        subject.getMaxSessions(),
-		        subject.getStatus().code);
+		        subject.getStatus().code,
+		        new Timestamp(subject.getStatusTimestamp()),
+		        subject.getConsecutiveAuthenticationFailedCount(),
+		        subject.getLastTimeAuthenticationFailed() > 0 ? new Timestamp(subject.getLastTimeAuthenticationFailed()) : null);
 		return subject;
 	}
 
@@ -117,7 +129,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject update(final Subject entity) {
 		validateForUpdate(entity);
 
-		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
+		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=?,status=?,status_timestamp=?,consec_auth_failed_count=?,last_auth_failed_ts=? where entity_id=? and entity_version=?";
 		final SubjectImpl updatedSubject = new SubjectImpl(entity);
 		updatedSubject.updated();
 		final Optional<UUID> optionalUpdatedBy = updatedSubject.getUpdatedByEntityId();
@@ -126,7 +138,12 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 		        updatedSubject.getEntityVersion(),
 		        new Timestamp(updatedSubject.getEntityUpdatedOn()),
 		        updatedById,
-		        updatedSubject.getEntityId(), entity.getEntityVersion());
+		        updatedSubject.getStatus().code,
+		        new Timestamp(updatedSubject.getStatusTimestamp()),
+		        updatedSubject.getConsecutiveAuthenticationFailedCount(),
+		        updatedSubject.getLastTimeAuthenticationFailed() > 0 ? new Timestamp(updatedSubject.getLastTimeAuthenticationFailed()) : null,
+		        updatedSubject.getEntityId(),
+		        entity.getEntityVersion());
 		if (updateCount == 0) {
 			if (exists(entity.getEntityId())) {
 				throw new StaleObjectException();
@@ -142,14 +159,19 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	public Subject update(final Subject entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
 		validateForUpdate(entity);
 
-		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
+		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=?,status=?,status_timestamp=?,consec_auth_failed_count=?,last_auth_failed_ts=? where entity_id=? and entity_version=?";
 		final SubjectImpl updatedSubject = new SubjectImpl(entity);
 		updatedSubject.updated(updatedBy);
 		final int updateCount = jdbc.update(sql,
 		        updatedSubject.getEntityVersion(),
 		        new Timestamp(updatedSubject.getEntityUpdatedOn()),
 		        updatedBy,
-		        updatedSubject.getEntityId(), entity.getEntityVersion());
+		        updatedSubject.getStatus().code,
+		        new Timestamp(updatedSubject.getStatusTimestamp()),
+		        updatedSubject.getConsecutiveAuthenticationFailedCount(),
+		        updatedSubject.getLastTimeAuthenticationFailed() > 0 ? new Timestamp(updatedSubject.getLastTimeAuthenticationFailed()) : null,
+		        updatedSubject.getEntityId(),
+		        entity.getEntityVersion());
 		if (updateCount == 0) {
 			if (exists(entity.getEntityId())) {
 				throw new StaleObjectException();

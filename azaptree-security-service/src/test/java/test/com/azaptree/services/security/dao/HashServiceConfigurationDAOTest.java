@@ -141,7 +141,7 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 
 		final Subject subject = subjectDao.create(new SubjectImpl(Status.ACTIVATED));
 		final HashedCredential cred = hashedCredentialDAO.create(new HashedCredentialImpl(subject.getEntityId(), "password", savedConfig.getEntityId(), hash
-		        .getBytes(), hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes()));
+		        .getBytes(), hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), null));
 
 		final HashRequest hashRequest2 = new HashRequest.Builder().setSource("password")
 		        .setAlgorithmName(cred.getHashAlgorithm())
