@@ -21,6 +21,7 @@ package test.com.azaptree.services.security.dao;
  */
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Set;
 import java.util.UUID;
 
@@ -154,9 +155,12 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 
 		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
 		final Hash hash = hashService.computeHash(hashRequest);
+		final Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, 90);
+		final long expiresOn = now.getTimeInMillis();
 		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hashServiceConfig.getEntityId(), hash.getBytes(),
 		        hash.getAlgorithmName(),
-		        hash.getIterations(), hash.getSalt().getBytes(), null);
+		        hash.getIterations(), hash.getSalt().getBytes(), now.getTime());
 		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
 
 		Assert.assertNotNull(savedPassword);
@@ -168,6 +172,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 		Assert.assertNotNull(password2);
 		Assert.assertNotNull(password2.getEntityId());
 		Assert.assertNotNull(password2.getSubjectId());
+		Assert.assertEquals(password2.getExpiresOn().get().getTime(), expiresOn);
 		log.info(password2.toJson());
 
 		Assert.assertEquals(password2, savedPassword);
@@ -267,6 +272,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 		Assert.assertFalse(credentials.isEmpty());
 		Assert.assertEquals(credentials.size(), 1);
 		Assert.assertTrue(credentials.contains(savedPassword));
+		Assert.assertEquals(credentials.iterator().next().hashCode(), savedPassword.hashCode());
 
 		Assert.assertTrue(hashedCredentialDAO.findBySubjectId(savedPassword.getEntityId()).isEmpty());
 	}

@@ -106,6 +106,16 @@ public class SessionDAO extends JDBCEntityDAOSupport<Session> implements Session
 	}
 
 	@Override
+	protected void initFieldColumnMappings() {
+		super.initFieldColumnMappings();
+		fieldColumnMappings.put("SubjectId", "subject_id");
+		fieldColumnMappings.put("CreatedOn", "created_on");
+		fieldColumnMappings.put("LastAccessedOn", "last_accessed_on");
+		fieldColumnMappings.put("TimeoutSeconds", "timeout");
+		fieldColumnMappings.put("Host", "host");
+	}
+
+	@Override
 	public boolean touchSession(final UUID sessionId) {
 		Assert.notNull(sessionId, "sessionId is required");
 		final String sql = "update t_session set last_accessed_on = ? where entity_id = ?";

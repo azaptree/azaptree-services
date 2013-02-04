@@ -109,6 +109,53 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
+	public void test_authenticationFailedCounter() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		Subject subject = subjectDao.create(temp);
+		log.info("test_authenticationFailedCounter(): subject : {}", subject);
+
+		final long afterCreateTs = System.currentTimeMillis();
+		subject.incrementConsecutiveAuthenticationFailedCount();
+		subject = subjectDao.update(subject);
+		Assert.assertEquals(subject.getConsecutiveAuthenticationFailedCount(), 1);
+		Assert.assertTrue(subject.getLastTimeAuthenticationFailed() >= afterCreateTs);
+
+		Subject retrievedSubject = subjectDao.findById(subject.getEntityId());
+		Assert.assertEquals(retrievedSubject.getConsecutiveAuthenticationFailedCount(), 1);
+		Assert.assertTrue(retrievedSubject.getLastTimeAuthenticationFailed() >= afterCreateTs);
+		Assert.assertEquals(retrievedSubject.getLastTimeAuthenticationFailed(), subject.getLastTimeAuthenticationFailed());
+
+		final long lastTimeAuthenicationFailed = retrievedSubject.getLastTimeAuthenticationFailed();
+		retrievedSubject.resetConsecutiveAuthenticationFailedCount();
+		subject = subjectDao.update(retrievedSubject);
+		Assert.assertEquals(subject.getConsecutiveAuthenticationFailedCount(), 0);
+		Assert.assertEquals(subject.getLastTimeAuthenticationFailed(), lastTimeAuthenicationFailed);
+
+		retrievedSubject = subjectDao.findById(subject.getEntityId());
+		Assert.assertEquals(retrievedSubject.getConsecutiveAuthenticationFailedCount(), 0);
+		Assert.assertEquals(retrievedSubject.getLastTimeAuthenticationFailed(), lastTimeAuthenicationFailed);
+	}
+
+	@Transactional
+	@Test
+	public void test_statusTimestamp() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		Subject subject = subjectDao.create(temp);
+		log.info("test_authenticationFailedCounter(): subject : {}", subject);
+
+		final long afterCreateTs = System.currentTimeMillis();
+		subject.setStatus(Status.LOCKED);
+		subject = subjectDao.update(subject);
+		Assert.assertEquals(subject.getStatus(), Status.LOCKED);
+		Assert.assertTrue(subject.getStatusTimestamp() >= afterCreateTs);
+
+		final Subject retrievedSubject = subjectDao.findById(subject.getEntityId());
+		Assert.assertEquals(retrievedSubject.getStatus(), Status.LOCKED);
+		Assert.assertTrue(retrievedSubject.getStatusTimestamp() >= afterCreateTs);
+	}
+
+	@Transactional
+	@Test
 	public void test_create_findById_delete() {
 		final long now = System.currentTimeMillis();
 		final Subject temp = new SubjectImpl(Status.ACTIVATED);
@@ -219,7 +266,6 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		}
 
 		test_update();
-
 	}
 
 	/**
@@ -234,13 +280,12 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		}
 
 		test_update();
-
 	}
 
 	@Transactional
 	@Test
 	public void test_update() {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject temp = new SubjectImpl(Status.ACTIVATED,3);
 		final Subject subject = subjectDao.create(temp);
 		final Subject updatedSubject = subjectDao.update(subject);
 		Assert.assertNotNull(updatedSubject);
@@ -266,20 +311,20 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	}
 
 	@Transactional
-	@Test(expectedExceptions = ObjectNotFoundException.class)
-	public void test_update_withCreatedBy_objectNotFound() {
-		final SubjectImpl subject = new SubjectImpl(Status.ACTIVATED);
-		subject.created();
-		subjectDao.update(subject, UUID.randomUUID());
-	}
-
-	@Transactional
 	@Test(expectedExceptions = StaleObjectException.class)
 	public void test_update_staleObject() {
 		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final SubjectImpl subject = (SubjectImpl) subjectDao.create(temp);
 		subject.updated();
 		subjectDao.update(subject);
+	}
+
+	@Transactional
+	@Test(expectedExceptions = ObjectNotFoundException.class)
+	public void test_update_withCreatedBy_objectNotFound() {
+		final SubjectImpl subject = new SubjectImpl(Status.ACTIVATED);
+		subject.created();
+		subjectDao.update(subject, UUID.randomUUID());
 	}
 
 	@Transactional
@@ -290,5 +335,4 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		subject.updated();
 		subjectDao.update(subject, UUID.randomUUID());
 	}
-
 }

@@ -53,7 +53,10 @@ public class SubjectImpl extends DomainVersionedEntity implements Subject {
 	public SubjectImpl(final Subject entity) {
 		super(entity);
 		setStatus(entity.getStatus());
+		setStatusTimestamp(entity.getStatusTimestamp());
 		setMaxSessions(entity.getMaxSessions());
+		setConsecutiveAuthenticationFailedCount(entity.getConsecutiveAuthenticationFailedCount());
+		setLastTimeAuthenticationFailed(entity.getLastTimeAuthenticationFailed());
 	}
 
 	@Override

@@ -48,11 +48,11 @@ public class SessionImpl extends DomainEntity implements Session {
 
 	public SessionImpl(final Session entity) {
 		super(entity);
-		this.subjectId = entity.getSubjectId();
-		this.createdOn = entity.getCreatedOn();
-		this.lastAccessedOn = entity.getLastAccessedOn();
-		this.timeoutSeconds = entity.getTimeoutSeconds();
-		this.host = entity.getHost();
+		setSubjectId(entity.getSubjectId());
+		setCreatedOn(entity.getCreatedOn());
+		setLastAccessedOn(entity.getLastAccessedOn());
+		setTimeoutSeconds(entity.getTimeoutSeconds());
+		setHost(entity.getHost());
 	}
 
 	public SessionImpl(final String json) {
@@ -68,11 +68,11 @@ public class SessionImpl extends DomainEntity implements Session {
 	}
 
 	public SessionImpl(final UUID subjectId, final long createdOn, final long lastAccessedOn, final int timeoutSeconds, final String host) {
-		this.subjectId = subjectId;
-		this.createdOn = createdOn;
-		this.lastAccessedOn = lastAccessedOn;
-		this.timeoutSeconds = timeoutSeconds;
-		this.host = host;
+		setSubjectId(subjectId);
+		setCreatedOn(createdOn);
+		setLastAccessedOn(lastAccessedOn);
+		setTimeoutSeconds(timeoutSeconds);
+		setHost(host);
 		validate();
 	}
 

@@ -126,6 +126,16 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	}
 
 	@Override
+	protected void initFieldColumnMappings() {
+		super.initFieldColumnMappings();
+		fieldColumnMappings.put("MaxSessions", "max_sessions");
+		fieldColumnMappings.put("Status", "status");
+		fieldColumnMappings.put("StatusTimestamp", "status_timestamp");
+		fieldColumnMappings.put("ConsecutiveAuthenticationFailedCount", "consec_auth_failed_count");
+		fieldColumnMappings.put("LastTimeAuthenticationFailed", "last_auth_failed_ts");
+	}
+
+	@Override
 	public Subject update(final Subject entity) {
 		validateForUpdate(entity);
 
