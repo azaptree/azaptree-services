@@ -32,24 +32,25 @@ public interface SecurityService {
 	 * A new session will be created for the authenticated subject.
 	 * 
 	 * @param token
-	 * @return SubjectAuthenticationInfo if authentication was successful
+	 * @return UUID - session id
 	 */
-	SubjectAuthenticationInfo login(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
+	UUID login(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
 
 	/**
 	 * In order for the subject to be authenticated, there must exist a Subject with the same UUID and matching credentials - all credentials must match.
 	 * 
 	 * NOTE: this operation only authenticates the subject - a session will not be created for the subject.
 	 * 
+	 * If the method returns with out throwing an exception, then authentication succeeded.
+	 * 
 	 * @param token
-	 * @return
 	 * @throws SecurityServiceException
 	 * @throws AuthenticationException
 	 */
-	SubjectAuthenticationInfo authenticate(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
+	void authenticate(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
 
 	/**
-	 * Invalidates the subject's session. If the subject logged in with 
+	 * Invalidates the subject's session. If the subject logged in with
 	 * 
 	 * @param sessionId
 	 * @throws SecurityServiceException

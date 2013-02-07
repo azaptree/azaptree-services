@@ -67,7 +67,7 @@ import com.azaptree.services.command.CommandCatalog;
 import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.command.http.WebCommandContext;
-import com.azaptree.services.command.http.WebRequestCommand;
+import com.azaptree.services.command.http.WebXmlRequestCommand;
 import com.azaptree.services.command.impl.CommandCatalogImpl;
 import com.azaptree.services.command.impl.CommandServiceImpl;
 import com.azaptree.services.command.messages.AdditionRequestMessage;
@@ -86,8 +86,8 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 	@Configuration
 	public static class Config {
 		@Bean
-		WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand() {
-			return new WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage>(AdditionRequestMessage.class, AdditionResponseMessage.class) {
+		WebXmlRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand() {
+			return new WebXmlRequestCommand<AdditionRequestMessage, AdditionResponseMessage>(AdditionRequestMessage.class, AdditionResponseMessage.class) {
 
 				@Override
 				protected boolean executeCommand(final WebCommandContext<AdditionRequestMessage, AdditionResponseMessage> ctx) {
@@ -132,7 +132,7 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 			        helloWorldCommand(),
 			        addNumbersCommand(),
 			        errorCommand(),
-			        new WebRequestCommand<HeartbeatMessage, HeartbeatMessage>("heartbeat", HeartbeatMessage.class, HeartbeatMessage.class) {
+			        new WebXmlRequestCommand<HeartbeatMessage, HeartbeatMessage>("heartbeat", HeartbeatMessage.class, HeartbeatMessage.class) {
 
 				        @Override
 				        protected boolean executeCommand(final WebCommandContext<HeartbeatMessage, HeartbeatMessage> ctx) {
@@ -166,8 +166,8 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 
 		@SuppressWarnings("rawtypes")
 		@Bean
-		WebRequestCommand errorCommand() {
-			return new WebRequestCommand() {
+		WebXmlRequestCommand errorCommand() {
+			return new WebXmlRequestCommand() {
 
 				@Override
 				protected boolean executeCommand(final WebCommandContext ctx) {
@@ -193,8 +193,8 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 
 		@SuppressWarnings("rawtypes")
 		@Bean
-		WebRequestCommand helloWorldCommand() {
-			return new WebRequestCommand() {
+		WebXmlRequestCommand helloWorldCommand() {
+			return new WebXmlRequestCommand() {
 
 				@Override
 				protected boolean executeCommand(final WebCommandContext ctx) {
@@ -269,7 +269,7 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 	private HttpClient client;
 
 	@Resource(name = "addNumbersCommand")
-	private WebRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand;
+	private WebXmlRequestCommand<AdditionRequestMessage, AdditionResponseMessage> addNumbersCommand;
 
 	@Autowired
 	private CommandService commandService;
@@ -384,7 +384,7 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		final String commandName = "heartbeat";
 		contentExchange.setURL(String.format("http://localhost:%d/command-service/%s/%s", httpSericeConfig.getPort(), commandCatalogName, commandName));
 
-		final WebRequestCommand<String, String> cmd = (WebRequestCommand<String, String>) commandService.getCommand(new CommandKey(commandCatalogName,
+		final WebXmlRequestCommand<String, String> cmd = (WebXmlRequestCommand<String, String>) commandService.getCommand(new CommandKey(commandCatalogName,
 		        commandName));
 		final JAXBContext jaxbCtx = cmd.getJaxbContext().get();
 		final Marshaller marshaller = jaxbCtx.createMarshaller();

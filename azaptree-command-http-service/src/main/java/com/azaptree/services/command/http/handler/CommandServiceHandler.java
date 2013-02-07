@@ -50,7 +50,7 @@ import com.azaptree.services.command.CommandCatalog;
 import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.command.http.WebCommandContext;
-import com.azaptree.services.command.http.WebRequestCommand;
+import com.azaptree.services.command.http.WebXmlRequestCommand;
 import com.azaptree.services.http.handler.AsyncSuspendContinueHttpHandlerSupport;
 import com.azaptree.services.http.headers.ResponseMessageHeaders;
 import com.azaptree.wadl.Application;
@@ -117,7 +117,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		final List<CommandKey> keys = new ArrayList<>(targetUriCommandKeyMap.values());
 		Collections.sort(keys);
 		for (final CommandKey commandKey : keys) {
-			final WebRequestCommand<?, ?> command = (WebRequestCommand<?, ?>) commandService.getCommand(commandKey);
+			final WebXmlRequestCommand<?, ?> command = (WebXmlRequestCommand<?, ?>) commandService.getCommand(commandKey);
 			if (command.hasXmlSchema()) {
 				final Include include = new Include();
 				include.setHref(String.format("%s/command-service/%s/%s.xsd", applicationHttpUrlBase, commandKey.getCatalogName(), commandKey.getCommandName()));
@@ -132,7 +132,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		resources.setBase(String.format("%s/command-service/%s/", applicationHttpUrlBase, catalogName));
 		final CommandCatalog catalog = commandService.getCommandCatalog(catalogName);
 		for (final String commandName : catalog.getCommandNames()) {
-			final WebRequestCommand<?, ?> command = (WebRequestCommand<?, ?>) commandService.getCommand(new CommandKey(catalogName, commandName));
+			final WebXmlRequestCommand<?, ?> command = (WebXmlRequestCommand<?, ?>) commandService.getCommand(new CommandKey(catalogName, commandName));
 			resources.getResource().add(command.createCommandResourceWadl());
 
 			if (command.hasXmlSchema()) {
@@ -161,7 +161,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		return resources;
 	}
 
-	protected WebCommandContext<?, ?> createWebCommandContext(final WebRequestCommand<?, ?> command, final Request baseRequest,
+	protected WebCommandContext<?, ?> createWebCommandContext(final WebXmlRequestCommand<?, ?> command, final Request baseRequest,
 	        final HttpServletRequest request,
 	        final HttpServletResponse response) throws JAXBException, IOException {
 		if (command.getRequestClass().isPresent()) {
@@ -183,7 +183,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 		final CommandKey commandKey = targetUriCommandKeyMap.get(toCommandUriTarget(target));
 		final CommandCatalog catalog = commandService.getCommandCatalog(commandKey.getCatalogName());
 		@SuppressWarnings("rawtypes")
-		final WebRequestCommand command = (WebRequestCommand) catalog.getCommand(commandKey.getCommandName());
+		final WebXmlRequestCommand command = (WebXmlRequestCommand) catalog.getCommand(commandKey.getCommandName());
 		if (!command.hasXmlSchema()) {
 			response.setStatus(HttpStatus.NO_CONTENT_204);
 			return;
@@ -270,7 +270,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 			final String[] commandNames = catalog.getCommandNames();
 			for (final String command : commandNames) {
 				final Command cmd = catalog.getCommand(command);
-				if (cmd instanceof WebRequestCommand) {
+				if (cmd instanceof WebXmlRequestCommand) {
 					final String uri = String.format("/command-service/%s/%s", catalogName, command);
 					final CommandKey key = new CommandKey(catalogName, command);
 					map.put(uri, key);
@@ -299,7 +299,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 	@Override
 	protected void process(final String target, final Request baseRequest, final HttpServletRequest request, final HttpServletResponse response) {
 		final CommandKey commandKey = targetUriCommandKeyMap.get(target);
-		final WebRequestCommand command = (WebRequestCommand) commandService.getCommand(commandKey);
+		final WebXmlRequestCommand command = (WebXmlRequestCommand) commandService.getCommand(commandKey);
 		final WebCommandContext<?, ?> commandContext;
 		try {
 			commandContext = createWebCommandContext(command, baseRequest, request, response);
