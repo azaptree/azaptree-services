@@ -160,8 +160,8 @@ public class CommandServiceHandlerTest extends AbstractTestNGSpringContextTests 
 		}
 
 		@Bean
-		CommandServiceHandler commandServiceHandler() {
-			return new CommandServiceHandler(executor(), "http://localhost:8080");
+		WebXmlRequestCommandServiceHandler commandServiceHandler() {
+			return new WebXmlRequestCommandServiceHandler(executor(), "http://localhost:8080");
 		}
 
 		@SuppressWarnings("rawtypes")

@@ -76,7 +76,7 @@ import com.google.common.collect.ImmutableMap;
  * @author alfio
  * 
  */
-public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSupport {
+public class WebXmlRequestCommandServiceHandler extends AsyncSuspendContinueHttpHandlerSupport {
 
 	@Autowired
 	private CommandService commandService;
@@ -93,7 +93,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 	 *            used when generating the WADL to specify the base HTTP url for <code>/application/resources/@base</code>, e.g.
 	 *            http://localhost:8080/command-service/
 	 */
-	public CommandServiceHandler(final Executor executor, final long continuationTimeoutMillis, final String applicationHttpUrlBase) {
+	public WebXmlRequestCommandServiceHandler(final Executor executor, final long continuationTimeoutMillis, final String applicationHttpUrlBase) {
 		super(executor, continuationTimeoutMillis);
 		Assert.hasText(applicationHttpUrlBase, "applicationHttpUrlBase is required");
 		this.applicationHttpUrlBase = applicationHttpUrlBase;
@@ -106,7 +106,7 @@ public class CommandServiceHandler extends AsyncSuspendContinueHttpHandlerSuppor
 	 *            used when generating the WADL to specify the base HTTP url for <code>/application/resources/@base</code>, e.g.
 	 *            http://localhost:8080/command-service/
 	 */
-	public CommandServiceHandler(final Executor executor, final String applicationHttpUrlBase) {
+	public WebXmlRequestCommandServiceHandler(final Executor executor, final String applicationHttpUrlBase) {
 		super(executor);
 		Assert.hasText(applicationHttpUrlBase, "applicationHttpUrlBase is required");
 		this.applicationHttpUrlBase = applicationHttpUrlBase;
