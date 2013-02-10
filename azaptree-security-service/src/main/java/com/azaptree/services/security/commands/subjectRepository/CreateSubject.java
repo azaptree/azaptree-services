@@ -1,16 +1,18 @@
 package com.azaptree.services.security.commands.subjectRepository;
 
 import org.apache.commons.chain.Context;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.command.impl.CommandSupport;
+import com.azaptree.services.security.dao.SubjectDAO;
 
 public class CreateSubject extends CommandSupport {
 
-	public CreateSubject() {
-	}
+	private final SubjectDAO subjectDAO;
 
-	public CreateSubject(final String name) {
-		super(name);
+	public CreateSubject(final SubjectDAO subjectDAO) {
+		Assert.notNull(subjectDAO, "subjectDAO is required");
+		this.subjectDAO = subjectDAO;
 	}
 
 	@Override
