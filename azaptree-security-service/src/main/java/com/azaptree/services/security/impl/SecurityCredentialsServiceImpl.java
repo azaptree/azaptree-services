@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 
 import com.azaptree.services.security.CredentialToByteSourceConverter;
-import com.azaptree.services.security.IncompatibleCredentialTypeException;
+import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.SecurityCredentialsService;
 import com.azaptree.services.security.SecurityServiceException;
 import com.google.common.collect.ImmutableMap;
@@ -68,13 +68,13 @@ public class SecurityCredentialsServiceImpl implements SecurityCredentialsServic
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
-	public byte[] convertCredentialToBytes(String name, Object credential) throws SecurityServiceException, IncompatibleCredentialTypeException {
+	public byte[] convertCredentialToBytes(String name, Object credential) throws SecurityServiceException, UnsupportedCredentialTypeException {
 		Assert.hasText(name, "name is required");
 		Assert.notNull(credential, "credential is required");
 
 		final CredentialToByteSourceConverter converter = credentialToByteSourceConverters.get(name);
 		if (converter == null) {
-			throw new IncompatibleCredentialTypeException(String.format("%s -> %s", name, credential.getClass().getName()));
+			throw new UnsupportedCredentialTypeException(String.format("%s -> %s", name, credential.getClass().getName()));
 		}
 		return converter.convert(credential);
 	}

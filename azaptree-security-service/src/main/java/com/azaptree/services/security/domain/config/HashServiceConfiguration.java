@@ -31,7 +31,7 @@ public interface HashServiceConfiguration extends Entity {
 	 * 
 	 * @return
 	 */
-	HashService createHashService();
+	HashService getHashService();
 
 	/**
 	 * Returns the name of the algorithm used to hash the input source, for example, SHA-256, MD5, etc.

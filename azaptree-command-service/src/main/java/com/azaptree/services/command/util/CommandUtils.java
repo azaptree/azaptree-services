@@ -30,7 +30,7 @@ public abstract class CommandUtils {
 	public static <T> T get(final Context ctx, final TypeReferenceKey<T> key) {
 		Assert.notNull(ctx, "ctx is required");
 		Assert.notNull(key, "key is required");
-		final T t = (T) ctx.get(key);
+		final T t = (T) ctx.get(key.getName());
 		return t != null ? t : key.getDefaultValue();
 	}
 
@@ -39,6 +39,6 @@ public abstract class CommandUtils {
 		Assert.notNull(ctx, "ctx is required");
 		Assert.notNull(key, "key is required");
 		Assert.notNull(value, "value is required");
-		return (T) ctx.put(key, value);
+		return (T) ctx.put(key.getName(), value);
 	}
 }

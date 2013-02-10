@@ -10,7 +10,7 @@ package com.azaptree.services.security;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,7 +20,6 @@ package com.azaptree.services.security;
  * #L%
  */
 
-import java.util.Map;
 import java.util.UUID;
 
 import com.azaptree.services.security.domain.Subject;
@@ -35,7 +34,7 @@ public interface SubjectRepositoryService {
 	 * @throws DuplicateCredentialException
 	 * @throws UnknownSubjectException
 	 */
-	void addSubjectCredential(UUID subjectId, String credentialName, Object credential) throws SecurityServiceException, DuplicateCredentialException,
+	void addSubjectCredential(UUID subjectId, Credential credential) throws SecurityServiceException, DuplicateCredentialException,
 	        UnknownSubjectException;
 
 	/**
@@ -43,11 +42,18 @@ public interface SubjectRepositoryService {
 	 * 
 	 * Credentials will be hashed before storing in the database
 	 * 
+	 * @param subject
 	 * @param credentials
 	 *            at least one credential is required.
 	 * @return
+	 * @throws UnknownCredentialException
+	 *             if the credential name is invalid
+	 * @throws UnsupportedCredentialTypeException
+	 *             if the credential type is unsupported for the corresponding credential name
+	 * @throws SecurityServiceException
 	 */
-	Subject createSubject(Map<String, Object> credentials) throws SecurityServiceException;
+	Subject createSubject(Subject subject, Credential... credentials) throws SecurityServiceException, UnsupportedCredentialTypeException,
+	        UnknownCredentialException;
 
 	/**
 	 * 

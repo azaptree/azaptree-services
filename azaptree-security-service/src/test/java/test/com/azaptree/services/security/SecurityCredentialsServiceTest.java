@@ -31,7 +31,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.security.CredentialNames;
-import com.azaptree.services.security.IncompatibleCredentialTypeException;
+import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.SecurityCredentialsService;
 import com.azaptree.services.security.config.spring.SecurityCredentialsServiceConfig;
 
@@ -49,7 +49,7 @@ public class SecurityCredentialsServiceTest extends AbstractTestNGSpringContextT
 		Assert.assertTrue(credentialBytes.length > 0);
 	}
 
-	@Test(expectedExceptions = { IncompatibleCredentialTypeException.class })
+	@Test(expectedExceptions = { UnsupportedCredentialTypeException.class })
 	public void test_convertCredentialToBytes_invalidName() {
 		service.convertCredentialToBytes("INVALID NAME sdfsdfsfs", "password");
 	}

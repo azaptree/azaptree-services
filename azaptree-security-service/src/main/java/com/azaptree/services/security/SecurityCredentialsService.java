@@ -31,10 +31,10 @@ public interface SecurityCredentialsService {
 	 *            REQUIRED
 	 * @return
 	 * @throws SecurityServiceException
-	 * @throws IncompatibleCredentialTypeException
+	 * @throws UnsupportedCredentialTypeException
 	 *             if the service does not know how to convert the credential to byte[]
 	 */
-	byte[] convertCredentialToBytes(String name, Object credential) throws SecurityServiceException, IncompatibleCredentialTypeException;
+	byte[] convertCredentialToBytes(String name, Object credential) throws SecurityServiceException, UnsupportedCredentialTypeException;
 
 	/**
 	 * Returns map of supported credentials types

@@ -1,4 +1,4 @@
-package test.com.azaptree.services.security.dao;
+package test.com.azaptree.services.security.commands.subjectRepository;
 
 /*
  * #%L
@@ -10,7 +10,7 @@ package test.com.azaptree.services.security.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,19 +20,19 @@ package test.com.azaptree.services.security.dao;
  * #L%
  */
 
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.Calendar;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
-import org.apache.shiro.crypto.hash.Hash;
-import org.apache.shiro.crypto.hash.HashRequest;
 import org.apache.shiro.crypto.hash.HashService;
-import org.apache.shiro.util.ByteSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
@@ -44,23 +44,31 @@ import org.springframework.transaction.annotation.Transactional;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import com.azaptree.services.command.CommandContext;
+import com.azaptree.services.security.Credential;
+import com.azaptree.services.security.CredentialNames;
+import com.azaptree.services.security.SecurityCredentialsService;
+import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
+import com.azaptree.services.security.config.spring.SecurityCredentialsServiceConfig;
 import com.azaptree.services.security.dao.HashServiceConfigurationDAO;
 import com.azaptree.services.security.dao.HashedCredentialDAO;
 import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.HashedCredential;
 import com.azaptree.services.security.domain.Subject;
-import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
-import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 
-@ContextConfiguration(classes = { HashServiceConfigurationDAOTest.Config.class })
-public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContextTests {
+@ContextConfiguration(classes = { CreateSubjectTest.Config.class })
+public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
+	@Import({ SecurityCredentialsServiceConfig.class })
 	public static class Config implements TransactionManagementConfigurer {
+		@Autowired
+		private SecurityCredentialsService securityCredentialsService;
+
 		@Override
 		public PlatformTransactionManager annotationDrivenTransactionManager() {
 			return dataSourceTransactionManager();
@@ -100,8 +108,20 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 		}
 
 		@Bean
-		public HashServiceConfigurationDAO hashServiceConfigurationDAO() {
-			return new HashServiceConfigurationDAO(jdbcTemplate());
+		public HashService hashService() {
+			return hashServiceConfiguation().getHashService();
+		}
+
+		@Bean
+		public HashServiceConfiguration hashServiceConfiguation() {
+			final HashServiceConfigurationDAO dao = new HashServiceConfigurationDAO(jdbcTemplate());
+			final String name = "HashedCredentialDAOTest";
+			final HashServiceConfiguration config = dao.findByName(name);
+			if (config != null) {
+				return config;
+			}
+
+			return dao.create(new HashServiceConfig(name));
 		}
 
 		@Bean
@@ -114,62 +134,52 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 			return new SubjectDAO(jdbcTemplate());
 		}
 
+		@Bean
+		public CreateSubject createSubject() {
+			return new CreateSubject(subjectDao(), hashedCredentialDAO(), hashServiceConfiguation(), securityCredentialsService);
+		}
 	}
 
-	@Autowired
-	private HashServiceConfigurationDAO dao;
+	final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
-	private SubjectDAO subjectDao;
+	private CreateSubject createSubject;
+
+	@Autowired
+	private SubjectDAO subjectDAO;
 
 	@Autowired
 	private HashedCredentialDAO hashedCredentialDAO;
 
 	@Transactional
 	@Test
-	public void test_create() {
-		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
-		final HashServiceConfiguration savedConfig = dao.create(config);
+	public void test_createSubject() {
+		final CommandContext ctx = new CommandContext();
+		final Subject subject = new SubjectImpl(Subject.Status.ACTIVATED);
+		ctx.put(CreateSubject.SUBJECT, subject);
 
-		final HashServiceConfiguration config2 = dao.findById(savedConfig.getEntityId());
-		Assert.assertNotNull(config2);
-		Assert.assertEquals(config2, savedConfig);
+		final Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, 90);
+		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, "secret", now.getTime());
+		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
 
-		final HashService hashService = config2.getHashService();
-		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
-		final Hash hash = hashService.computeHash(hashRequest);
+		createSubject.execute(ctx);
+		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
+		log.info("test_createSubject(): createdSubject : {}", createdSubject);
+		Assert.assertNotNull(createdSubject);
+		Assert.assertNotNull(createdSubject.getEntityId());
+		Assert.assertEquals(createdSubject.getEntityVersion(), 1l);
 
-		final Subject subject = subjectDao.create(new SubjectImpl(Status.ACTIVATED));
-		final HashedCredential cred = hashedCredentialDAO.create(new HashedCredentialImpl(subject.getEntityId(), "password", savedConfig.getEntityId(), hash
-		        .getBytes(), hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), null));
+		final Subject retrievedSubject = subjectDAO.findById(createdSubject.getEntityId());
+		Assert.assertNotNull(retrievedSubject);
+		Assert.assertEquals(retrievedSubject.getEntityId(), createdSubject.getEntityId());
 
-		final HashRequest hashRequest2 = new HashRequest.Builder().setSource("password")
-		        .setAlgorithmName(cred.getHashAlgorithm())
-		        .setIterations(cred.getHashIterations())
-		        .setSalt(ByteSource.Util.bytes(cred.getSalt()))
-		        .build();
-		final Hash hash2 = hashService.computeHash(hashRequest2);
-		Assert.assertTrue(Arrays.equals(hash2.getBytes(), cred.getHash()));
-	}
-
-	@Transactional
-	@Test(expectedExceptions = { UnsupportedOperationException.class })
-	public void test_update() {
-		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
-		final HashServiceConfiguration savedConfig = dao.update(config);
-	}
-
-	@Transactional
-	@Test
-	public void test_delete() {
-		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
-		final HashServiceConfiguration savedConfig = dao.create(config);
-
-		final HashServiceConfiguration config2 = dao.findById(savedConfig.getEntityId());
-		Assert.assertNotNull(config2);
-		Assert.assertEquals(config2, savedConfig);
-
-		Assert.assertTrue(dao.delete(config2.getEntityId()));
-		Assert.assertFalse(dao.exists(savedConfig.getEntityId()));
+		final Set<HashedCredential> credentials = hashedCredentialDAO.findBySubjectId(createdSubject.getEntityId());
+		Assert.assertNotNull(credentials);
+		Assert.assertFalse(credentials.isEmpty());
+		Assert.assertEquals(credentials.size(), 1);
+		final HashedCredential retrievedCredential = credentials.iterator().next();
+		Assert.assertEquals(retrievedCredential.getName(), credential.getName());
+		Assert.assertEquals(retrievedCredential.getExpiresOn().get(), credential.getExpiresOn());
 	}
 }

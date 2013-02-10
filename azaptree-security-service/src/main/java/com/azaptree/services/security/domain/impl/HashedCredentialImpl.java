@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.shiro.crypto.hash.Hash;
 import org.apache.shiro.util.ByteSource;
 import org.springframework.util.Assert;
 
@@ -54,15 +55,15 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		super(entity);
 		validate(entity.getSubjectId(), entity.getName(), entity.getHashServiceConfigurationId(), entity.getHash(), entity.getHashAlgorithm(),
 		        entity.getHashIterations(), entity.getSalt());
-		this.subjectId = entity.getSubjectId();
-		this.hashServiceConfigurationId = entity.getHashServiceConfigurationId();
-		this.name = entity.getName();
-		this.hash = entity.getHash();
-		this.hashAlgorithm = entity.getHashAlgorithm();
-		this.hashIterations = entity.getHashIterations();
-		this.salt = entity.getSalt();
+		subjectId = entity.getSubjectId();
+		hashServiceConfigurationId = entity.getHashServiceConfigurationId();
+		name = entity.getName();
+		hash = entity.getHash();
+		hashAlgorithm = entity.getHashAlgorithm();
+		hashIterations = entity.getHashIterations();
+		salt = entity.getSalt();
 		final Optional<Date> expiration = entity.getExpiresOn();
-		this.expiresOn = expiration.isPresent() ? expiration.get() : null;
+		expiresOn = expiration.isPresent() ? expiration.get() : null;
 	}
 
 	/**
@@ -114,6 +115,10 @@ public class HashedCredentialImpl extends DomainVersionedEntity implements Hashe
 		this.hashIterations = hashIterations;
 		this.salt = salt;
 		this.expiresOn = expiresOn;
+	}
+
+	public HashedCredentialImpl(final UUID subjectId, final String name, final UUID hashServiceConfigurationId, final Hash hash, final Date expiresOn) {
+		this(subjectId, name, hashServiceConfigurationId, hash.getBytes(), hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), expiresOn);
 	}
 
 	@Override

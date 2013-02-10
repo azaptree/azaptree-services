@@ -85,6 +85,8 @@ public class CommandServiceTest extends AbstractTestNGSpringContextTests {
 				@Override
 				protected boolean executeCommand(final Context ctx) {
 					log.info("msg: {}", ctx.get(MSG));
+					org.springframework.util.Assert.hasText(get(ctx, MSG));
+
 					put(ctx, RESP_MSG, "RECEIVED MESSAGE: " + get(ctx, MSG));
 					return org.apache.commons.chain.Command.CONTINUE_PROCESSING;
 				}

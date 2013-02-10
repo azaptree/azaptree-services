@@ -20,26 +20,26 @@ package com.azaptree.services.security;
  * #L%
  */
 
-public class IncompatibleCredentialTypeException extends SecurityServiceException {
+public class UnsupportedCredentialTypeException extends SecurityServiceException {
 
 	private static final long serialVersionUID = 1L;
 
-	public IncompatibleCredentialTypeException() {
+	public UnsupportedCredentialTypeException() {
 	}
 
-	public IncompatibleCredentialTypeException(final String message) {
+	public UnsupportedCredentialTypeException(final String message) {
 		super(message);
 	}
 
-	public IncompatibleCredentialTypeException(final String message, final Throwable cause) {
+	public UnsupportedCredentialTypeException(final String message, final Throwable cause) {
 		super(message, cause);
 	}
 
-	public IncompatibleCredentialTypeException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
+	public UnsupportedCredentialTypeException(final String message, final Throwable cause, final boolean enableSuppression, final boolean writableStackTrace) {
 		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
-	public IncompatibleCredentialTypeException(final Throwable cause) {
+	public UnsupportedCredentialTypeException(final Throwable cause) {
 		super(cause);
 	}
 

@@ -10,7 +10,7 @@ package com.azaptree.services.security.config;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,24 +23,20 @@ package com.azaptree.services.security.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import com.azaptree.services.security.SecurityCredentialsService;
-import com.azaptree.services.security.SecurityService;
-import com.azaptree.services.security.SessionManagementService;
-import com.azaptree.services.security.SubjectRepositoryService;
+import com.azaptree.services.command.CommandCatalog;
+import com.azaptree.services.command.CommandKey;
+import com.azaptree.services.command.CommandService;
 
 @Configuration
-public interface SecurityServiceConfiguration {
+public interface CommandServiceConfiguration {
+	public static final String COMMAND_CATALOG_NAME = "azaptree-security-service";
+
+	public static final CommandKey CREATE_SUBJECT = new CommandKey(COMMAND_CATALOG_NAME, "CreateSubject");
 
 	@Bean
-	SecurityCredentialsService securityCredentialsService();
+	CommandService commandService();
 
 	@Bean
-	SecurityService securityService();
-
-	@Bean
-	SessionManagementService sessionManagementService();
-
-	@Bean
-	SubjectRepositoryService subjectRepositoryService();
+	CommandCatalog securityServiceCommandCatalog();
 
 }

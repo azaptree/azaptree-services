@@ -48,6 +48,8 @@ public class HashServiceConfig extends DomainEntity implements HashServiceConfig
 
 	private final int secureRandomNumberGeneratorNextBytesSize;
 
+	private transient HashService hashService;
+
 	public HashServiceConfig(final HashServiceConfiguration config) {
 		super(config);
 		name = config.getName();
@@ -80,7 +82,10 @@ public class HashServiceConfig extends DomainEntity implements HashServiceConfig
 	}
 
 	@Override
-	public HashService createHashService() {
+	public HashService getHashService() {
+		if (hashService != null) {
+			return hashService;
+		}
 		final DefaultHashService service = new DefaultHashService();
 		service.setGeneratePublicSalt(true);
 		service.setPrivateSalt(ByteSource.Util.bytes(privateSalt));
@@ -95,6 +100,7 @@ public class HashServiceConfig extends DomainEntity implements HashServiceConfig
 		rng.setSeed(rngSeed);
 
 		service.setRandomNumberGenerator(rng);
+		hashService = service;
 		return service;
 	}
 

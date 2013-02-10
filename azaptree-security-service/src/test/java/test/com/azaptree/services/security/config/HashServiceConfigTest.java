@@ -43,8 +43,8 @@ public class HashServiceConfigTest {
 		final int nextBytesSize = 32;
 		final HashServiceConfig config1 = new HashServiceConfig("testHash", privateSalt, hashIterations, algo, nextBytesSize);
 		log.info("hashConfig: {}", config1);
-		final HashService hashService1 = config1.createHashService();
-		final HashService hashService2 = config1.createHashService();
+		final HashService hashService1 = config1.getHashService();
+		final HashService hashService2 = config1.getHashService();
 
 		final HashRequest req1 = new HashRequest.Builder().setSource("password").build();
 		final Hash hash1 = hashService1.computeHash(req1);
@@ -59,8 +59,8 @@ public class HashServiceConfigTest {
 	public void testHashService2() {
 		final HashServiceConfig config1 = new HashServiceConfig("testHash");
 		log.info("hashConfig: {}", config1);
-		final HashService hashService1 = config1.createHashService();
-		final HashService hashService2 = config1.createHashService();
+		final HashService hashService1 = config1.getHashService();
+		final HashService hashService2 = config1.getHashService();
 
 		final HashRequest req1 = new HashRequest.Builder().setSource("password").build();
 		final Hash hash1 = hashService1.computeHash(req1);

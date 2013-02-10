@@ -107,7 +107,7 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 
 		@Bean
 		public HashService hashService() {
-			return hashServiceConfiguation().createHashService();
+			return hashServiceConfiguation().getHashService();
 		}
 
 		@Bean
