@@ -43,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
@@ -155,7 +154,7 @@ public class AsyncHttpHandlerSupportTest extends AbstractTestNGSpringContextTest
 		final AsyncHandler handler = (AsyncHandler) httpServiceConfig.getHttpRequestHandler();
 
 		ContentExchange exchange = new ContentExchange(true);
-		exchange.setMethod(HttpMethod.GET.name());
+		exchange.setMethod("GET");
 		String url = String.format("http://localhost:%d/testAsyncHandler?action=test", httpServiceConfig.getPort());
 		exchange.setURL(url);
 		client.send(exchange);
@@ -171,7 +170,7 @@ public class AsyncHttpHandlerSupportTest extends AbstractTestNGSpringContextTest
 		Assert.assertEquals(handler.requestCounter.get(), requestCounter);
 
 		exchange = new ContentExchange(true);
-		exchange.setMethod(HttpMethod.GET.name());
+		exchange.setMethod("GET");
 		url = String.format("http://localhost:%d/testAsyncHandler?action=test&postProcess=true", httpServiceConfig.getPort());
 		exchange.setURL(url);
 		client.send(exchange);
@@ -187,7 +186,7 @@ public class AsyncHttpHandlerSupportTest extends AbstractTestNGSpringContextTest
 		Assert.assertEquals(handler.requestCounter.get(), requestCounter);
 
 		exchange = new ContentExchange(true);
-		exchange.setMethod(HttpMethod.GET.name());
+		exchange.setMethod("GET");
 		url = String.format("http://localhost:%d/testAsyncHandler", httpServiceConfig.getPort());
 		exchange.setURL(url);
 		client.send(exchange);
