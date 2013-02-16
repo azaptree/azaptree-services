@@ -159,6 +159,18 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	}
 
 	@Override
+	public boolean existsForSubjectIdAndName(final UUID subjectId, final String name) {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.hasText(name, "name is required");
+		final String sql = "select 1 from t_hashed_credential where subject_id = ? and name = ?";
+		try {
+			return jdbc.queryForInt(sql, subjectId, name) == 1;
+		} catch (final IncorrectResultSizeDataAccessException e) {
+			return false;
+		}
+	}
+
+	@Override
 	public Set<HashedCredential> findBySubjectId(final UUID subjectId) throws DAOException {
 		Assert.notNull(subjectId, "subjectId is required");
 		final String sql = "select * from t_hashed_credential where subject_id = ?";
@@ -298,4 +310,5 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 
 		return updatedEntity;
 	}
+
 }

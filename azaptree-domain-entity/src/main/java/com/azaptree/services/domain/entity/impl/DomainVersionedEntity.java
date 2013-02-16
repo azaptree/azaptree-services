@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 
 import com.azaptree.services.domain.entity.VersionedEntity;
 import com.azaptree.services.json.JsonUtils;
@@ -237,11 +238,13 @@ public class DomainVersionedEntity extends DomainEntity implements VersionedEnti
 	 * Call this method when the entity is updated before it is persisted to increment its version and update its lastupdatedByEntityId
 	 * 
 	 * @param lastupdatedByEntityId
+	 *            REQUIRED
 	 */
 	public void updated(final UUID lastupdatedByEntityId) {
 		if (this.entityId == null) {
 			throw new IllegalStateException("The entity has not yet been created : entityId == null");
 		}
+		Assert.notNull(lastupdatedByEntityId, "lastupdatedByEntityId is required");
 		entityVersion++;
 		updatedByEntityId = lastupdatedByEntityId;
 		entityUpdatedOn = System.currentTimeMillis();

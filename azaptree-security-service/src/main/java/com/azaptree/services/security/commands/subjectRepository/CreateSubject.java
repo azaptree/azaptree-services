@@ -30,6 +30,7 @@ import org.apache.shiro.crypto.hash.Hash;
 import org.apache.shiro.crypto.hash.HashRequest;
 import org.apache.shiro.crypto.hash.HashService;
 import org.apache.shiro.util.ByteSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -56,31 +57,29 @@ import com.google.common.base.Optional;
  */
 public class CreateSubject extends CommandSupport {
 
-	private final SubjectDAO subjectDAO;
-	private final HashedCredentialDAO hashedCredentialDAO;
+	@Autowired
+	private SubjectDAO subjectDAO;
+	@Autowired
+	private HashedCredentialDAO hashedCredentialDAO;
+	@Autowired
+	private SecurityCredentialsService securityCredentialsService;
 
 	private final HashService hashService;
 	private final UUID hashServiceId;
 
-	private final SecurityCredentialsService securityCredentialsService;
-
 	public static final TypeReferenceKey<Credential[]> CREDENTIALS = new TypeReferenceKey<Credential[]>("CREDENTIALS", true) {
+		// intentionally empty
 	};
 
 	public static final TypeReferenceKey<Subject> SUBJECT = new TypeReferenceKey<Subject>("SUBJECT", true) {
+		// intentionally empty
 	};
 
-	public CreateSubject(final SubjectDAO subjectDAO, final HashedCredentialDAO hashCredentialDAO, final HashServiceConfiguration hashServiceConfig,
-	        final SecurityCredentialsService securityCredentialsService) {
-		Assert.notNull(subjectDAO, "subjectDAO is required");
-		Assert.notNull(hashCredentialDAO, "hashCredentialDAO is required");
+	public CreateSubject(final HashServiceConfiguration hashServiceConfig) {
 		Assert.notNull(hashServiceConfig, "hashServiceConfig is required");
-		Assert.notNull(securityCredentialsService, "securityCredentialsService is required");
-		this.subjectDAO = subjectDAO;
-		this.hashedCredentialDAO = hashCredentialDAO;
+
 		this.hashService = hashServiceConfig.getHashService();
 		this.hashServiceId = hashServiceConfig.getEntityId();
-		this.securityCredentialsService = securityCredentialsService;
 
 		this.setValidator(new CommandContextValidatorSupport() {
 
@@ -94,18 +93,22 @@ public class CreateSubject extends CommandSupport {
 				// check that the subject does not have an entity id, which would imply the subject already exists in the database
 				final Subject subject = get(ctx, SUBJECT);
 				Assert.isNull(subject.getEntityId());
+				final Optional<UUID> createdBy = subject.getCreatedByEntityId();
+				if (createdBy.isPresent()) {
+					if (!subjectDAO.exists(createdBy.get())) {
+						throw new IllegalArgumentException("Invalid entity id for created by: " + createdBy.get());
+					}
+				}
 
 				final Credential[] credentials = get(ctx, CREDENTIALS);
 				Assert.isTrue(ArrayUtils.isNotEmpty(credentials), "credentials are required");
 
 				final Set<String> names = new HashSet<>();
 				for (Credential credential : credentials) {
-					if (!names.add(credential.getName())) {
-						throw new IllegalArgumentException("Duplicate credential name: " + credential.getName());
-					}
+					Assert.isTrue(names.add(credential.getName()), String.format("Duplicate credential name: %s", credential.getName()));
 
 					if (!securityCredentialsService.isCredentialSupported(credential.getName(), credential.getCredential())) {
-						if (securityCredentialsService.getSupportedCredentials().containsKey(credential.getName())) {
+						if (!securityCredentialsService.getSupportedCredentials().containsKey(credential.getName())) {
 							throw new UnknownCredentialException(credential.getName());
 						}
 

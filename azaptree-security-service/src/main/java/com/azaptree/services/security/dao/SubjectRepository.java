@@ -10,7 +10,7 @@ package com.azaptree.services.security.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,21 +20,29 @@ package com.azaptree.services.security.dao;
  * #L%
  */
 
-import java.util.Set;
 import java.util.UUID;
 
-import com.azaptree.services.domain.entity.dao.DAOException;
-import com.azaptree.services.domain.entity.dao.VersionedEntityDAO;
-import com.azaptree.services.security.domain.HashedCredential;
+import com.azaptree.services.security.UnknownSubjectException;
 
-public interface HashedCredentialRepository extends VersionedEntityDAO<HashedCredential> {
+public interface SubjectRepository {
 
-	Set<HashedCredential> findBySubjectId(UUID subjectId) throws DAOException;
+	/**
+	 * Updates the last updated on for the specified subject
+	 * 
+	 * @param subjectId
+	 *            REQUIRED
+	 * @param updatedBySubjectId
+	 *            REQUIRED
+	 * @throws UnknownSubjectException
+	 */
+	void touch(UUID subjectId, UUID updatedBySubjectId) throws UnknownSubjectException;
 
-	HashedCredential findBySubjectIdAndName(UUID subjectId, String name);
-
-	boolean existsForSubjectIdAndName(UUID subjectId, String name);
-
-	boolean subjectHasCredential(UUID subjectId, String name, byte[] hash);
-
+	/**
+	 * Updates the last updated on for the specified subject
+	 * 
+	 * @param subjectId
+	 *            REQUIRED
+	 * @throws UnknownSubjectException
+	 */
+	void touch(UUID subjectId) throws UnknownSubjectException;
 }

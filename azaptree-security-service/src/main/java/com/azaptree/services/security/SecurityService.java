@@ -26,19 +26,6 @@ import org.apache.shiro.crypto.hash.HashService;
 
 public interface SecurityService {
 
-	/**
-	 * In order for the subject to be authenticated, there must exist a Subject with the same UUID and matching credentials - all credentials must match.
-	 * 
-	 * NOTE: this operation only authenticates the subject - a session will not be created for the subject.
-	 * 
-	 * If the method returns with out throwing an exception, then authentication succeeded.
-	 * 
-	 * @param token
-	 * @throws SecurityServiceException
-	 * @throws AuthenticationException
-	 */
-	void authenticate(SubjectAuthenticationToken token) throws SecurityServiceException, AuthenticationException;
-
 	HashService getHashService(String name) throws SecurityServiceException;
 
 	HashService getHashService(UUID hashServiceConfiguationId) throws SecurityServiceException;

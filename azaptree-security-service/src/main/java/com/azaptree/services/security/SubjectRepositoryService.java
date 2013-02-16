@@ -26,16 +26,36 @@ import com.azaptree.services.security.domain.Subject;
 
 public interface SubjectRepositoryService {
 	/**
-	 * If a credential with the same name already exists, then
 	 * 
 	 * @param subjectId
+	 *            REQUIRED
 	 * @param credentialName
+	 *            REQUIRED
 	 * @param credential
+	 *            REQUIRED
 	 * @throws DuplicateCredentialException
+	 *             If a credential with the same name already exists for the specified subject
 	 * @throws UnknownSubjectException
 	 */
 	void addSubjectCredential(UUID subjectId, Credential credential) throws SecurityServiceException, DuplicateCredentialException,
-	        UnknownSubjectException;
+	        UnknownSubjectException, UnsupportedCredentialTypeException;
+
+	/**
+	 * 
+	 * @param subjectId
+	 *            REQUIRED
+	 * @param credentialName
+	 *            REQUIRED
+	 * @param credential
+	 *            REQUIRED
+	 * @param updatedBySubjectId
+	 *            REQUIRED
+	 * @throws DuplicateCredentialException
+	 *             If a credential with the same name already exists for the specified subject
+	 * @throws UnknownSubjectException
+	 */
+	void addSubjectCredential(UUID subjectId, Credential credential, UUID updatedBySubjectId) throws SecurityServiceException, DuplicateCredentialException,
+	        UnknownSubjectException, UnsupportedCredentialTypeException;
 
 	/**
 	 * Creates a new Subject with the specified credentials in the database.
@@ -43,6 +63,7 @@ public interface SubjectRepositoryService {
 	 * Credentials will be hashed before storing in the database
 	 * 
 	 * @param subject
+	 *            REQUIRED
 	 * @param credentials
 	 *            at least one credential is required.
 	 * @return
@@ -66,7 +87,9 @@ public interface SubjectRepositoryService {
 	/**
 	 * 
 	 * @param subjectId
+	 *            REQUIRED
 	 * @param credentialName
+	 *            REQUIRED
 	 * @param credential
 	 * @throws SecurityServiceException
 	 * @throws UnknownCredentialException
@@ -74,6 +97,23 @@ public interface SubjectRepositoryService {
 	 * @throws UnknownSubjectException
 	 */
 	void deleteSubjectCredential(UUID subjectId, String credentialName) throws SecurityServiceException, UnknownCredentialException, UnknownSubjectException;
+
+	/**
+	 * 
+	 * @param subjectId
+	 *            REQUIRED
+	 * @param credentialName
+	 *            REQUIRED
+	 * @param credential
+	 * @param updatedBySubjectId
+	 *            REQUIRED
+	 * @throws SecurityServiceException
+	 * @throws UnknownCredentialException
+	 *             if there was not credential with that name found to delete
+	 * @throws UnknownSubjectException
+	 */
+	void deleteSubjectCredential(UUID subjectId, String credentialName, UUID updatedBySubjectId) throws SecurityServiceException, UnknownCredentialException,
+	        UnknownSubjectException;
 
 	Subject getSubject(UUID subjectId) throws SecurityServiceException;
 

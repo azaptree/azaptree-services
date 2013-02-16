@@ -10,7 +10,7 @@ package com.azaptree.services.security.config;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,6 +32,7 @@ public interface CommandServiceConfiguration {
 	public static final String COMMAND_CATALOG_NAME = "azaptree-security-service";
 
 	public static final CommandKey CREATE_SUBJECT = new CommandKey(COMMAND_CATALOG_NAME, "CreateSubject");
+	public static final CommandKey ADD_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "AddSubjectCredential");
 
 	@Bean
 	CommandService commandService();

@@ -35,13 +35,14 @@ import com.azaptree.services.domain.entity.dao.JDBCVersionedEntityDAOSupport;
 import com.azaptree.services.domain.entity.dao.ObjectNotFoundException;
 import com.azaptree.services.domain.entity.dao.StaleObjectException;
 import com.azaptree.services.domain.entity.dao.VersionedEntityRowMapperSupport;
+import com.azaptree.services.security.UnknownSubjectException;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 import com.google.common.base.Optional;
 
 @Repository
-public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
+public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> implements SubjectRepository {
 
 	private final RowMapper<Subject> rowMapper = new VersionedEntityRowMapperSupport<Subject>() {
 
@@ -136,6 +137,56 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	}
 
 	@Override
+	public void touch(final UUID subjectId) throws UnknownSubjectException {
+		Assert.notNull(subjectId, "subjectId is required");
+		final Subject subject = findById(subjectId);
+		if (subject == null) {
+			throw new ObjectNotFoundException();
+		}
+
+		final String sql = "update t_subject set entity_version=(entity_version+1), entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
+
+		final int updateCount = jdbc.update(sql,
+		        new Timestamp(System.currentTimeMillis()),
+		        null,
+		        subjectId,
+		        subject.getEntityVersion());
+		if (updateCount == 0) {
+			if (exists(subjectId)) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
+		}
+
+	}
+
+	@Override
+	public void touch(final UUID subjectId, final UUID updatedBySubjectId) throws UnknownSubjectException {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.notNull(updatedBySubjectId, "updatedBySubjectId not null");
+		final Subject subject = findById(subjectId);
+		if (subject == null) {
+			throw new ObjectNotFoundException();
+		}
+
+		final String sql = "update t_subject set entity_version=(entity_version+1), entity_updated_on=?,entity_updated_by=? where entity_id=? and entity_version=?";
+
+		final int updateCount = jdbc.update(sql,
+		        new Timestamp(System.currentTimeMillis()),
+		        updatedBySubjectId,
+		        subjectId,
+		        subject.getEntityVersion());
+		if (updateCount == 0) {
+			if (exists(subjectId)) {
+				throw new StaleObjectException();
+			}
+
+			throw new ObjectNotFoundException();
+		}
+	}
+
+	@Override
 	public Subject update(final Subject entity) {
 		validateForUpdate(entity);
 
@@ -168,6 +219,7 @@ public class SubjectDAO extends JDBCVersionedEntityDAOSupport<Subject> {
 	@Override
 	public Subject update(final Subject entity, final UUID updatedBy) throws DAOException, StaleObjectException, ObjectNotFoundException {
 		validateForUpdate(entity);
+		Assert.notNull(updatedBy, "updatedBy is required");
 
 		final String sql = "update t_subject set entity_version=?, entity_updated_on=?,entity_updated_by=?,status=?,status_timestamp=?,consec_auth_failed_count=?,last_auth_failed_ts=? where entity_id=? and entity_version=?";
 		final SubjectImpl updatedSubject = new SubjectImpl(entity);

@@ -10,7 +10,7 @@ package test.com.azaptree.services.security.commands.subjectRepository;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *      http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,14 +21,12 @@ package test.com.azaptree.services.security.commands.subjectRepository;
  */
 
 import java.util.Calendar;
-import java.util.Set;
 import java.util.UUID;
 
 import javax.sql.DataSource;
 
 import org.apache.shiro.crypto.hash.HashService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.Assert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
@@ -41,15 +39,15 @@ import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
-import org.springframework.transaction.annotation.Transactional;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.command.CommandContext;
 import com.azaptree.services.security.Credential;
 import com.azaptree.services.security.CredentialNames;
-import com.azaptree.services.security.UnknownCredentialException;
+import com.azaptree.services.security.DuplicateCredentialException;
+import com.azaptree.services.security.UnknownSubjectException;
 import com.azaptree.services.security.UnsupportedCredentialTypeException;
+import com.azaptree.services.security.commands.subjectRepository.AddSubjectCredential;
 import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
 import com.azaptree.services.security.config.spring.SecurityCredentialsServiceConfig;
 import com.azaptree.services.security.dao.HashServiceConfigurationDAO;
@@ -61,13 +59,18 @@ import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
 
-@ContextConfiguration(classes = { CreateSubjectTest.Config.class })
-public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
+@ContextConfiguration(classes = { AddSubjectCredentialTest.Config.class })
+public class AddSubjectCredentialTest extends AbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
-	@Import({ SecurityCredentialsServiceConfig.class })
+	@Import(SecurityCredentialsServiceConfig.class)
 	public static class Config implements TransactionManagementConfigurer {
+
+		@Bean
+		public AddSubjectCredential addSubjectCredential() {
+			return new AddSubjectCredential(hashServiceConfiguation());
+		}
 
 		@Override
 		public PlatformTransactionManager annotationDrivenTransactionManager() {
@@ -138,22 +141,17 @@ public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 		public SubjectDAO subjectDao() {
 			return new SubjectDAO(jdbcTemplate());
 		}
+
 	}
 
-	final Logger log = LoggerFactory.getLogger(getClass());
+	@Autowired
+	private AddSubjectCredential addSubjectCredentialCommand;
 
 	@Autowired
 	private CreateSubject createSubject;
 
-	@Autowired
-	private SubjectDAO subjectDAO;
-
-	@Autowired
-	private HashedCredentialDAO hashedCredentialDAO;
-
-	@Transactional
 	@Test
-	public void test_createSubject() {
+	public void test() {
 		final CommandContext ctx = new CommandContext();
 		final Subject subject = new SubjectImpl(Subject.Status.ACTIVATED);
 		ctx.put(CreateSubject.SUBJECT, subject);
@@ -165,30 +163,21 @@ public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 
 		createSubject.execute(ctx);
 		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
-		log.info("test_createSubject(): createdSubject : {}", createdSubject);
-		Assert.assertNotNull(createdSubject);
-		Assert.assertNotNull(createdSubject.getEntityId());
-		Assert.assertEquals(createdSubject.getEntityVersion(), 1l);
 
-		final Subject retrievedSubject = subjectDAO.findById(createdSubject.getEntityId());
-		Assert.assertNotNull(retrievedSubject);
-		Assert.assertEquals(retrievedSubject.getEntityId(), createdSubject.getEntityId());
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
 
-		final Set<HashedCredential> credentials = hashedCredentialDAO.findBySubjectId(createdSubject.getEntityId());
-		Assert.assertNotNull(credentials);
-		Assert.assertFalse(credentials.isEmpty());
-		Assert.assertEquals(credentials.size(), 1);
-		final HashedCredential retrievedCredential = credentials.iterator().next();
-		Assert.assertEquals(retrievedCredential.getName(), credential.getName());
-		Assert.assertEquals(retrievedCredential.getExpiresOn().get(), credential.getExpiresOn());
+		addSubjectCredentialCommand.execute(ctx);
+		final HashedCredential hashedCredential2 = ctx.get(AddSubjectCredential.HASHED_CREDENTIAL);
+		Assert.assertNotNull(hashedCredential2);
 	}
 
-	@Transactional
-	@Test(expectedExceptions = { IllegalArgumentException.class })
-	public void test_createSubject_invalid_createdBy() {
+	@Test(expectedExceptions = { DuplicateCredentialException.class })
+	public void test_duplicate_credential_name() {
 		final CommandContext ctx = new CommandContext();
-		final SubjectImpl subject = new SubjectImpl(Subject.Status.ACTIVATED);
-		subject.setCreatedBy(UUID.randomUUID());
+		final Subject subject = new SubjectImpl(Subject.Status.ACTIVATED);
 		ctx.put(CreateSubject.SUBJECT, subject);
 
 		final Calendar now = Calendar.getInstance();
@@ -197,56 +186,20 @@ public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
 
 		createSubject.execute(ctx);
+		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
+
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential(CredentialNames.PASSWORD.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+
+		addSubjectCredentialCommand.execute(ctx);
+		final HashedCredential hashedCredential2 = ctx.get(AddSubjectCredential.HASHED_CREDENTIAL);
+		Assert.assertNotNull(hashedCredential2);
 	}
 
-	@Transactional
-	@Test(expectedExceptions = { IllegalArgumentException.class })
-	public void test_createSubject_with_dup_credential() {
-		final CommandContext ctx = new CommandContext();
-		final SubjectImpl subject = new SubjectImpl(Subject.Status.ACTIVATED);
-		ctx.put(CreateSubject.SUBJECT, subject);
-
-		final Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, 90);
-		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, "secret", now.getTime());
-		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential, credential });
-
-		createSubject.execute(ctx);
-	}
-
-	@Transactional
-	@Test(expectedExceptions = { UnknownCredentialException.class })
-	public void test_createSubject_with_invalid_credential_name() {
-		final CommandContext ctx = new CommandContext();
-		final SubjectImpl subject = new SubjectImpl(Subject.Status.ACTIVATED);
-		ctx.put(CreateSubject.SUBJECT, subject);
-
-		final Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, 90);
-		final Credential credential = new Credential("Invalid name", "secret", now.getTime());
-		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
-
-		createSubject.execute(ctx);
-	}
-
-	@Transactional
 	@Test(expectedExceptions = { UnsupportedCredentialTypeException.class })
-	public void test_createSubject_with_invalid_credential_type() {
-		final CommandContext ctx = new CommandContext();
-		final SubjectImpl subject = new SubjectImpl(Subject.Status.ACTIVATED);
-		ctx.put(CreateSubject.SUBJECT, subject);
-
-		final Calendar now = Calendar.getInstance();
-		now.add(Calendar.DATE, 90);
-		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, 5, now.getTime());
-		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
-
-		createSubject.execute(ctx);
-	}
-
-	@Transactional
-	@Test
-	public void test_createSubject_with_valid_createdBy() {
+	public void test_invalid_credential_name() {
 		final CommandContext ctx = new CommandContext();
 		final Subject subject = new SubjectImpl(Subject.Status.ACTIVATED);
 		ctx.put(CreateSubject.SUBJECT, subject);
@@ -259,12 +212,94 @@ public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 		createSubject.execute(ctx);
 		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
 
-		final SubjectImpl subject2 = new SubjectImpl(Subject.Status.ACTIVATED);
-		subject2.setCreatedBy(createdSubject.getEntityId());
-		ctx.put(CreateSubject.SUBJECT, subject2);
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential("INVALID NAME", "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+
+		addSubjectCredentialCommand.execute(ctx);
+	}
+
+	@Test(expectedExceptions = { UnknownSubjectException.class })
+	public void test_unknown_subjectId() {
+		final CommandContext ctx = new CommandContext();
+
+		ctx.put(AddSubjectCredential.SUBJECT_ID, UUID.randomUUID());
+		final Credential credential2 = new Credential(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+
+		addSubjectCredentialCommand.execute(ctx);
+	}
+
+	@Test
+	public void test_with_updated_by() {
+		final CommandContext ctx = new CommandContext();
+		ctx.put(CreateSubject.SUBJECT, new SubjectImpl(Subject.Status.ACTIVATED));
+
+		final Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, 90);
+		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, "secret", now.getTime());
+		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
+
+		createSubject.execute(ctx);
+		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
+
+		ctx.put(CreateSubject.SUBJECT, new SubjectImpl(Subject.Status.ACTIVATED));
 		createSubject.execute(ctx);
 		final Subject createdSubject2 = ctx.get(CreateSubject.SUBJECT);
 
-		Assert.assertEquals(createdSubject2.getCreatedByEntityId().get(), createdSubject.getEntityId());
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+		ctx.put(AddSubjectCredential.UPDATED_BY_SUBJECT_ID, createdSubject2.getEntityId());
+
+		addSubjectCredentialCommand.execute(ctx);
+		final HashedCredential hashedCredential2 = ctx.get(AddSubjectCredential.HASHED_CREDENTIAL);
+		Assert.assertNotNull(hashedCredential2);
+	}
+
+	@Test(expectedExceptions = IllegalArgumentException.class)
+	public void test_with_updated_by_same_as_subject_id() {
+		final CommandContext ctx = new CommandContext();
+		ctx.put(CreateSubject.SUBJECT, new SubjectImpl(Subject.Status.ACTIVATED));
+
+		final Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, 90);
+		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, "secret", now.getTime());
+		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
+
+		createSubject.execute(ctx);
+		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
+
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+		ctx.put(AddSubjectCredential.UPDATED_BY_SUBJECT_ID, createdSubject.getEntityId());
+
+		addSubjectCredentialCommand.execute(ctx);
+	}
+
+	@Test(expectedExceptions = UnknownSubjectException.class)
+	public void test_with_updated_by_not_found() {
+		final CommandContext ctx = new CommandContext();
+		ctx.put(CreateSubject.SUBJECT, new SubjectImpl(Subject.Status.ACTIVATED));
+
+		final Calendar now = Calendar.getInstance();
+		now.add(Calendar.DATE, 90);
+		final Credential credential = new Credential(CredentialNames.PASSWORD.credentialName, "secret", now.getTime());
+		ctx.put(CreateSubject.CREDENTIALS, new Credential[] { credential });
+
+		createSubject.execute(ctx);
+		final Subject createdSubject = ctx.get(CreateSubject.SUBJECT);
+
+		ctx.clear();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, createdSubject.getEntityId());
+		final Credential credential2 = new Credential(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, "buona sera");
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential2);
+		ctx.put(AddSubjectCredential.UPDATED_BY_SUBJECT_ID, UUID.randomUUID());
+
+		addSubjectCredentialCommand.execute(ctx);
 	}
 }

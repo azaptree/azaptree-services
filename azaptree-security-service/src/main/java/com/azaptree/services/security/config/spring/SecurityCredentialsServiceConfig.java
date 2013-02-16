@@ -10,7 +10,7 @@ package com.azaptree.services.security.config.spring;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,6 +38,7 @@ public class SecurityCredentialsServiceConfig {
 	protected Map<String, CredentialToByteSourceConverter<?>> credentialToByteSourceConverters() {
 		final Map<String, CredentialToByteSourceConverter<?>> converters = new HashMap<>();
 		converters.put(CredentialNames.PASSWORD.credentialName, stringToByteSourceConverter());
+		converters.put(CredentialNames.FORGOT_PASSWORD_ANSWER_1.credentialName, stringToByteSourceConverter());
 		return converters;
 	}
 

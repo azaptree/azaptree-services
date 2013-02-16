@@ -285,7 +285,7 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 	@Transactional
 	@Test
 	public void test_update() {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED,3);
+		final Subject temp = new SubjectImpl(Status.ACTIVATED, 3);
 		final Subject subject = subjectDao.create(temp);
 		final Subject updatedSubject = subjectDao.update(subject);
 		Assert.assertNotNull(updatedSubject);
@@ -300,6 +300,53 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
 		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
 		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
+	}
+
+	@Transactional
+	@Test
+	public void test_touch() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED, 3);
+		final Subject subject = subjectDao.create(temp);
+		final Subject updatedSubject = subjectDao.update(subject);
+		Assert.assertNotNull(updatedSubject);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), subject.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), subject.getEntityVersion());
+
+		log.info("subject : {}", subject);
+		log.info("updatedSubject : {}", updatedSubject);
+
+		subjectDao.touch(updatedSubject.getEntityId());
+
+		final Subject updatedSubject2 = subjectDao.findById(updatedSubject.getEntityId());
+		Assert.assertNotNull(updatedSubject2);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
+		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
+		Assert.assertFalse(updatedSubject2.getUpdatedByEntityId().isPresent());
+	}
+
+	@Transactional
+	@Test
+	public void test_touch_withUpdatedBy() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED, 3);
+		final Subject subject = subjectDao.create(temp);
+		final Subject updatedSubject = subjectDao.update(subject);
+		Assert.assertNotNull(updatedSubject);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), subject.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), subject.getEntityVersion());
+
+		log.info("subject : {}", subject);
+		log.info("updatedSubject : {}", updatedSubject);
+
+		final UUID updatedBy = UUID.randomUUID();
+		subjectDao.touch(updatedSubject.getEntityId(), updatedBy);
+
+		final Subject updatedSubject2 = subjectDao.findById(updatedSubject.getEntityId());
+		Assert.assertNotNull(updatedSubject2);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
+		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
+		Assert.assertEquals(updatedSubject2.getUpdatedByEntityId().get(), updatedBy);
 	}
 
 	@Transactional

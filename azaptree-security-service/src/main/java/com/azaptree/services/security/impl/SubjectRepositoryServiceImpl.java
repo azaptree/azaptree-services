@@ -33,6 +33,7 @@ import com.azaptree.services.security.SubjectRepositoryService;
 import com.azaptree.services.security.UnknownCredentialException;
 import com.azaptree.services.security.UnknownSubjectException;
 import com.azaptree.services.security.UnsupportedCredentialTypeException;
+import com.azaptree.services.security.commands.subjectRepository.AddSubjectCredential;
 import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
 import com.azaptree.services.security.config.CommandServiceConfiguration;
 import com.azaptree.services.security.domain.Subject;
@@ -45,8 +46,20 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 	@Override
 	public void addSubjectCredential(final UUID subjectId, final Credential credential) throws SecurityServiceException, DuplicateCredentialException,
 	        UnknownSubjectException {
-		// TODO Auto-generated method stub
+		final CommandContext ctx = new CommandContext();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, subjectId);
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential);
+		commandService.execute(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
+	}
 
+	@Override
+	public void addSubjectCredential(final UUID subjectId, final Credential credential, final UUID updatedBySubjectId) throws SecurityServiceException,
+	        DuplicateCredentialException, UnknownSubjectException, UnsupportedCredentialTypeException {
+		final CommandContext ctx = new CommandContext();
+		ctx.put(AddSubjectCredential.SUBJECT_ID, subjectId);
+		ctx.put(AddSubjectCredential.CREDENTIAL, credential);
+		ctx.put(AddSubjectCredential.UPDATED_BY_SUBJECT_ID, updatedBySubjectId);
+		commandService.execute(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
 	}
 
 	@Override
@@ -68,6 +81,13 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 	@Override
 	public void deleteSubjectCredential(final UUID subjectId, final String credentialName) throws SecurityServiceException, UnknownCredentialException,
 	        UnknownSubjectException {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void deleteSubjectCredential(final UUID subjectId, final String credentialName, final UUID updatedBySubjectId) throws SecurityServiceException,
+	        UnknownCredentialException, UnknownSubjectException {
 		// TODO Auto-generated method stub
 
 	}
