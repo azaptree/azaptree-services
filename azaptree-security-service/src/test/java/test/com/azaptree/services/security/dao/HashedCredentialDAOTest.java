@@ -258,6 +258,46 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
+	public void test_deleteBySubjectIdAndName() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDao.create(temp);
+
+		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
+		final Hash hash = hashService.computeHash(hashRequest);
+		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hashServiceConfig.getEntityId(), hash.getBytes(),
+		        hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), null);
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
+
+		final HashedCredential retrievedCredential = hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getName());
+		Assert.assertEquals(retrievedCredential, savedPassword);
+
+		Assert.assertNull(hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getEntityId().toString()));
+
+		Assert.assertTrue(hashedCredentialDAO.deleteBySubjectIdAndName(subject.getEntityId(), savedPassword.getName()));
+		Assert.assertFalse(hashedCredentialDAO.deleteBySubjectIdAndName(subject.getEntityId(), savedPassword.getName()));
+	}
+
+	@Transactional
+	@Test
+	public void test_existsForSubjectIdAndName() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDao.create(temp);
+
+		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
+		final Hash hash = hashService.computeHash(hashRequest);
+		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hashServiceConfig.getEntityId(), hash.getBytes(),
+		        hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), null);
+		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
+
+		final HashedCredential retrievedCredential = hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getName());
+		Assert.assertEquals(retrievedCredential, savedPassword);
+		Assert.assertTrue(hashedCredentialDAO.existsForSubjectIdAndName(subject.getEntityId(), savedPassword.getName()));
+
+		Assert.assertNull(hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getEntityId().toString()));
+	}
+
+	@Transactional
+	@Test
 	public void test_findBySubjectId() {
 		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDao.create(temp);
@@ -291,25 +331,6 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 
 		final HashedCredential retrievedCredential = hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getName());
 		Assert.assertEquals(retrievedCredential, savedPassword);
-
-		Assert.assertNull(hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getEntityId().toString()));
-	}
-
-	@Transactional
-	@Test
-	public void test_existsForSubjectIdAndName() {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED);
-		final Subject subject = subjectDao.create(temp);
-
-		final HashRequest hashRequest = new HashRequest.Builder().setSource("password").build();
-		final Hash hash = hashService.computeHash(hashRequest);
-		final HashedCredential password = new HashedCredentialImpl(subject.getEntityId(), "password", hashServiceConfig.getEntityId(), hash.getBytes(),
-		        hash.getAlgorithmName(), hash.getIterations(), hash.getSalt().getBytes(), null);
-		final HashedCredential savedPassword = hashedCredentialDAO.create(password);
-
-		final HashedCredential retrievedCredential = hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getName());
-		Assert.assertEquals(retrievedCredential, savedPassword);
-		Assert.assertTrue(hashedCredentialDAO.existsForSubjectIdAndName(subject.getEntityId(), savedPassword.getName()));
 
 		Assert.assertNull(hashedCredentialDAO.findBySubjectIdAndName(subject.getEntityId(), savedPassword.getEntityId().toString()));
 	}

@@ -156,7 +156,7 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 	@Test(expectedExceptions = { UnsupportedOperationException.class })
 	public void test_update() {
 		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
-		final HashServiceConfiguration savedConfig = dao.update(config);
+		dao.update(config);
 	}
 
 	@Transactional
@@ -172,4 +172,5 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 		Assert.assertTrue(dao.delete(config2.getEntityId()));
 		Assert.assertFalse(dao.exists(savedConfig.getEntityId()));
 	}
+
 }

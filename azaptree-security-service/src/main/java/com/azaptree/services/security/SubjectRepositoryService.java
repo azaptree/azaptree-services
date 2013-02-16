@@ -96,7 +96,7 @@ public interface SubjectRepositoryService {
 	 *             if there was not credential with that name found to delete
 	 * @throws UnknownSubjectException
 	 */
-	void deleteSubjectCredential(UUID subjectId, String credentialName) throws SecurityServiceException, UnknownCredentialException, UnknownSubjectException;
+	boolean deleteSubjectCredential(UUID subjectId, String credentialName) throws SecurityServiceException, UnknownSubjectException;
 
 	/**
 	 * 
@@ -112,7 +112,8 @@ public interface SubjectRepositoryService {
 	 *             if there was not credential with that name found to delete
 	 * @throws UnknownSubjectException
 	 */
-	void deleteSubjectCredential(UUID subjectId, String credentialName, UUID updatedBySubjectId) throws SecurityServiceException, UnknownCredentialException,
+	boolean deleteSubjectCredential(UUID subjectId, String credentialName, UUID updatedBySubjectId) throws SecurityServiceException,
+	        UnknownCredentialException,
 	        UnknownSubjectException;
 
 	Subject getSubject(UUID subjectId) throws SecurityServiceException;

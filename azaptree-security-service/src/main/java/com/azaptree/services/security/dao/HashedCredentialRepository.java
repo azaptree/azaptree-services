@@ -33,6 +33,8 @@ public interface HashedCredentialRepository extends VersionedEntityDAO<HashedCre
 
 	HashedCredential findBySubjectIdAndName(UUID subjectId, String name);
 
+	boolean deleteBySubjectIdAndName(UUID subjectId, String name);
+
 	boolean existsForSubjectIdAndName(UUID subjectId, String name);
 
 	boolean subjectHasCredential(UUID subjectId, String name, byte[] hash);

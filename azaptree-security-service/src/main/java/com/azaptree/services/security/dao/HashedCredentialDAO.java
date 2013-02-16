@@ -159,6 +159,14 @@ public class HashedCredentialDAO extends JDBCVersionedEntityDAOSupport<HashedCre
 	}
 
 	@Override
+	public boolean deleteBySubjectIdAndName(final UUID subjectId, final String name) {
+		Assert.notNull(subjectId, "subjectId is required");
+		Assert.hasText(name, "name is required");
+		final String sql = "delete from t_hashed_credential where subject_id = ? and name = ?";
+		return jdbc.update(sql, subjectId, name) > 0;
+	}
+
+	@Override
 	public boolean existsForSubjectIdAndName(final UUID subjectId, final String name) {
 		Assert.notNull(subjectId, "subjectId is required");
 		Assert.hasText(name, "name is required");

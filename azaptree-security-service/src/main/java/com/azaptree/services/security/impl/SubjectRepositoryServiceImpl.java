@@ -37,6 +37,7 @@ import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.commands.subjectRepository.AddSubjectCredential;
 import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
 import com.azaptree.services.security.commands.subjectRepository.DeleteSubject;
+import com.azaptree.services.security.commands.subjectRepository.DeleteSubjectCredential;
 import com.azaptree.services.security.config.CommandServiceConfiguration;
 import com.azaptree.services.security.domain.Subject;
 
@@ -89,16 +90,35 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 	}
 
 	@Override
-	public void deleteSubjectCredential(final UUID subjectId, final String credentialName) throws SecurityServiceException, UnknownCredentialException,
-	        UnknownSubjectException {
-		// TODO Auto-generated method stub
-
+	public boolean deleteSubjectCredential(final UUID subjectId, final String credentialName) throws SecurityServiceException, UnknownSubjectException {
+		final CommandContext ctx = new CommandContext();
+		ctx.put(DeleteSubjectCredential.SUBJECT_ID, subjectId);
+		ctx.put(DeleteSubjectCredential.CREDENTIAL_NAME, credentialName);
+		try {
+			executeCommand(CommandServiceConfiguration.DELETE_SUBJECT_CREDENTIAL, ctx);
+			return true;
+		} catch (final UnknownCredentialException e) {
+			return false;
+		} catch (final SecurityServiceException e) {
+			throw e;
+		}
 	}
 
 	@Override
-	public void deleteSubjectCredential(final UUID subjectId, final String credentialName, final UUID updatedBySubjectId) throws SecurityServiceException,
+	public boolean deleteSubjectCredential(final UUID subjectId, final String credentialName, final UUID updatedBySubjectId) throws SecurityServiceException,
 	        UnknownCredentialException, UnknownSubjectException {
-		// TODO Auto-generated method stub
+		final CommandContext ctx = new CommandContext();
+		ctx.put(DeleteSubjectCredential.SUBJECT_ID, subjectId);
+		ctx.put(DeleteSubjectCredential.CREDENTIAL_NAME, credentialName);
+		ctx.put(DeleteSubjectCredential.UPDATED_BY_SUBJECT_ID, updatedBySubjectId);
+		try {
+			executeCommand(CommandServiceConfiguration.DELETE_SUBJECT_CREDENTIAL, ctx);
+			return true;
+		} catch (final UnknownCredentialException e) {
+			return false;
+		} catch (final SecurityServiceException e) {
+			throw e;
+		}
 
 	}
 
