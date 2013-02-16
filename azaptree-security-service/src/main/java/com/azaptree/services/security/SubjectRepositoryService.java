@@ -82,7 +82,7 @@ public interface SubjectRepositoryService {
 	 * @return
 	 * @throws SecurityServiceException
 	 */
-	boolean deleteSubject(UUID subjectId) throws SecurityServiceException, UnknownSubjectException;
+	boolean deleteSubject(UUID subjectId) throws SecurityServiceException;
 
 	/**
 	 * 

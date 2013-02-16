@@ -64,6 +64,10 @@ public class CommandContext extends ContextBase {
 		return t != null ? t : key.getDefaultValue();
 	}
 
+	public <T> T getAttribute(final TypeReferenceKey<T> key) {
+		return get(key);
+	}
+
 	@SuppressWarnings("rawtypes")
 	@Override
 	public Object put(final Object key, final Object value) {
@@ -89,5 +93,9 @@ public class CommandContext extends ContextBase {
 	public <T> T remove(final TypeReferenceKey<T> key) {
 		Assert.notNull(key, "key is required");
 		return (T) super.remove(key.getName());
+	}
+
+	public <T> T setAttribute(final TypeReferenceKey<T> key, final T value) {
+		return put(key, value);
 	}
 }

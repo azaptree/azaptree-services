@@ -118,6 +118,9 @@ public class CreateSubject extends CommandSupport {
 				}
 			}
 		});
+
+		this.setInputKeys(SUBJECT, CREDENTIALS);
+		this.setOutputKeys(SUBJECT);
 	}
 
 	@Transactional
@@ -150,16 +153,6 @@ public class CreateSubject extends CommandSupport {
 		put(ctx, SUBJECT, createdSubject);
 
 		return CONTINUE_PROCESSING;
-	}
-
-	@Override
-	public Optional<TypeReferenceKey<?>[]> getInputKeys() {
-		return Optional.of(new TypeReferenceKey<?>[] { SUBJECT, CREDENTIALS });
-	}
-
-	@Override
-	public Optional<TypeReferenceKey<?>[]> getOutputKeys() {
-		return Optional.of(new TypeReferenceKey<?>[] { SUBJECT });
 	}
 
 }

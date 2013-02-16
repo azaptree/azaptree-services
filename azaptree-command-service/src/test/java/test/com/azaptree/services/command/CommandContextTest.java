@@ -47,7 +47,7 @@ public class CommandContextTest {
 		Assert.assertTrue(ctx.containsKey(MSG));
 		Assert.assertEquals(ctx.get(MSG), value);
 
-		String removedValue = ctx.remove(MSG);
+		final String removedValue = ctx.remove(MSG);
 		Assert.assertEquals(removedValue, value);
 	}
 
@@ -60,7 +60,7 @@ public class CommandContextTest {
 		Assert.assertTrue(ctx.containsKey(key));
 		Assert.assertEquals(ctx.get(key), value);
 
-		Object removedValue = ctx.remove(key);
+		final Object removedValue = ctx.remove(key);
 		Assert.assertEquals(removedValue, value);
 	}
 
@@ -75,6 +75,18 @@ public class CommandContextTest {
 
 		final CommandContext ctx2 = new CommandContext(ctx);
 		Assert.assertEquals(ctx.get(key), ctx2.get(key));
+	}
+
+	@Test
+	public void test_setAttribute_containsKey_getAttribute() {
+		final CommandContext ctx = new CommandContext();
+		final String value = "CIAO";
+		ctx.setAttribute(MSG, value);
+		Assert.assertTrue(ctx.containsKey(MSG));
+		Assert.assertEquals(ctx.getAttribute(MSG), value);
+
+		final String removedValue = ctx.remove(MSG);
+		Assert.assertEquals(removedValue, value);
 	}
 
 }

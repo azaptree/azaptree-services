@@ -25,6 +25,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.azaptree.services.command.CommandContext;
+import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.security.Credential;
 import com.azaptree.services.security.DuplicateCredentialException;
@@ -35,6 +36,7 @@ import com.azaptree.services.security.UnknownSubjectException;
 import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.commands.subjectRepository.AddSubjectCredential;
 import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
+import com.azaptree.services.security.commands.subjectRepository.DeleteSubject;
 import com.azaptree.services.security.config.CommandServiceConfiguration;
 import com.azaptree.services.security.domain.Subject;
 
@@ -49,7 +51,7 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 		final CommandContext ctx = new CommandContext();
 		ctx.put(AddSubjectCredential.SUBJECT_ID, subjectId);
 		ctx.put(AddSubjectCredential.CREDENTIAL, credential);
-		commandService.execute(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
+		executeCommand(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
 	}
 
 	@Override
@@ -59,7 +61,7 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 		ctx.put(AddSubjectCredential.SUBJECT_ID, subjectId);
 		ctx.put(AddSubjectCredential.CREDENTIAL, credential);
 		ctx.put(AddSubjectCredential.UPDATED_BY_SUBJECT_ID, updatedBySubjectId);
-		commandService.execute(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
+		executeCommand(CommandServiceConfiguration.ADD_SUBJECT_CREDENTIAL, ctx);
 	}
 
 	@Override
@@ -68,14 +70,22 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 		final CommandContext ctx = new CommandContext();
 		ctx.put(CreateSubject.SUBJECT, subject);
 		ctx.put(CreateSubject.CREDENTIALS, credentials);
-		commandService.execute(CommandServiceConfiguration.CREATE_SUBJECT, ctx);
+		executeCommand(CommandServiceConfiguration.CREATE_SUBJECT, ctx);
 		return ctx.get(CreateSubject.SUBJECT);
 	}
 
 	@Override
 	public boolean deleteSubject(final UUID subjectId) throws SecurityServiceException, UnknownSubjectException {
-		// TODO Auto-generated method stub
-		return false;
+		final CommandContext ctx = new CommandContext();
+		ctx.put(DeleteSubject.SUBJECT_ID, subjectId);
+		try {
+			executeCommand(CommandServiceConfiguration.DELETE_SUBJECT, ctx);
+			return true;
+		} catch (final UnknownSubjectException e) {
+			return false;
+		} catch (final SecurityServiceException e) {
+			throw e;
+		}
 	}
 
 	@Override
@@ -90,6 +100,16 @@ public class SubjectRepositoryServiceImpl implements SubjectRepositoryService {
 	        UnknownCredentialException, UnknownSubjectException {
 		// TODO Auto-generated method stub
 
+	}
+
+	private void executeCommand(final CommandKey commandKey, final CommandContext ctx) {
+		try {
+			commandService.execute(commandKey, ctx);
+		} catch (final SecurityException e) {
+			throw e;
+		} catch (final Exception e) {
+			throw new SecurityServiceException(e);
+		}
 	}
 
 	@Override

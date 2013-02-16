@@ -45,7 +45,6 @@ import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.HashedCredential;
 import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
-import com.google.common.base.Optional;
 
 public class AddSubjectCredential extends CommandSupport {
 
@@ -61,13 +60,9 @@ public class AddSubjectCredential extends CommandSupport {
 	@Autowired
 	private SecurityCredentialsService securityCredentialsService;
 
-	public static final TypeReferenceKey<UUID> SUBJECT_ID = new TypeReferenceKey<UUID>("SUBJECT_ID", true) {
-		// intentionally empty
-	};
+	public static final TypeReferenceKey<UUID> SUBJECT_ID = CommandContextKeys.SUBJECT_ID;
 
-	public static final TypeReferenceKey<UUID> UPDATED_BY_SUBJECT_ID = new TypeReferenceKey<UUID>("UPDATED_BY_SUBJECT_ID", false) {
-		// intentionally empty
-	};
+	public static final TypeReferenceKey<UUID> UPDATED_BY_SUBJECT_ID = CommandContextKeys.UPDATED_BY_SUBJECT_ID;
 
 	public static final TypeReferenceKey<Credential> CREDENTIAL = new TypeReferenceKey<Credential>("CREDENTIAL", true) {
 		// intentionally empty
@@ -120,6 +115,9 @@ public class AddSubjectCredential extends CommandSupport {
 			}
 
 		});
+
+		setInputKeys(SUBJECT_ID, CREDENTIAL, UPDATED_BY_SUBJECT_ID);
+		setOutputKeys(HASHED_CREDENTIAL);
 	}
 
 	@Transactional
@@ -148,15 +146,4 @@ public class AddSubjectCredential extends CommandSupport {
 
 		return CONTINUE_PROCESSING;
 	}
-
-	@Override
-	public Optional<TypeReferenceKey<?>[]> getInputKeys() {
-		return Optional.of(new TypeReferenceKey<?>[] { SUBJECT_ID, CREDENTIAL, UPDATED_BY_SUBJECT_ID });
-	}
-
-	@Override
-	public Optional<TypeReferenceKey<?>[]> getOutputKeys() {
-		return Optional.of(new TypeReferenceKey<?>[] { HASHED_CREDENTIAL });
-	}
-
 }

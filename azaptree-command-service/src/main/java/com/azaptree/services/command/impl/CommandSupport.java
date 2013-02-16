@@ -122,11 +122,11 @@ public abstract class CommandSupport implements Command, BeanNameAware {
 		this.name = name;
 	}
 
-	public void setInputKeys(final TypeReferenceKey<?>[] inputKeys) {
+	public void setInputKeys(final TypeReferenceKey<?>... inputKeys) {
 		this.inputKeys = inputKeys;
 	}
 
-	public void setOutputKeys(final TypeReferenceKey<?>[] outputKeys) {
+	public void setOutputKeys(final TypeReferenceKey<?>... outputKeys) {
 		this.outputKeys = outputKeys;
 	}
 
