@@ -10,6 +10,8 @@ import java.util.TreeMap;
 import java.util.concurrent.CountDownLatch;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -111,6 +113,15 @@ public class SpringApplicationService {
 		}
 	}
 
+	private static void logSpringBeans() {
+		final ToStringBuilder sb = new ToStringBuilder(applicationContext, ToStringStyle.MULTI_LINE_STYLE);
+		sb.append("beanDefinitionCount", applicationContext.getBeanDefinitionCount());
+		for (final String beanName : applicationContext.getBeanDefinitionNames()) {
+			sb.append(beanName, applicationContext.getBean(beanName).getClass().getName());
+		}
+		getLogger().info(sb.toString());
+	}
+
 	/**
 	 * @param args
 	 */
@@ -121,6 +132,7 @@ public class SpringApplicationService {
 		logConfig(config);
 		try (final AnnotationConfigApplicationContext applicationContext = config.createAnnotationConfigApplicationContext()) {
 			SpringApplicationService.applicationContext = applicationContext;
+			logSpringBeans();
 			shutdownLatch.await();
 			getLogger().info("SHUTDOWN SIGNALLED");
 		} finally {
@@ -144,7 +156,7 @@ public class SpringApplicationService {
 
 	private static void validate(final String[] args) {
 		if (args.length == 0) {
-			final StringWriter sw = new StringWriter();
+			final StringWriter sw = new StringWriter(256);
 			final PrintWriter pw = new PrintWriter(sw);
 			pw.println();
 			pw.println(StringUtils.repeat("=", 160));

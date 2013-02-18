@@ -61,12 +61,15 @@ import com.azaptree.services.commons.xml.XmlUtils;
 import com.azaptree.services.spring.application.config.SpringApplicationService.ConfigurationClasses;
 import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties;
 import com.azaptree.services.spring.application.config.SpringApplicationService.JvmSystemProperties.Prop;
+import com.azaptree.services.spring.application.config.SpringApplicationService.SpringProfiles;
 
 public class SpringApplicationServiceConfig {
 
 	private Class<?>[] configurationClasses;
 
 	private Properties jvmSystemProperties;
+
+	private String[] springProfiles;
 
 	public SpringApplicationServiceConfig(final InputStream xml) throws JAXBException, ClassNotFoundException {
 		init(xml);
@@ -84,6 +87,10 @@ public class SpringApplicationServiceConfig {
 
 	public AnnotationConfigApplicationContext createAnnotationConfigApplicationContext() {
 		final AnnotationConfigApplicationContext ctx = new AnnotationConfigApplicationContext();
+		if (ArrayUtils.isNotEmpty(springProfiles)) {
+			ctx.getEnvironment().setActiveProfiles(springProfiles);
+		}
+
 		if (ArrayUtils.isNotEmpty(configurationClasses)) {
 			for (final Class<?> c : configurationClasses) {
 				ctx.register(c);
@@ -135,6 +142,17 @@ public class SpringApplicationServiceConfig {
 		log(config);
 		loadConfigurationClasses(config);
 		loadJvmSystemProperties(config);
+		loadSpringProfiles(config);
+	}
+
+	private void loadSpringProfiles(SpringApplicationService config) {
+		final SpringProfiles springProfiles = config.getSpringProfiles();
+		if (springProfiles != null) {
+			final List<String> profiles = springProfiles.getProfile();
+			if (!CollectionUtils.isEmpty(profiles)) {
+				this.springProfiles = profiles.toArray(new String[profiles.size()]);
+			}
+		}
 	}
 
 	private void loadConfigurationClasses(final SpringApplicationService config) throws ClassNotFoundException {
@@ -212,6 +230,9 @@ public class SpringApplicationServiceConfig {
 			}
 			sb.append("configurationClasses", Arrays.toString(names));
 		}
+		if (ArrayUtils.isNotEmpty(springProfiles)) {
+			sb.append("springProfiles", Arrays.toString(springProfiles));
+		}
 
 		if (!CollectionUtils.isEmpty(jvmSystemProperties)) {
 			final StringWriter sw = new StringWriter(256);
@@ -222,6 +243,7 @@ public class SpringApplicationServiceConfig {
 			}
 			sb.append("jvmSystemProperties", sw.toString());
 		}
+
 		return sb.toString();
 	}
 }

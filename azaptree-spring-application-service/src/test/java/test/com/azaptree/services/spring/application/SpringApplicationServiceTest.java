@@ -88,6 +88,10 @@ public class SpringApplicationServiceTest {
 			Assert.assertNotNull(env);
 			Assert.assertFalse(CollectionUtils.isEmpty(env));
 
+			final Map<String, String> environment = ctx.getBean("environment", Map.class);
+			Assert.assertNotNull(environment);
+			Assert.assertFalse(CollectionUtils.isEmpty(environment));
+
 			log.info("bean count: {}", ctx.getBeanDefinitionCount());
 			for (String beanName : ctx.getBeanDefinitionNames()) {
 				log.info("beanName: {}", beanName);

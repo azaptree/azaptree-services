@@ -38,6 +38,16 @@
 						</sequence>
 					</complexType>
 				</element>
+				<element name="spring-profiles" minOccurs="0">
+					<complexType>
+						<annotation>
+							<documentation><![CDATA[Names Spring profiles to activate]]></documentation>
+						</annotation>
+						<sequence>
+							<element name="profile" type="string" maxOccurs="unbounded" />
+						</sequence>
+					</complexType>
+				</element>
 			</sequence>
 		</complexType>
 	</element>
