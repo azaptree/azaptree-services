@@ -36,6 +36,7 @@ public interface SubjectRepositoryService {
 	 * @throws DuplicateCredentialException
 	 *             If a credential with the same name already exists for the specified subject
 	 * @throws UnknownSubjectException
+	 * @throws UnsupportedCredentialTypeException
 	 */
 	void addSubjectCredential(UUID subjectId, Credential credential) throws SecurityServiceException, DuplicateCredentialException,
 	        UnknownSubjectException, UnsupportedCredentialTypeException;
@@ -92,8 +93,6 @@ public interface SubjectRepositoryService {
 	 *            REQUIRED
 	 * @param credential
 	 * @throws SecurityServiceException
-	 * @throws UnknownCredentialException
-	 *             if there was not credential with that name found to delete
 	 * @throws UnknownSubjectException
 	 */
 	boolean deleteSubjectCredential(UUID subjectId, String credentialName) throws SecurityServiceException, UnknownSubjectException;
@@ -108,14 +107,16 @@ public interface SubjectRepositoryService {
 	 * @param updatedBySubjectId
 	 *            REQUIRED
 	 * @throws SecurityServiceException
-	 * @throws UnknownCredentialException
-	 *             if there was not credential with that name found to delete
 	 * @throws UnknownSubjectException
 	 */
-	boolean deleteSubjectCredential(UUID subjectId, String credentialName, UUID updatedBySubjectId) throws SecurityServiceException,
-	        UnknownCredentialException,
-	        UnknownSubjectException;
+	boolean deleteSubjectCredential(UUID subjectId, String credentialName, UUID updatedBySubjectId) throws SecurityServiceException, UnknownSubjectException;
 
+	/**
+	 * 
+	 * @param subjectId
+	 * @return
+	 * @throws SecurityServiceException
+	 */
 	Subject getSubject(UUID subjectId) throws SecurityServiceException;
 
 }

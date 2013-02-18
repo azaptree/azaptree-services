@@ -71,9 +71,7 @@ public class CreateSubject extends CommandSupport {
 		// intentionally empty
 	};
 
-	public static final TypeReferenceKey<Subject> SUBJECT = new TypeReferenceKey<Subject>("SUBJECT", true) {
-		// intentionally empty
-	};
+	public static final TypeReferenceKey<Subject> SUBJECT = CommandContextKeys.SUBJECT;
 
 	public CreateSubject(final HashServiceConfiguration hashServiceConfig) {
 		Assert.notNull(hashServiceConfig, "hashServiceConfig is required");

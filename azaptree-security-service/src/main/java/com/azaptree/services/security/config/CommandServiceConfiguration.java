@@ -31,11 +31,12 @@ import com.azaptree.services.command.CommandService;
 public interface CommandServiceConfiguration {
 	public static final String COMMAND_CATALOG_NAME = "azaptree-security-service";
 
+	public static final CommandKey GET_SUBJECT = new CommandKey(COMMAND_CATALOG_NAME, "GetSubject");
 	public static final CommandKey CREATE_SUBJECT = new CommandKey(COMMAND_CATALOG_NAME, "CreateSubject");
 	public static final CommandKey DELETE_SUBJECT = new CommandKey(COMMAND_CATALOG_NAME, "DeleteSubject");
 
 	public static final CommandKey ADD_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "AddSubjectCredential");
-	public static final CommandKey DELETE_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "DELETE_SUBJECT_CREDENTIAL");
+	public static final CommandKey DELETE_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "DeleteSubjectCredential");
 
 	@Bean
 	CommandService commandService();
