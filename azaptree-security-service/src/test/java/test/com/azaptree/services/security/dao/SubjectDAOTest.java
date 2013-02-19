@@ -34,7 +34,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
@@ -51,9 +50,10 @@ import com.azaptree.services.security.dao.SubjectDAO;
 import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = SubjectDAOTest.Config.class)
-public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
+public class SubjectDAOTest extends AzaptreeAbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
@@ -102,8 +102,6 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		}
 	}
 
-	final Logger log = LoggerFactory.getLogger(getClass());
-
 	@Autowired
 	private SubjectDAO subjectDao;
 
@@ -134,24 +132,6 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		retrievedSubject = subjectDao.findById(subject.getEntityId());
 		Assert.assertEquals(retrievedSubject.getConsecutiveAuthenticationFailedCount(), 0);
 		Assert.assertEquals(retrievedSubject.getLastTimeAuthenticationFailed(), lastTimeAuthenicationFailed);
-	}
-
-	@Transactional
-	@Test
-	public void test_statusTimestamp() {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED);
-		Subject subject = subjectDao.create(temp);
-		log.info("test_authenticationFailedCounter(): subject : {}", subject);
-
-		final long afterCreateTs = System.currentTimeMillis();
-		subject.setStatus(Status.LOCKED);
-		subject = subjectDao.update(subject);
-		Assert.assertEquals(subject.getStatus(), Status.LOCKED);
-		Assert.assertTrue(subject.getStatusTimestamp() >= afterCreateTs);
-
-		final Subject retrievedSubject = subjectDao.findById(subject.getEntityId());
-		Assert.assertEquals(retrievedSubject.getStatus(), Status.LOCKED);
-		Assert.assertTrue(retrievedSubject.getStatusTimestamp() >= afterCreateTs);
 	}
 
 	@Transactional
@@ -284,22 +264,20 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
-	public void test_update() {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED, 3);
-		final Subject subject = subjectDao.create(temp);
-		final Subject updatedSubject = subjectDao.update(subject);
-		Assert.assertNotNull(updatedSubject);
-		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), subject.getEntityUpdatedOn());
-		Assert.assertNotEquals(updatedSubject.getEntityVersion(), subject.getEntityVersion());
+	public void test_statusTimestamp() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		Subject subject = subjectDao.create(temp);
+		log.info("test_authenticationFailedCounter(): subject : {}", subject);
 
-		log.info("subject : {}", subject);
-		log.info("updatedSubject : {}", updatedSubject);
+		final long afterCreateTs = System.currentTimeMillis();
+		subject.setStatus(Status.LOCKED);
+		subject = subjectDao.update(subject);
+		Assert.assertEquals(subject.getStatus(), Status.LOCKED);
+		Assert.assertTrue(subject.getStatusTimestamp() >= afterCreateTs);
 
-		final Subject updatedSubject2 = subjectDao.update(updatedSubject, UUID.randomUUID());
-		Assert.assertNotNull(updatedSubject2);
-		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
-		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
-		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
+		final Subject retrievedSubject = subjectDao.findById(subject.getEntityId());
+		Assert.assertEquals(retrievedSubject.getStatus(), Status.LOCKED);
+		Assert.assertTrue(retrievedSubject.getStatusTimestamp() >= afterCreateTs);
 	}
 
 	@Transactional
@@ -347,6 +325,26 @@ public class SubjectDAOTest extends AbstractTestNGSpringContextTests {
 		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
 		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
 		Assert.assertEquals(updatedSubject2.getUpdatedByEntityId().get(), updatedBy);
+	}
+
+	@Transactional
+	@Test
+	public void test_update() {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED, 3);
+		final Subject subject = subjectDao.create(temp);
+		final Subject updatedSubject = subjectDao.update(subject);
+		Assert.assertNotNull(updatedSubject);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), subject.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), subject.getEntityVersion());
+
+		log.info("subject : {}", subject);
+		log.info("updatedSubject : {}", updatedSubject);
+
+		final Subject updatedSubject2 = subjectDao.update(updatedSubject, UUID.randomUUID());
+		Assert.assertNotNull(updatedSubject2);
+		Assert.assertNotEquals(updatedSubject.getEntityUpdatedOn(), updatedSubject2.getEntityUpdatedOn());
+		Assert.assertNotEquals(updatedSubject.getEntityVersion(), updatedSubject2.getEntityVersion());
+		Assert.assertTrue(updatedSubject2.getEntityVersion() > updatedSubject.getEntityVersion());
 	}
 
 	@Transactional

@@ -36,7 +36,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
@@ -51,9 +50,11 @@ import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SessionImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = { SessionDAOTest.Config.class })
-public class SessionDAOTest extends AbstractTestNGSpringContextTests {
+public class SessionDAOTest extends AzaptreeAbstractTestNGSpringContextTests {
+
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
 	public static class Config implements TransactionManagementConfigurer {
@@ -105,8 +106,6 @@ public class SessionDAOTest extends AbstractTestNGSpringContextTests {
 			return new SubjectDAO(jdbcTemplate());
 		}
 	}
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private SessionDAO sessionDAO;

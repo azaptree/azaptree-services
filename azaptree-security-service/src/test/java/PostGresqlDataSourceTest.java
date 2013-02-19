@@ -23,8 +23,6 @@ import java.sql.Timestamp;
 
 import javax.sql.DataSource;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
@@ -34,15 +32,16 @@ import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.jdbc.datasource.LazyConnectionDataSourceProxy;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 import org.springframework.transaction.annotation.Transactional;
 import org.testng.annotations.Test;
 
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
+
 @ContextConfiguration(classes = { PostGresqlDataSourceTest.Config.class })
-public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
+public class PostGresqlDataSourceTest extends AzaptreeAbstractTestNGSpringContextTests {
 	@Configuration
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	public static class Config implements TransactionManagementConfigurer {
@@ -82,8 +81,6 @@ public class PostGresqlDataSourceTest extends AbstractTestNGSpringContextTests {
 		}
 
 	}
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private JdbcTemplate jdbc;

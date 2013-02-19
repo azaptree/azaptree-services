@@ -108,6 +108,17 @@ public class HashServiceConfigurationDAO extends JDBCEntityDAOSupport<HashServic
 		fieldColumnMappings.put("SecureRandomNumberGeneratorNextBytesSize", "secure_rand_next_bytes_size");
 	}
 
+	@Override
+	public UUID lookupIdByName(final String name) {
+		Assert.hasText(name, "name is required");
+		final Object[] args = { name };
+		try {
+			return jdbc.queryForObject("select entity_id from t_hash_service_config where name = ?", args, UUID.class);
+		} catch (final IncorrectResultSizeDataAccessException e) {
+			return null;
+		}
+	}
+
 	/**
 	 * HashServiceConfiguration should not be updated once created because other services may depend on hashes that were previously created by the HashService
 	 * created by the config. For example, HashedCredential matching will depend on using the same HashServiceConfiguration for proper matching.

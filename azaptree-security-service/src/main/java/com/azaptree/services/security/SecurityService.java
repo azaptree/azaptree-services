@@ -24,11 +24,23 @@ import java.util.UUID;
 
 import org.apache.shiro.crypto.hash.HashService;
 
+import com.azaptree.services.security.domain.config.HashServiceConfiguration;
+
 public interface SecurityService {
+
+	HashService getHashService() throws SecurityServiceException;
 
 	HashService getHashService(String name) throws SecurityServiceException;
 
 	HashService getHashService(UUID hashServiceConfiguationId) throws SecurityServiceException;
+
+	/**
+	 * Returns the HashServiceConfiguration used to create the HashService returned by getHashService() .
+	 * 
+	 * @return
+	 * @throws SecurityServiceException
+	 */
+	HashServiceConfiguration getHashServiceConfiguration() throws SecurityServiceException;
 
 	UUID getHashServiceId(String name) throws SecurityServiceException;
 

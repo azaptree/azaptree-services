@@ -10,7 +10,7 @@ package test.com.azaptree.services.security;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,22 +22,19 @@ package test.com.azaptree.services.security;
 
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import com.azaptree.services.security.CredentialNames;
-import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.SecurityCredentialsService;
+import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.config.spring.SecurityCredentialsServiceConfig;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = { SecurityCredentialsServiceConfig.class })
-public class SecurityCredentialsServiceTest extends AbstractTestNGSpringContextTests {
-	private final Logger log = LoggerFactory.getLogger(getClass());
+public class SecurityCredentialsServiceTest extends AzaptreeAbstractTestNGSpringContextTests {
 
 	@Autowired
 	private SecurityCredentialsService service;

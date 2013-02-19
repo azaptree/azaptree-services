@@ -40,7 +40,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
@@ -60,9 +59,10 @@ import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = HashedCredentialDAOTest.Config.class)
-public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
+public class HashedCredentialDAOTest extends AzaptreeAbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
@@ -132,8 +132,6 @@ public class HashedCredentialDAOTest extends AbstractTestNGSpringContextTests {
 			return new SubjectDAO(jdbcTemplate());
 		}
 	}
-
-	final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private SubjectDAO subjectDao;

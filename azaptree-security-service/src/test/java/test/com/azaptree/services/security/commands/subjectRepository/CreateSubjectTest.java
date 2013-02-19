@@ -24,23 +24,16 @@ import java.util.Calendar;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.sql.DataSource;
-
 import org.apache.shiro.crypto.hash.HashService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.AdviceMode;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 import org.springframework.transaction.annotation.Transactional;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -51,6 +44,7 @@ import com.azaptree.services.security.CredentialNames;
 import com.azaptree.services.security.UnknownCredentialException;
 import com.azaptree.services.security.UnsupportedCredentialTypeException;
 import com.azaptree.services.security.commands.subjectRepository.CreateSubject;
+import com.azaptree.services.security.config.spring.DatabaseSpringConfiguration;
 import com.azaptree.services.security.config.spring.SecurityCredentialsServiceConfig;
 import com.azaptree.services.security.dao.HashServiceConfigurationDAO;
 import com.azaptree.services.security.dao.HashedCredentialDAO;
@@ -60,66 +54,37 @@ import com.azaptree.services.security.domain.Subject;
 import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = { CreateSubjectTest.Config.class })
-public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
+@ActiveProfiles({ "local" })
+public class CreateSubjectTest extends AzaptreeAbstractTestNGSpringContextTests {
 
-	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
+	@ComponentScan(basePackageClasses = { com.azaptree.services.security.config.spring.local.DatabaseSpringConfiguration.class })
 	@Import({ SecurityCredentialsServiceConfig.class })
-	public static class Config implements TransactionManagementConfigurer {
-
-		@Override
-		public PlatformTransactionManager annotationDrivenTransactionManager() {
-			return dataSourceTransactionManager();
-		}
+	public static class Config {
+		@Autowired
+		private DatabaseSpringConfiguration databaseSpringConfiguration;
 
 		@Bean
 		public CreateSubject createSubject() {
-			return new CreateSubject(hashServiceConfiguation());
-		}
-
-		@Bean(destroyMethod = "close")
-		public DataSource dataSource() {
-			final org.apache.tomcat.jdbc.pool.DataSource ds = new org.apache.tomcat.jdbc.pool.DataSource();
-			ds.setDefaultAutoCommit(false);
-			ds.setDriverClassName("org.postgresql.Driver");
-			ds.setUrl("jdbc:postgresql://localhost:5433/azaptree");
-			ds.setUsername("azaptree");
-			ds.setPassword("!azaptree");
-			ds.setInitSQL("set search_path to azaptree");
-			ds.setTestOnBorrow(true);
-			ds.setTestOnConnect(true);
-			ds.setValidationQuery("select 1");
-			ds.setLogValidationErrors(true);
-			ds.setInitialSize(10);
-			ds.setJdbcInterceptors("org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;" +
-			        "org.apache.tomcat.jdbc.pool.interceptor.ConnectionState;" +
-			        "org.apache.tomcat.jdbc.pool.interceptor.SlowQueryReport");
-			ds.setTimeBetweenEvictionRunsMillis(30000);
-			ds.setCommitOnReturn(true);
-
-			return ds;
-		}
-
-		@Bean
-		public org.springframework.jdbc.datasource.DataSourceTransactionManager dataSourceTransactionManager() {
-			return new DataSourceTransactionManager(dataSource());
+			return new CreateSubject(hashServiceConfiguration());
 		}
 
 		@Bean
 		public HashedCredentialDAO hashedCredentialDAO() {
-			return new HashedCredentialDAO(jdbcTemplate());
+			return new HashedCredentialDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
 		}
 
 		@Bean
 		public HashService hashService() {
-			return hashServiceConfiguation().getHashService();
+			return hashServiceConfiguration().getHashService();
 		}
 
 		@Bean
-		public HashServiceConfiguration hashServiceConfiguation() {
-			final HashServiceConfigurationDAO dao = new HashServiceConfigurationDAO(jdbcTemplate());
+		public HashServiceConfiguration hashServiceConfiguration() {
+			final HashServiceConfigurationDAO dao = new HashServiceConfigurationDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
 			final String name = "HashedCredentialDAOTest";
 			final HashServiceConfiguration config = dao.findByName(name);
 			if (config != null) {
@@ -130,17 +95,10 @@ public class CreateSubjectTest extends AbstractTestNGSpringContextTests {
 		}
 
 		@Bean
-		public JdbcTemplate jdbcTemplate() {
-			return new JdbcTemplate(dataSource());
-		}
-
-		@Bean
 		public SubjectDAO subjectDao() {
-			return new SubjectDAO(jdbcTemplate());
+			return new SubjectDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
 		}
 	}
-
-	final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private CreateSubject createSubject;

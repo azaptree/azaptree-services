@@ -22,12 +22,14 @@ package com.azaptree.services.security.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import com.azaptree.services.command.CommandCatalog;
 import com.azaptree.services.command.CommandKey;
-import com.azaptree.services.command.CommandService;
+import com.azaptree.services.command.config.spring.CommandServiceSpringConfiguration;
 
 @Configuration
+@Import(CommandServiceSpringConfiguration.class)
 public interface CommandServiceConfiguration {
 	public static final String COMMAND_CATALOG_NAME = "azaptree-security-service";
 
@@ -37,9 +39,6 @@ public interface CommandServiceConfiguration {
 
 	public static final CommandKey ADD_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "AddSubjectCredential");
 	public static final CommandKey DELETE_SUBJECT_CREDENTIAL = new CommandKey(COMMAND_CATALOG_NAME, "DeleteSubjectCredential");
-
-	@Bean
-	CommandService commandService();
 
 	@Bean
 	CommandCatalog securityServiceCommandCatalog();

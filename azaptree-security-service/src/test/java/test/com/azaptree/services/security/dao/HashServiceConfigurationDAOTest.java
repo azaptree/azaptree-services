@@ -36,7 +36,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
@@ -54,9 +53,10 @@ import com.azaptree.services.security.domain.config.HashServiceConfiguration;
 import com.azaptree.services.security.domain.config.impl.HashServiceConfig;
 import com.azaptree.services.security.domain.impl.HashedCredentialImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = { HashServiceConfigurationDAOTest.Config.class })
-public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContextTests {
+public class HashServiceConfigurationDAOTest extends AzaptreeAbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
@@ -153,13 +153,6 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 	}
 
 	@Transactional
-	@Test(expectedExceptions = { UnsupportedOperationException.class })
-	public void test_update() {
-		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
-		dao.update(config);
-	}
-
-	@Transactional
 	@Test
 	public void test_delete() {
 		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
@@ -171,6 +164,13 @@ public class HashServiceConfigurationDAOTest extends AbstractTestNGSpringContext
 
 		Assert.assertTrue(dao.delete(config2.getEntityId()));
 		Assert.assertFalse(dao.exists(savedConfig.getEntityId()));
+	}
+
+	@Transactional
+	@Test(expectedExceptions = { UnsupportedOperationException.class })
+	public void test_update() {
+		final HashServiceConfig config = new HashServiceConfig("test_create" + UUID.randomUUID());
+		dao.update(config);
 	}
 
 }

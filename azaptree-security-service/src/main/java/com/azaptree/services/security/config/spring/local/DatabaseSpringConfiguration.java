@@ -1,4 +1,4 @@
-package com.azaptree.services.security.config;
+package com.azaptree.services.security.config.spring.local;
 
 /*
  * #%L
@@ -20,20 +20,23 @@ package com.azaptree.services.security.config;
  * #L%
  */
 
-import javax.sql.DataSource;
-
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import com.azaptree.services.commons.profiles.Local;
+
+@EnableTransactionManagement
 @Configuration
-public interface DatabaseConfiguration extends TransactionManagementConfigurer {
+@Local
+public class DatabaseSpringConfiguration extends com.azaptree.services.security.config.spring.DatabaseSpringConfiguration {
 
-	@Bean
-	DataSource securityServiceDataSource();
-
-	@Bean
-	JdbcTemplate securityServiceJdbcTemplate();
+	@Override
+	protected org.apache.tomcat.jdbc.pool.DataSource configure(final org.apache.tomcat.jdbc.pool.DataSource ds) {
+		ds.setUrl("jdbc:postgresql://localhost:5433/azaptree");
+		ds.setUsername("azaptree");
+		ds.setPassword("!azaptree");
+		ds.setInitSQL("set search_path to azaptree");
+		return ds;
+	}
 
 }

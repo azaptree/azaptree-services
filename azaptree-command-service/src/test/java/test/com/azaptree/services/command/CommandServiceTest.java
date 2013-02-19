@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.testng.Assert;
@@ -44,10 +45,10 @@ import com.azaptree.services.command.CommandException;
 import com.azaptree.services.command.CommandKey;
 import com.azaptree.services.command.CommandService;
 import com.azaptree.services.command.CommandServiceJmxApi;
+import com.azaptree.services.command.config.spring.CommandServiceSpringConfiguration;
 import com.azaptree.services.command.impl.CommandCatalogImpl;
 import com.azaptree.services.command.impl.CommandChainSupport;
 import com.azaptree.services.command.impl.CommandContextValidatorSupport;
-import com.azaptree.services.command.impl.CommandServiceImpl;
 import com.azaptree.services.command.impl.CommandSupport;
 import com.azaptree.services.commons.TypeReferenceKey;
 import com.azaptree.services.commons.validation.ValidationException;
@@ -56,12 +57,8 @@ import com.azaptree.services.commons.validation.ValidationException;
 public class CommandServiceTest extends AbstractTestNGSpringContextTests {
 
 	@Configuration
+	@Import(CommandServiceSpringConfiguration.class)
 	public static class Config {
-
-		@Bean
-		public CommandService commandService() {
-			return new CommandServiceImpl();
-		}
 
 		@Bean
 		public Command badCommand() {

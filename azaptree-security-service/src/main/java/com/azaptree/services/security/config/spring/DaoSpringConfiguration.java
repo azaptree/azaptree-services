@@ -1,4 +1,4 @@
-package com.azaptree.services.security.config;
+package com.azaptree.services.security.config.spring;
 
 /*
  * #%L
@@ -20,13 +20,11 @@ package com.azaptree.services.security.config;
  * #L%
  */
 
-import javax.sql.DataSource;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
 
+import com.azaptree.services.security.config.DaoConfiguration;
 import com.azaptree.services.security.dao.HashServiceConfigurationDAO;
 import com.azaptree.services.security.dao.HashedCredentialDAO;
 import com.azaptree.services.security.dao.SessionAttributeDAO;
@@ -34,27 +32,38 @@ import com.azaptree.services.security.dao.SessionDAO;
 import com.azaptree.services.security.dao.SubjectDAO;
 
 @Configuration
-public interface DataAccessConfiguration extends TransactionManagementConfigurer {
+public class DaoSpringConfiguration implements DaoConfiguration {
+	@Autowired
+	private DatabaseSpringConfiguration databaseSpringConfiguration;
 
+	@Override
 	@Bean
-	HashedCredentialDAO hashedCredentialDAO();
+	public HashedCredentialDAO hashedCredentialDAO() {
+		return new HashedCredentialDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
+	}
 
+	@Override
 	@Bean
-	HashServiceConfigurationDAO hashServiceConfigurationDAO();
+	public HashServiceConfigurationDAO hashServiceConfigurationDAO() {
+		return new HashServiceConfigurationDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
+	}
 
+	@Override
 	@Bean
-	DataSource securityDatabaseDataSource();
+	public SessionAttributeDAO sessionAttributeDAO() {
+		return new SessionAttributeDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
+	}
 
+	@Override
 	@Bean
-	JdbcTemplate securityDatabaseJdbcTemplate();
+	public SessionDAO sessionDAO() {
+		return new SessionDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
+	}
 
+	@Override
 	@Bean
-	SessionAttributeDAO sessionAttributeDAO();
-
-	@Bean
-	SessionDAO sessionDAO();
-
-	@Bean
-	SubjectDAO subjectDAO();
+	public SubjectDAO subjectDAO() {
+		return new SubjectDAO(databaseSpringConfiguration.securityServiceJdbcTemplate());
+	}
 
 }

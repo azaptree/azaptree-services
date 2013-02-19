@@ -10,7 +10,7 @@ package test.com.azaptree.services.security.dao;
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- *      http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -38,7 +38,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.testng.AbstractTestNGSpringContextTests;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.transaction.annotation.TransactionManagementConfigurer;
@@ -57,9 +56,10 @@ import com.azaptree.services.security.domain.Subject.Status;
 import com.azaptree.services.security.domain.impl.SessionAttributeImpl;
 import com.azaptree.services.security.domain.impl.SessionImpl;
 import com.azaptree.services.security.domain.impl.SubjectImpl;
+import com.azaptree.services.tests.support.AzaptreeAbstractTestNGSpringContextTests;
 
 @ContextConfiguration(classes = { SessionAttributeDAOTest.Config.class })
-public class SessionAttributeDAOTest extends AbstractTestNGSpringContextTests {
+public class SessionAttributeDAOTest extends AzaptreeAbstractTestNGSpringContextTests {
 
 	@EnableTransactionManagement(mode = AdviceMode.ASPECTJ)
 	@Configuration
@@ -117,8 +117,6 @@ public class SessionAttributeDAOTest extends AbstractTestNGSpringContextTests {
 			return new SubjectDAO(jdbcTemplate());
 		}
 	}
-
-	private final Logger log = LoggerFactory.getLogger(getClass());
 
 	@Autowired
 	private SessionDAO sessionDAO;
@@ -237,6 +235,60 @@ public class SessionAttributeDAOTest extends AbstractTestNGSpringContextTests {
 
 	@Transactional
 	@Test
+	public void test_getSessionAttributes() throws IOException {
+		final Subject temp = new SubjectImpl(Status.ACTIVATED);
+		final Subject subject = subjectDAO.create(temp);
+
+		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
+		Assert.assertNotNull(session);
+
+		final Session session2 = sessionDAO.findById(session.getEntityId());
+		Assert.assertNotNull(session2);
+		Assert.assertEquals(session2, session);
+
+		final SessionAttribute attr = sessionAttrDao.create(new SessionAttributeImpl(session.getEntityId(), "key_1", session.toJson()));
+		log.info("attr : {}", attr);
+		Assert.assertNotNull(attr);
+
+		final SessionAttribute attr2 = sessionAttrDao.findById(attr.getEntityId());
+		Assert.assertNotNull(attr2);
+		Assert.assertEquals(attr2, attr);
+
+		final Map<String, Object> attrValue = JsonUtils.parse(new ByteArrayInputStream(attr.getJson().getBytes()));
+		log.info("attrValue serialized back to JSON : {}", JsonUtils.serialize(attrValue));
+
+		List<String> keys = sessionAttrDao.getAttributeKeys(session.getEntityId());
+		Assert.assertFalse(keys.isEmpty());
+		Assert.assertEquals(keys.size(), 1);
+		Assert.assertTrue(keys.contains(attr.getName()));
+
+		final SessionAttribute attr3 = sessionAttrDao.create(new SessionAttributeImpl(session.getEntityId(), "key_3", session.toJson()));
+		keys = sessionAttrDao.getAttributeKeys(session.getEntityId());
+		Assert.assertFalse(keys.isEmpty());
+		Assert.assertEquals(keys.size(), 2);
+		Assert.assertTrue(keys.contains(attr.getName()));
+		Assert.assertTrue(keys.contains(attr3.getName()));
+
+		Assert.assertTrue(sessionAttrDao.setAttribute(session.getEntityId(), attr3.getName(), attr2.toJson()));
+		final Map<String, Object> attr3Map = JsonUtils.parse(new ByteArrayInputStream(sessionAttrDao.findById(attr3.getEntityId()).getJson().getBytes()));
+		Assert.assertEquals(attr3Map.get("entityId"), attr2.getEntityId().toString());
+
+		Assert.assertTrue(sessionAttrDao.setAttribute(session.getEntityId(), "key_4", attr3.toJson()));
+		final String attr4Jsonvalue = sessionAttrDao.getAttributeJsonValue(session.getEntityId(), "key_4");
+		final Map<String, Object> attr4Map = JsonUtils.parse(new ByteArrayInputStream(attr4Jsonvalue.getBytes()));
+		Assert.assertEquals(attr4Map.get("entityId"), attr3.getEntityId().toString());
+
+		final Map<String, SessionAttribute> attrs = sessionAttrDao.getSessionAttributes(session.getEntityId());
+		Assert.assertNotNull(attrs);
+
+		for (final String key : sessionAttrDao.getAttributeKeys(session.getEntityId())) {
+			Assert.assertNotNull(attrs.get(key));
+			Assert.assertEquals(attrs.get(key).getName(), key);
+		}
+	}
+
+	@Transactional
+	@Test
 	public void test_removeAttribute() throws IOException {
 		final Subject temp = new SubjectImpl(Status.ACTIVATED);
 		final Subject subject = subjectDAO.create(temp);
@@ -319,60 +371,6 @@ public class SessionAttributeDAOTest extends AbstractTestNGSpringContextTests {
 		final String attr4Jsonvalue = sessionAttrDao.getAttributeJsonValue(session.getEntityId(), "key_4");
 		final Map<String, Object> attr4Map = JsonUtils.parse(new ByteArrayInputStream(attr4Jsonvalue.getBytes()));
 		Assert.assertEquals(attr4Map.get("entityId"), attr3.getEntityId().toString());
-	}
-
-	@Transactional
-	@Test
-	public void test_getSessionAttributes() throws IOException {
-		final Subject temp = new SubjectImpl(Status.ACTIVATED);
-		final Subject subject = subjectDAO.create(temp);
-
-		final Session session = sessionDAO.create(new SessionImpl(subject.getEntityId()));
-		Assert.assertNotNull(session);
-
-		final Session session2 = sessionDAO.findById(session.getEntityId());
-		Assert.assertNotNull(session2);
-		Assert.assertEquals(session2, session);
-
-		final SessionAttribute attr = sessionAttrDao.create(new SessionAttributeImpl(session.getEntityId(), "key_1", session.toJson()));
-		log.info("attr : {}", attr);
-		Assert.assertNotNull(attr);
-
-		final SessionAttribute attr2 = sessionAttrDao.findById(attr.getEntityId());
-		Assert.assertNotNull(attr2);
-		Assert.assertEquals(attr2, attr);
-
-		final Map<String, Object> attrValue = JsonUtils.parse(new ByteArrayInputStream(attr.getJson().getBytes()));
-		log.info("attrValue serialized back to JSON : {}", JsonUtils.serialize(attrValue));
-
-		List<String> keys = sessionAttrDao.getAttributeKeys(session.getEntityId());
-		Assert.assertFalse(keys.isEmpty());
-		Assert.assertEquals(keys.size(), 1);
-		Assert.assertTrue(keys.contains(attr.getName()));
-
-		final SessionAttribute attr3 = sessionAttrDao.create(new SessionAttributeImpl(session.getEntityId(), "key_3", session.toJson()));
-		keys = sessionAttrDao.getAttributeKeys(session.getEntityId());
-		Assert.assertFalse(keys.isEmpty());
-		Assert.assertEquals(keys.size(), 2);
-		Assert.assertTrue(keys.contains(attr.getName()));
-		Assert.assertTrue(keys.contains(attr3.getName()));
-
-		Assert.assertTrue(sessionAttrDao.setAttribute(session.getEntityId(), attr3.getName(), attr2.toJson()));
-		final Map<String, Object> attr3Map = JsonUtils.parse(new ByteArrayInputStream(sessionAttrDao.findById(attr3.getEntityId()).getJson().getBytes()));
-		Assert.assertEquals(attr3Map.get("entityId"), attr2.getEntityId().toString());
-
-		Assert.assertTrue(sessionAttrDao.setAttribute(session.getEntityId(), "key_4", attr3.toJson()));
-		final String attr4Jsonvalue = sessionAttrDao.getAttributeJsonValue(session.getEntityId(), "key_4");
-		final Map<String, Object> attr4Map = JsonUtils.parse(new ByteArrayInputStream(attr4Jsonvalue.getBytes()));
-		Assert.assertEquals(attr4Map.get("entityId"), attr3.getEntityId().toString());
-
-		final Map<String, SessionAttribute> attrs = sessionAttrDao.getSessionAttributes(session.getEntityId());
-		Assert.assertNotNull(attrs);
-
-		for (String key : sessionAttrDao.getAttributeKeys(session.getEntityId())) {
-			Assert.assertNotNull(attrs.get(key));
-			Assert.assertEquals(attrs.get(key).getName(), key);
-		}
 	}
 
 	@Test(expectedExceptions = { UnsupportedOperationException.class })

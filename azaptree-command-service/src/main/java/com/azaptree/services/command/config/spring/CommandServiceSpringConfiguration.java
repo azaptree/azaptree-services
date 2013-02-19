@@ -1,8 +1,8 @@
-package com.azaptree.services.security.config;
+package com.azaptree.services.command.config.spring;
 
 /*
  * #%L
- * AZAPTREE SECURITY SERVICE
+ * AZAPTREE-COMMAND-SERVICE
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,20 +20,20 @@ package com.azaptree.services.security.config;
  * #L%
  */
 
-import javax.sql.DataSource;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
+
+import com.azaptree.services.command.CommandService;
+import com.azaptree.services.command.config.CommandServiceConfiguration;
+import com.azaptree.services.command.impl.CommandServiceImpl;
 
 @Configuration
-public interface DatabaseConfiguration extends TransactionManagementConfigurer {
+public class CommandServiceSpringConfiguration implements CommandServiceConfiguration {
 
+	@Override
 	@Bean
-	DataSource securityServiceDataSource();
-
-	@Bean
-	JdbcTemplate securityServiceJdbcTemplate();
+	public CommandService commandService() {
+		return new CommandServiceImpl();
+	}
 
 }

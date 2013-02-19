@@ -1,8 +1,8 @@
-package com.azaptree.services.security.config;
+package com.azaptree.services.commons.profiles;
 
 /*
  * #%L
- * AZAPTREE SECURITY SERVICE
+ * AZAPTREE-SERVICES-COMMONS
  * %%
  * Copyright (C) 2012 - 2013 AZAPTREE.COM
  * %%
@@ -20,20 +20,22 @@ package com.azaptree.services.security.config;
  * #L%
  */
 
-import javax.sql.DataSource;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.transaction.annotation.TransactionManagementConfigurer;
+import org.springframework.context.annotation.Profile;
 
-@Configuration
-public interface DatabaseConfiguration extends TransactionManagementConfigurer {
-
-	@Bean
-	DataSource securityServiceDataSource();
-
-	@Bean
-	JdbcTemplate securityServiceJdbcTemplate();
-
+/**
+ * Used to mark Spring beans that are to be loaded when running locally, i.e., within your developer workspace
+ * 
+ * @author alfio
+ * 
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Profile("local")
+public @interface Local {
+	// marker annotation for Spring profiles
 }

@@ -240,7 +240,7 @@
 			<dependency>
 				<groupId>org.apache.tomcat</groupId>
 				<artifactId>tomcat-jdbc</artifactId>
-				<version>7.0.35</version>
+				<version>7.0.37</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
@@ -257,7 +257,7 @@
 		<dependency>
 			<groupId>org.testng</groupId>
 			<artifactId>testng</artifactId>
-			<version>6.7</version>
+			<version>6.8</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -503,6 +503,7 @@
 		<module>azaptree-domain-entity</module>
 		<module>azaptree-services-json</module>
 		<module>azaptree-shiro-realm</module>
+		<module>azaptree-testing</module>
 	</modules>
 	<parent>
 		<groupId>org.sonatype.oss</groupId>
